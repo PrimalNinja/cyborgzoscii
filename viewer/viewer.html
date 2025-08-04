@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ZOSCII Viewer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        .drop-zone { border: 3px dashed #ccc; border-radius: 10px; width: 100%; height: 100vh; text-align: center; font-size: 24px; cursor: pointer; color: #ccc; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; margin-bottom: 20px; }
+        .drop-zone.dragover { border-color: #007bff; color: #007bff; background-color: #f8f9fa; }
+        .drop-zone.has-file { border-color: #28a745; color: #28a745; background-color: #d4edda; }
+        #divContent { display: none; }
+        .zoscii-output { background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; padding: 20px; font-family: monospace; font-size: 18px; line-height: 1.4; }
+    </style>
+</head>
+<body>
+	<div id="divDropZone">
+		<div class="drop-zone">Drop ROMFILE here to view ZOSCII</div>
+	</div>
+	<div id="divContent">&nbsp;</div>
+    <script>
+        var g_arrZosciiAddresses = null;
+        var g_arrRomData = null;
+        
+        $(document).ready(function() 
+        {
+            // Load addresses from binary file via AJAX
+            $.ajax({
+                url: 'viewer.php?file=content.bin',
+                method: 'GET',
+                dataType: 'json',
+                success: function(objData_a) 
+                {
+                    if (objData_a.error) 
+                    {
+                        alert('Error loading addresses: ' + objData_a.error);
+                    } else {
+                        g_arrZosciiAddresses = objData_a;
+                        fnSetupDropZone();
+                    }
+                },
+                error: function() 
+                {
+                    alert('Failed to load address file');
+                }
+            });
+            
+            function fnSetupDropZone() 
+            {
+                var objDropZone = $(".drop-zone");
+                
+                objDropZone.on("dragover", function(objEvent_a) 
+                {
+                    objEvent_a.preventDefault();
+                    $(this).addClass("dragover");
+                });
+                
+                objDropZone.on("dragleave", function(objEvent_a) 
+                {
+                    objEvent_a.preventDefault();
+                    $(this).removeClass("dragover");
+                });
+                
+                objDropZone.on("drop", function(objEvent_a) 
+                {
+                    objEvent_a.preventDefault();
+                    $(this).removeClass("dragover");
+                    
+                    var arrFiles = objEvent_a.originalEvent.dataTransfer.files;
+                    if (arrFiles.length > 0) 
+                    {
+                        var objReader = new FileReader();
+                        objReader.onload = function(objEvent_a) 
+                        {
+                            g_arrRomData = new Uint8Array(objEvent_a.target.result);
+                            fnProcessZOSCII();
+                        };
+                        objReader.readAsArrayBuffer(arrFiles[0]);
+                    }
+                });
+            }
+            
+            function fnProcessZOSCII() 
+            {
+                var strResult = "";
+                for (var intI = 0; intI < g_arrZosciiAddresses.length; intI++) 
+                {
+                    var intAddress = g_arrZosciiAddresses[intI];
+                    if (intAddress < g_arrRomData.length) 
+                    {
+                        strResult += String.fromCharCode(g_arrRomData[intAddress]);
+                    } 
+					else 
+					{
+                        strResult += "?";
+                    }
+                }
+                
+                $("#divDropZone").hide();
+                $("#divContent").text(strResult);
+				$("#divContent").show();
+            }
+        });
+    </script>
+</body>
+</html>

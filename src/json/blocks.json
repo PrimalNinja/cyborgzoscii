@@ -1,0 +1,14 @@
+{
+  "blocks": [
+    {
+      "start": 49152,
+      "size": 4096,
+      "description": "ROM at C000-CFFF"
+    },
+    {
+      "start": 57344,
+      "size": 2048,
+      "description": "Additional ROM at E000-E7FF"
+    }
+  ]
+}

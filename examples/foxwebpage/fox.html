@@ -1,0 +1,55 @@
+<div id="mainContent">
+    <style>
+        #mainContent {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 40px;
+            font-family: 'Georgia', serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        
+        .typewriter {
+            font-size: 24px;
+            font-weight: bold;
+            border-right: 3px solid white;
+            white-space: nowrap;
+            overflow: hidden;
+            animation: typing 3s steps(44, end), blink 0.75s step-end infinite;
+        }
+        
+        @keyframes typing {
+            from { width: 0; }
+            to { width: 100%; }
+        }
+        
+        @keyframes blink {
+            from, to { border-color: transparent; }
+            50% { border-color: white; }
+        }
+    </style>
+    
+    <h2>Minimal Demo Page</h2>
+    <div id="typewriterText" class="typewriter"></div>
+    
+    <script>
+        var g_strMessage = "The quick brown fox jumps over the lazy dog.";
+        var g_intCurrentChar = 0;
+        
+        function fnTypeWriter() 
+        {
+            if (g_intCurrentChar < g_strMessage.length) 
+            {
+                document.getElementById("typewriterText").innerHTML += g_strMessage.charAt(g_intCurrentChar);
+                g_intCurrentChar++;
+                setTimeout(fnTypeWriter, 70);
+            }
+        }
+        
+        // Start typing when page loads
+        setTimeout(fnTypeWriter, 1000);
+    </script>
+</div>
