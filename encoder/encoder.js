@@ -1,6 +1,7 @@
 var g_arrRomData = null;
 var g_strTextData = "";
 var g_objEncodingResult = null;
+var g_BITTAGE = 16;		// 16 or 32 bits
 
 $(document).ready(function() 
 {
@@ -182,26 +183,42 @@ function fnDisplayAnalysis(objResult)
     strHtml += "<div class='mt-4'>";
     strHtml += "<h5>Generate Viewer</h5>";
     strHtml += "<p>Create a standalone viewer file that can decode this ZOSCII data:</p>";
-    strHtml += "<button class='btn btn-success' id='generateViewerBtn'>Generate Viewer File</button>";
+    strHtml += "<button class='btn btn-success' id='generateAddressFileBtn'>Generate Address File</button>";
     strHtml += "<div id='viewerResult' class='mt-3'></div>";
     strHtml += "</div>";
     
     $("#analysisContent").html(strHtml);
     
     // Setup generate viewer button
-	$("#generateViewerBtn").click(function() 
+	$("#generateAddressFileBtn").click(function() 
 	{
 		$(this).prop("disabled", true).text("Generating...");
 		
 		// Create binary file with addresses
-		var arrAddressBytes = new Uint8Array(g_objEncodingResult.addresses.length * 4);
-		for (var intI = 0; intI < g_objEncodingResult.addresses.length; intI++)
+		var arrAddressBytes;
+		var intAddress;
+		var intI;
+		if (g_BITTAGE === 16)
 		{
-			var intAddress = g_objEncodingResult.addresses[intI];
-			arrAddressBytes[intI * 4] = intAddress & 0xFF;
-			arrAddressBytes[intI * 4 + 1] = (intAddress >> 8) & 0xFF;
-			arrAddressBytes[intI * 4 + 2] = (intAddress >> 16) & 0xFF;
-			arrAddressBytes[intI * 4 + 3] = (intAddress >> 24) & 0xFF;
+			arrAddressBytes = new Uint8Array(g_objEncodingResult.addresses.length * 2);
+			for (intI = 0; intI < g_objEncodingResult.addresses.length; intI++)
+			{
+				intAddress = g_objEncodingResult.addresses[intI];
+				arrAddressBytes[intI * 2] = intAddress & 0xFF;
+				arrAddressBytes[intI * 2 + 1] = (intAddress >> 8) & 0xFF;
+			}
+		}
+		else if (g_BITTAGE === 32)
+		{
+			arrAddressBytes = new Uint8Array(g_objEncodingResult.addresses.length * 4);
+			for (intI = 0; intI < g_objEncodingResult.addresses.length; intI++)
+			{
+				intAddress = g_objEncodingResult.addresses[intI];
+				arrAddressBytes[intI * 4] = intAddress & 0xFF;
+				arrAddressBytes[intI * 4 + 1] = (intAddress >> 8) & 0xFF;
+				arrAddressBytes[intI * 4 + 2] = (intAddress >> 16) & 0xFF;
+				arrAddressBytes[intI * 4 + 3] = (intAddress >> 24) & 0xFF;
+			}
 		}
 		
 		// Download only the binary address file
