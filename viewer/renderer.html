@@ -42,7 +42,7 @@
                         alert('Error loading addresses: ' + objData_a.error);
                     } else {
                         g_arrZosciiAddresses = objData_a;
-                        fnSetupDropZone();
+                        setupDropZone();
                     }
                 },
                 error: function() 
@@ -51,7 +51,7 @@
                 }
             });
             
-            function fnSetupDropZone() 
+            function setupDropZone() 
             {
                 var objDropZone = $(".drop-zone");
                 
@@ -79,14 +79,14 @@
                         objReader.onload = function(objEvent_a) 
                         {
                             g_arrRomData = new Uint8Array(objEvent_a.target.result);
-                            fnProcessZOSCII();
+                            processZOSCII();
                         };
                         objReader.readAsArrayBuffer(arrFiles[0]);
                     }
                 });
             }
             
-            function fnProcessZOSCII() 
+            function processZOSCII() 
             {
                 var strResult = "";
                 for (var intI = 0; intI < g_arrZosciiAddresses.length; intI++) 
