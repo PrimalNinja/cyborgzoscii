@@ -5,78 +5,121 @@
 // cbConverter_a: encoding conversion function (e.g., asciiToPetscii) or null
 // intUnmappableChar_a: the native character code to be used if it cannot be mapped to ASCII
 // Returns: array of addresses
-function toZOSCII(arrBinaryData_a, strInputString_a, arrMemoryBlocks_a, cbConverter_a, intUnmappableChar_a)
+// Function to convert string to ZOSCII address sequence
+// arrBinaryData_a: Uint8Array containing the ROM/binary data  
+// strInputString_a: message to convert
+// arrMemoryBlocks_a: array of {start: startAddress, size: blockSize} objects
+// cbConverter_a: encoding conversion function (e.g., asciiToPetscii) or null
+// intUnmappableChar_a: the native character code to be used if it cannot be mapped to ASCII
+// intGlobalAddressingMode_a: 16 or 32 for address size
+// Returns: array of addresses
+// Function to convert string to ZOSCII address sequence
+// arrBinaryData_a: Uint8Array containing the ROM/binary data  
+// strInputString_a: message to convert
+// arrMemoryBlocks_a: array of {start: startAddress, size: blockSize} objects
+// cbConverter_a: encoding conversion function (e.g., asciiToPetscii) or null
+// intUnmappableChar_a: the native character code to be used if it cannot be mapped to ASCII
+// intGlobalAddressingMode_a: 16 or 32 for address size
+// Returns: array of addresses
+// Build result array with random addresses - pre-allocate and avoid push()
+function toZOSCII(arrBinaryData_a, strInputString_a, arrMemoryBlocks_a, cbConverter_a, intUnmappableChar_a, intGlobalAddressingMode_a)
 {
-    var arrByteAddresses = [];
-    var arrResult = [];
-    var blnValidAddress;
-	var intAddress;
-    var intBlock;
-	var intByte;
-    var intI;
-	var intIndex;
-	var intRandomPick;
-    var objBlock;
+    var intStartTime = new Date().getTime();
     
-    // Initialize Byte Arrays
-    for (intI = 0; intI < 256; intI++)
+    var arrByteCounts = new Array(256);
+    var arrByteAddresses = new Array(256);
+    var arrOffsets = new Array(256);
+    
+    // Initialize counters
+    for (var intI = 0; intI < 256; intI++)
     {
-        arrByteAddresses[intI] = [];
+        arrByteCounts[intI] = 0;
     }
     
-    // Helper function to check if address is in valid memory blocks
-    function isValidAddress(intAddress)
+    // Pass 1: Count occurrences by iterating through blocks
+    for (var intBlock = 0; intBlock < arrMemoryBlocks_a.length; intBlock++)
     {
-        var blnFound = false;
-		
-        for (intBlock = 0; intBlock < arrMemoryBlocks_a.length; intBlock++)
+        var objBlock = arrMemoryBlocks_a[intBlock];
+        for (var intAddress = objBlock.start; intAddress < (objBlock.start + objBlock.size); intAddress++)
         {
-            objBlock = arrMemoryBlocks_a[intBlock];
-            if (intAddress >= objBlock.start && intAddress < (objBlock.start + objBlock.size))
+            var intByte = arrBinaryData_a[intAddress];
+            arrByteCounts[intByte]++;
+        }
+    }
+    
+    // Pass 2: Pre-allocate exact-sized arrays
+    for (var intI = 0; intI < 256; intI++)
+    {
+        arrByteAddresses[intI] = new Array(arrByteCounts[intI]);
+        arrOffsets[intI] = 0;
+    }
+    
+    // Pass 3: Populate arrays by iterating through blocks
+    for (var intBlock = 0; intBlock < arrMemoryBlocks_a.length; intBlock++)
+    {
+        var objBlock = arrMemoryBlocks_a[intBlock];
+        for (var intAddress = objBlock.start; intAddress < (objBlock.start + objBlock.size); intAddress++)
+        {
+            var intByte = arrBinaryData_a[intAddress];
+            arrByteAddresses[intByte][arrOffsets[intByte]++] = intAddress;
+        }
+    }
+    
+    // Build result array with random addresses - pre-allocate and avoid push()
+    var intResultCount = 0;
+    var intDebugMissing = 0;
+
+    for (var intI = 0; intI < strInputString_a.length; intI++)
+    {
+        var intIndex = strInputString_a.charCodeAt(intI);
+        if (cbConverter_a)
+        {
+            intIndex = cbConverter_a(intIndex, intUnmappableChar_a);
+        }
+        if (intIndex >= 0 && intIndex < 256 && arrByteAddresses[intIndex] && arrByteAddresses[intIndex].length > 0)
+        {
+            intResultCount++;
+        }
+        else
+        {
+            intDebugMissing++;
+            if (intDebugMissing <= 10) // Only log first 10 missing characters
             {
-                blnFound = true;
-                break;
+                console.log("Missing character: '" + strInputString_a.charAt(intI) + "' (code " + strInputString_a.charCodeAt(intI) + " -> " + intIndex + ")");
             }
         }
-        return blnFound;
     }
-    
-    // Parse binary data and populate address arrays
-    for (intAddress = 0; intAddress < arrBinaryData_a.length; intAddress++)
-    {
-        // Only process addresses within valid memory blocks
-        blnValidAddress = isValidAddress(intAddress);
-        if (blnValidAddress)
-        {
-            intByte = arrBinaryData_a[intAddress];
-			arrByteAddresses[intByte].push(intAddress);
-        }
-    }
-    
-    // Build result array with random addresses
-    for (intI = 0; intI < strInputString_a.length; intI++)
-    {
-        intIndex = strInputString_a.charCodeAt(intI);
-		if (cbConverter_a)
-		{
-			intIndex = cbConverter_a(intIndex, intUnmappableChar_a);
-		}
 
-		try
-		{
-			if (intIndex >= 0 && arrByteAddresses[intIndex].length > 0)
-			{
-				// Pick random address from this character's array
-				intRandomPick = Math.floor(Math.random() * arrByteAddresses[intIndex].length);
-				intAddress = arrByteAddresses[intIndex][intRandomPick];
-				arrResult.push(intAddress);
-			}
+    console.log("Characters found in ROM: " + intResultCount);
+    console.log("Characters missing from ROM: " + intDebugMissing);
+
+    var arrResult = new Array(intResultCount);
+    var intResultIndex = 0;
+
+    for (var intI = 0; intI < strInputString_a.length; intI++)
+    {
+        var intIndex = strInputString_a.charCodeAt(intI);
+        if (cbConverter_a)
+        {
+            intIndex = cbConverter_a(intIndex, intUnmappableChar_a);
         }
-		catch(err)
-		{
-			// do nothing, we just had some unfound characters we don't want addresses for anyway
-		}
+
+        if (intIndex >= 0 && intIndex < 256 && arrByteAddresses[intIndex] && arrByteAddresses[intIndex].length > 0)
+        {
+            var intRandomPick = Math.floor(Math.random() * arrByteAddresses[intIndex].length);
+            arrResult[intResultIndex++] = arrByteAddresses[intIndex][intRandomPick];
+        }
     }
+
+    var intEndTime = new Date().getTime();
+    var intElapsedMs = intEndTime - intStartTime;
+    
+    console.log("ZOSCII Performance:");
+    console.log("- Binary size: " + arrBinaryData_a.length + " bytes");
+    console.log("- Input length: " + strInputString_a.length + " chars");
+    console.log("- Memory blocks: " + arrMemoryBlocks_a.length);
+    console.log("- Execution time: " + intElapsedMs + "ms");
+    console.log("- Output addresses: " + arrResult.length);
     
     return arrResult;
 }
@@ -190,14 +233,3 @@ function ebcdicToAscii(intEbcdicChar_a, intUnmappableChar_a)
     
     return arrEbcdicToAsciiMap[intEbcdicChar_a];
 }
-
-// Example usage:
-var arrMemoryBlocks = [
-    {start: 0xC000, size: 0x1000},  // ROM at C000-CFFF
-    {start: 0xE000, size: 0x0800}   // Additional ROM at E000-E7FF
-];
-
-var arrROMData = new Uint8Array(65536); // 64KB address space
-
-var arrAddresses = toZOSCII(arrROMData, "Hello, World!", arrMemoryBlocks, ebcdicToAscii, 42);
-console.log(arrAddresses);
