@@ -3,6 +3,34 @@
 ;This software is released under MIT License.
 
 
+Version ASCII: Traditional Pointer Method, Per character: ~104 cycles + char_out time
+
+start:	ld hl, string
+		call strout
+		ret
+
+strout:	ld a, (hl)
+		xor a
+		ret z
+		call char_out
+		inc hl
+		jr strout
+		
+		; this is Hello, World!
+string: dw "Hello, World!", 0
+
+note: char_out usually has something like this within that is not required for ZOSCII
+
+		push af
+		ld hl, ASCIITABLE
+		ld b, 0
+		ld c, a
+		add hl, bc
+		pop af
+
+
+
+
 Version 1: Traditional Pointer Method, Per character: 75 cycles + char_out time
 
 start:	ld hl, string

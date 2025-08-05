@@ -416,6 +416,12 @@ $("#divDropZone").on("drop", function(objEvent_a)
 		objReader.onload = function(e)
 		{
 			g_arrUserRom = new Uint8Array(e.target.result);
+
+			if (g_arrUserRom.length > 65536) 
+			{
+				// Only use the first 64KB if ROM is larger, for 16-bit compatibility
+				g_arrUserRom = g_arrUserRom.slice(0, 65536);
+			}
 			
 			buildCharacterMap();
 			

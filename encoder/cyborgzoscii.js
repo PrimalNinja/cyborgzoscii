@@ -25,53 +25,63 @@
 function toZOSCII(arrBinaryData_a, strInputString_a, arrMemoryBlocks_a, cbConverter_a, intUnmappableChar_a, intGlobalAddressingMode_a)
 {
     var intStartTime = new Date().getTime();
+	
+    var intI;
+    var intBlock;
+    var intResultIndex = 0;
+    var intResultCount = 0;
+    var intDebugMissing = 0;
     
     var arrByteCounts = new Array(256);
     var arrByteAddresses = new Array(256);
     var arrOffsets = new Array(256);
+    var arrInputCounts = new Array(256);
+	var intAddress;
+	var intByte;
+	var intIndex;
+	var objBlock;
     
     // Initialize counters
-    for (var intI = 0; intI < 256; intI++)
+    for (intI = 0; intI < 256; intI++)
     {
         arrByteCounts[intI] = 0;
+        arrInputCounts[intI] = 0;
     }
     
     // Pass 1: Count occurrences by iterating through blocks
-    for (var intBlock = 0; intBlock < arrMemoryBlocks_a.length; intBlock++)
+    for (intBlock = 0; intBlock < arrMemoryBlocks_a.length; intBlock++)
     {
-        var objBlock = arrMemoryBlocks_a[intBlock];
-        for (var intAddress = objBlock.start; intAddress < (objBlock.start + objBlock.size); intAddress++)
+        objBlock = arrMemoryBlocks_a[intBlock];
+        for (intAddress = objBlock.start; intAddress < (objBlock.start + objBlock.size); intAddress++)
         {
-            var intByte = arrBinaryData_a[intAddress];
+            intByte = arrBinaryData_a[intAddress];
             arrByteCounts[intByte]++;
         }
     }
     
     // Pass 2: Pre-allocate exact-sized arrays
-    for (var intI = 0; intI < 256; intI++)
+    for (intI = 0; intI < 256; intI++)
     {
         arrByteAddresses[intI] = new Array(arrByteCounts[intI]);
         arrOffsets[intI] = 0;
     }
     
     // Pass 3: Populate arrays by iterating through blocks
-    for (var intBlock = 0; intBlock < arrMemoryBlocks_a.length; intBlock++)
+    for (intBlock = 0; intBlock < arrMemoryBlocks_a.length; intBlock++)
     {
-        var objBlock = arrMemoryBlocks_a[intBlock];
-        for (var intAddress = objBlock.start; intAddress < (objBlock.start + objBlock.size); intAddress++)
+        objBlock = arrMemoryBlocks_a[intBlock];
+        for (intAddress = objBlock.start; intAddress < (objBlock.start + objBlock.size); intAddress++)
         {
-            var intByte = arrBinaryData_a[intAddress];
-            arrByteAddresses[intByte][arrOffsets[intByte]++] = intAddress;
+            intByte = arrBinaryData_a[intAddress];
+            arrByteAddresses[intByte][arrOffsets[intByte]] = intAddress;
+			arrOffsets[intByte]++;
         }
     }
     
     // Build result array with random addresses - pre-allocate and avoid push()
-    var intResultCount = 0;
-    var intDebugMissing = 0;
-
-    for (var intI = 0; intI < strInputString_a.length; intI++)
+    for (intI = 0; intI < strInputString_a.length; intI++)
     {
-        var intIndex = strInputString_a.charCodeAt(intI);
+        intIndex = strInputString_a.charCodeAt(intI);
         if (cbConverter_a)
         {
             intIndex = cbConverter_a(intIndex, intUnmappableChar_a);
@@ -83,7 +93,7 @@ function toZOSCII(arrBinaryData_a, strInputString_a, arrMemoryBlocks_a, cbConver
         else
         {
             intDebugMissing++;
-            if (intDebugMissing <= 10) // Only log first 10 missing characters
+            if (intDebugMissing <= 10)
             {
                 console.log("Missing character: '" + strInputString_a.charAt(intI) + "' (code " + strInputString_a.charCodeAt(intI) + " -> " + intIndex + ")");
             }
@@ -94,11 +104,10 @@ function toZOSCII(arrBinaryData_a, strInputString_a, arrMemoryBlocks_a, cbConver
     console.log("Characters missing from ROM: " + intDebugMissing);
 
     var arrResult = new Array(intResultCount);
-    var intResultIndex = 0;
 
-    for (var intI = 0; intI < strInputString_a.length; intI++)
+    for (intI = 0; intI < strInputString_a.length; intI++)
     {
-        var intIndex = strInputString_a.charCodeAt(intI);
+        intIndex = strInputString_a.charCodeAt(intI);
         if (cbConverter_a)
         {
             intIndex = cbConverter_a(intIndex, intUnmappableChar_a);
@@ -106,8 +115,10 @@ function toZOSCII(arrBinaryData_a, strInputString_a, arrMemoryBlocks_a, cbConver
 
         if (intIndex >= 0 && intIndex < 256 && arrByteAddresses[intIndex] && arrByteAddresses[intIndex].length > 0)
         {
+            arrInputCounts[intIndex]++;
             var intRandomPick = Math.floor(Math.random() * arrByteAddresses[intIndex].length);
-            arrResult[intResultIndex++] = arrByteAddresses[intIndex][intRandomPick];
+            arrResult[intResultIndex] = arrByteAddresses[intIndex][intRandomPick];
+			intResultIndex++;
         }
     }
 
@@ -121,7 +132,11 @@ function toZOSCII(arrBinaryData_a, strInputString_a, arrMemoryBlocks_a, cbConver
     console.log("- Execution time: " + intElapsedMs + "ms");
     console.log("- Output addresses: " + arrResult.length);
     
-    return arrResult;
+    return {
+        addresses: arrResult,
+        inputCounts: arrInputCounts,
+		romCounts: arrByteCounts
+    };
 }
 
 // Function to convert PETSCII character codes to ASCII character codes
