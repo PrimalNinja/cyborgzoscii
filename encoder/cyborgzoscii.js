@@ -5,24 +5,10 @@
 // cbConverter_a: encoding conversion function (e.g., asciiToPetscii) or null
 // intUnmappableChar_a: the native character code to be used if it cannot be mapped to ASCII
 // Returns: array of addresses
-// Function to convert string to ZOSCII address sequence
-// arrBinaryData_a: Uint8Array containing the ROM/binary data  
-// strInputString_a: message to convert
-// arrMemoryBlocks_a: array of {start: startAddress, size: blockSize} objects
-// cbConverter_a: encoding conversion function (e.g., asciiToPetscii) or null
-// intUnmappableChar_a: the native character code to be used if it cannot be mapped to ASCII
-// intGlobalAddressingMode_a: 16 or 32 for address size
-// Returns: array of addresses
-// Function to convert string to ZOSCII address sequence
-// arrBinaryData_a: Uint8Array containing the ROM/binary data  
-// strInputString_a: message to convert
-// arrMemoryBlocks_a: array of {start: startAddress, size: blockSize} objects
-// cbConverter_a: encoding conversion function (e.g., asciiToPetscii) or null
-// intUnmappableChar_a: the native character code to be used if it cannot be mapped to ASCII
-// intGlobalAddressingMode_a: 16 or 32 for address size
-// Returns: array of addresses
-// Build result array with random addresses - pre-allocate and avoid push()
-function toZOSCII(arrBinaryData_a, strInputString_a, arrMemoryBlocks_a, cbConverter_a, intUnmappableChar_a, intGlobalAddressingMode_a)
+
+// TODO enhance to support binary files
+
+function toZOSCII(arrBinaryData_a, strInputString_a, arrMemoryBlocks_a, cbConverter_a, intUnmappableChar_a)
 {
     var intStartTime = new Date().getTime();
 	

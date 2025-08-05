@@ -377,7 +377,7 @@ function setupButtons()
             fnConverter = ebcdicToAscii;
         }
        
-        var objResult = toZOSCII(g_arrRomData, g_strTextData, arrMemoryBlocks, fnConverter, 42, g_BITTAGE);
+        var objResult = toZOSCII(g_arrRomData, g_strTextData, arrMemoryBlocks, fnConverter, 42);
         
         g_objEncodingResult = {
             success: true,
