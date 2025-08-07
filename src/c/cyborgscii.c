@@ -1,3 +1,7 @@
+// Cyborg ZOSCII v20250805
+// (c) 2025 Cyborg Unicorn Pty Ltd.
+// This software is released under MIT License.
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
