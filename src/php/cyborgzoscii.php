@@ -1,77 +1,124 @@
 <?php
 
-// Cyborg ZOSCII v20250805
-// (c) 2025 Cyborg Unicorn Pty Ltd.
-// This software is released under MIT License.
-
 /**
  * Function to convert string to ZOSCII address sequence
- * @param string $arrBinaryData_a - Binary data containing the ROM/binary data
- * @param string $strInputString_a - Message to convert
- * @param array $arrMemoryBlocks_a - Array of memory blocks with 'start' and 'size' keys
- * @param callable|null $cbConverter_a - Encoding conversion function or null
- * @param int $intUnmappableChar_a - The native character code to be used if it cannot be mapped to ASCII
- * @return array - Array of addresses
+ * @param array $arrBinaryData_a - array containing the ROM/binary data  
+ * @param string $strInputString_a - message to convert
+ * @param array $arrMemoryBlocks_a - array of ['start' => startAddress, 'size' => blockSize] objects
+ * @param callable|null $cbConverter_a - encoding conversion function or null
+ * @param int $intUnmappableChar_a - the native character code to be used if it cannot be mapped to ASCII
+ * @return array - ['addresses' => array, 'inputCounts' => array, 'romCounts' => array]
  */
 function toZOSCII($arrBinaryData_a, $strInputString_a, $arrMemoryBlocks_a, $cbConverter_a, $intUnmappableChar_a)
 {
-    $arrByteAddresses = [];
-    $arrResult = [];
+    $intStartTime = microtime(true) * 1000; // Convert to milliseconds
+	
+    $intI;
+    $intBlock;
+    $intResultIndex = 0;
+    $intResultCount = 0;
+    $intDebugMissing = 0;
     
-    // Initialize Byte Arrays
+    $arrByteCounts = array_fill(0, 256, 0);
+    $arrByteAddresses = array_fill(0, 256, array());
+    $arrOffsets = array_fill(0, 256, 0);
+    $arrInputCounts = array_fill(0, 256, 0);
+    $intAddress;
+    $intByte;
+    $intIndex;
+    $objBlock;
+    
+    // Pass 1: Count occurrences by iterating through blocks
+    for ($intBlock = 0; $intBlock < count($arrMemoryBlocks_a); $intBlock++)
+    {
+        $objBlock = $arrMemoryBlocks_a[$intBlock];
+        for ($intAddress = $objBlock['start']; $intAddress < ($objBlock['start'] + $objBlock['size']); $intAddress++)
+        {
+            $intByte = $arrBinaryData_a[$intAddress];
+            $arrByteCounts[$intByte]++;
+        }
+    }
+    
+    // Pass 2: Pre-allocate exact-sized arrays
     for ($intI = 0; $intI < 256; $intI++)
     {
-        $arrByteAddresses[$intI] = [];
+        $arrByteAddresses[$intI] = array_fill(0, $arrByteCounts[$intI], 0);
+        $arrOffsets[$intI] = 0;
     }
     
-    // Helper function to check if address is in valid memory blocks
-    $fnIsValidAddress = function($intAddress) use ($arrMemoryBlocks_a)
+    // Pass 3: Populate arrays by iterating through blocks
+    for ($intBlock = 0; $intBlock < count($arrMemoryBlocks_a); $intBlock++)
     {
-        $blnFound = false;
-        
-        for ($intBlock = 0; $intBlock < count($arrMemoryBlocks_a); $intBlock++)
+        $objBlock = $arrMemoryBlocks_a[$intBlock];
+        for ($intAddress = $objBlock['start']; $intAddress < ($objBlock['start'] + $objBlock['size']); $intAddress++)
         {
-            $objBlock = $arrMemoryBlocks_a[$intBlock];
-            if ($intAddress >= $objBlock['start'] && $intAddress < ($objBlock['start'] + $objBlock['size']))
+            $intByte = $arrBinaryData_a[$intAddress];
+            $arrByteAddresses[$intByte][$arrOffsets[$intByte]] = $intAddress;
+            $arrOffsets[$intByte]++;
+        }
+    }
+    
+    $strLength = strlen($strInputString_a);
+    
+    // Build result array with random addresses - pre-allocate and avoid push()
+    for ($intI = 0; $intI < $strLength; $intI++)
+    {
+        $intIndex = ord($strInputString_a[$intI]);
+        if ($cbConverter_a)
+        {
+            $intIndex = call_user_func($cbConverter_a, $intIndex, $intUnmappableChar_a);
+        }
+        if ($intIndex >= 0 && $intIndex < 256 && isset($arrByteAddresses[$intIndex]) && count($arrByteAddresses[$intIndex]) > 0)
+        {
+            $intResultCount++;
+        }
+        else
+        {
+            $intDebugMissing++;
+            if ($intDebugMissing <= 10)
             {
-                $blnFound = true;
-                break;
+                echo "Missing character: '" . $strInputString_a[$intI] . "' (code " . ord($strInputString_a[$intI]) . " -> " . $intIndex . ")" . PHP_EOL;
             }
         }
-        return $blnFound;
-    };
-    
-    // Parse binary data and populate address arrays
-    for ($intAddress = 0; $intAddress < strlen($arrBinaryData_a); $intAddress++)
+    }
+
+    echo "Characters found in ROM: " . $intResultCount . PHP_EOL;
+    echo "Characters missing from ROM: " . $intDebugMissing . PHP_EOL;
+
+    $arrResult = array_fill(0, $intResultCount, 0);
+
+    for ($intI = 0; $intI < $strLength; $intI++)
     {
-        // Only process addresses within valid memory blocks
-        $blnValidAddress = $fnIsValidAddress($intAddress);
-        if ($blnValidAddress)
+        $intIndex = ord($strInputString_a[$intI]);
+        if ($cbConverter_a)
         {
-            $intByte = ord($arrBinaryData_a[$intAddress]);
-            $arrByteAddresses[$intByte][] = $intAddress;
+            $intIndex = call_user_func($cbConverter_a, $intIndex, $intUnmappableChar_a);
+        }
+
+        if ($intIndex >= 0 && $intIndex < 256 && isset($arrByteAddresses[$intIndex]) && count($arrByteAddresses[$intIndex]) > 0)
+        {
+            $arrInputCounts[$intIndex]++;
+            $intRandomPick = mt_rand(0, count($arrByteAddresses[$intIndex]) - 1);
+            $arrResult[$intResultIndex] = $arrByteAddresses[$intIndex][$intRandomPick];
+            $intResultIndex++;
         }
     }
-    
-	// Build result array with random addresses
-	for ($intI = 0; $intI < strlen($strInputString_a); $intI++)
-	{
-		$intIndex = ord($strInputString_a[$intI]);
-		if ($cbConverter_a !== null)
-		{
-			$intIndex = call_user_func($cbConverter_a, $intIndex, $intUnmappableChar_a);
-		}
 
-		if ($intIndex >= 0 && count($arrByteAddresses[$intIndex]) > 0)
-		{
-			// Pick random address from this character's array
-			$intRandomPick = mt_rand(0, count($arrByteAddresses[$intIndex]) - 1);
-			$intAddress = $arrByteAddresses[$intIndex][$intRandomPick];
-			$arrResult[] = $intAddress;
-		}
-	}
+    $intEndTime = microtime(true) * 1000;
+    $intElapsedMs = $intEndTime - $intStartTime;
     
-    return $arrResult;
+    echo "ZOSCII Performance:" . PHP_EOL;
+    echo "- Binary size: " . count($arrBinaryData_a) . " bytes" . PHP_EOL;
+    echo "- Input length: " . $strLength . " chars" . PHP_EOL;
+    echo "- Memory blocks: " . count($arrMemoryBlocks_a) . PHP_EOL;
+    echo "- Execution time: " . number_format($intElapsedMs, 2) . "ms" . PHP_EOL;
+    echo "- Output addresses: " . count($arrResult) . PHP_EOL;
+    
+    return array(
+        'addresses' => $arrResult,
+        'inputCounts' => $arrInputCounts,
+        'romCounts' => $arrByteCounts
+    );
 }
 
 /**

@@ -1,198 +1,269 @@
-// Cyborg ZOSCII v20250805
-// (c) 2025 Cyborg Unicorn Pty Ltd.
-// This software is released under MIT License.
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
-// Memory block structure
+// Structure to represent memory blocks
 typedef struct {
     int start;
     int size;
 } MemoryBlock;
 
-// Dynamic array structure for addresses
+// Structure to represent the result
 typedef struct {
     int* addresses;
-    int count;
-    int capacity;
-} AddressList;
+    int address_count;
+    int* input_counts;
+    int* rom_counts;
+} ZOSCIIResult;
 
-// Function pointer type for character converters
-typedef int (*CharConverter)(int character, int unmappable_char);
+// Function pointer type for character conversion
+typedef int (*ConverterFunc)(int, int);
 
-// Helper function to add address to dynamic array
-void addAddress(AddressList* list, int address) {
-    if (list->count >= list->capacity) {
-        list->capacity = list->capacity == 0 ? 10 : list->capacity * 2;
-        list->addresses = realloc(list->addresses, list->capacity * sizeof(int));
+// Function to convert string to ZOSCII address sequence
+ZOSCIIResult toZOSCII(unsigned char* arrBinaryData_a, const char* strInputString_a, 
+                      MemoryBlock* arrMemoryBlocks_a, int memoryBlockCount,
+                      ConverterFunc cbConverter_a, int intUnmappableChar_a) {
+    
+    clock_t intStartTime = clock();
+    
+    int intI;
+    int intBlock;
+    int intResultIndex = 0;
+    int intResultCount = 0;
+    int intDebugMissing = 0;
+    
+    int arrByteCounts[256] = {0};
+    int** arrByteAddresses = malloc(256 * sizeof(int*));
+    int arrOffsets[256] = {0};
+    int arrInputCounts[256] = {0};
+    int intAddress;
+    int intByte;
+    int intIndex;
+    MemoryBlock objBlock;
+    
+    // Initialize byte address arrays to NULL
+    for (intI = 0; intI < 256; intI++) {
+        arrByteAddresses[intI] = NULL;
     }
-    list->addresses[list->count++] = address;
-}
-
-// Helper function to check if address is in valid memory blocks
-int isValidAddress(int address, MemoryBlock* memory_blocks, int block_count) {
-    for (int i = 0; i < block_count; i++) {
-        if (address >= memory_blocks[i].start && 
-            address < (memory_blocks[i].start + memory_blocks[i].size)) {
-            return 1;
+    
+    // Pass 1: Count occurrences by iterating through blocks
+    for (intBlock = 0; intBlock < memoryBlockCount; intBlock++) {
+        objBlock = arrMemoryBlocks_a[intBlock];
+        for (intAddress = objBlock.start; intAddress < (objBlock.start + objBlock.size); intAddress++) {
+            intByte = arrBinaryData_a[intAddress];
+            arrByteCounts[intByte]++;
         }
     }
-    return 0;
+    
+    // Pass 2: Pre-allocate exact-sized arrays
+    for (intI = 0; intI < 256; intI++) {
+        if (arrByteCounts[intI] > 0) {
+            arrByteAddresses[intI] = malloc(arrByteCounts[intI] * sizeof(int));
+        }
+    }
+    
+    // Pass 3: Populate arrays by iterating through blocks
+    for (intBlock = 0; intBlock < memoryBlockCount; intBlock++) {
+        objBlock = arrMemoryBlocks_a[intBlock];
+        for (intAddress = objBlock.start; intAddress < (objBlock.start + objBlock.size); intAddress++) {
+            intByte = arrBinaryData_a[intAddress];
+            arrByteAddresses[intByte][arrOffsets[intByte]] = intAddress;
+            arrOffsets[intByte]++;
+        }
+    }
+    
+    int strLength = strlen(strInputString_a);
+    
+    // Count valid characters for result array size
+    for (intI = 0; intI < strLength; intI++) {
+        intIndex = (unsigned char)strInputString_a[intI];
+        if (cbConverter_a) {
+            intIndex = cbConverter_a(intIndex, intUnmappableChar_a);
+        }
+        if (intIndex >= 0 && intIndex < 256 && arrByteAddresses[intIndex] && arrByteCounts[intIndex] > 0) {
+            intResultCount++;
+        } else {
+            intDebugMissing++;
+            if (intDebugMissing <= 10) {
+                printf("Missing character: '%c' (code %d -> %d)\n", 
+                       strInputString_a[intI], (unsigned char)strInputString_a[intI], intIndex);
+            }
+        }
+    }
+
+    printf("Characters found in ROM: %d\n", intResultCount);
+    printf("Characters missing from ROM: %d\n", intDebugMissing);
+
+    int* arrResult = malloc(intResultCount * sizeof(int));
+
+    for (intI = 0; intI < strLength; intI++) {
+        intIndex = (unsigned char)strInputString_a[intI];
+        if (cbConverter_a) {
+            intIndex = cbConverter_a(intIndex, intUnmappableChar_a);
+        }
+
+        if (intIndex >= 0 && intIndex < 256 && arrByteAddresses[intIndex] && arrByteCounts[intIndex] > 0) {
+            arrInputCounts[intIndex]++;
+            int intRandomPick = rand() % arrByteCounts[intIndex];
+            arrResult[intResultIndex] = arrByteAddresses[intIndex][intRandomPick];
+            intResultIndex++;
+        }
+    }
+
+    clock_t intEndTime = clock();
+    double intElapsedMs = ((double)(intEndTime - intStartTime) / CLOCKS_PER_SEC) * 1000.0;
+    
+    printf("ZOSCII Performance:\n");
+    printf("- Input length: %d chars\n", strLength);
+    printf("- Memory blocks: %d\n", memoryBlockCount);
+    printf("- Execution time: %.2fms\n", intElapsedMs);
+    printf("- Output addresses: %d\n", intResultCount);
+    
+    // Prepare result structure
+    ZOSCIIResult result;
+    result.addresses = arrResult;
+    result.address_count = intResultCount;
+    result.input_counts = malloc(256 * sizeof(int));
+    result.rom_counts = malloc(256 * sizeof(int));
+    
+    memcpy(result.input_counts, arrInputCounts, 256 * sizeof(int));
+    memcpy(result.rom_counts, arrByteCounts, 256 * sizeof(int));
+    
+    // Clean up temporary arrays
+    for (intI = 0; intI < 256; intI++) {
+        if (arrByteAddresses[intI]) {
+            free(arrByteAddresses[intI]);
+        }
+    }
+    free(arrByteAddresses);
+    
+    return result;
 }
 
 // Function to convert PETSCII character codes to ASCII character codes
-int petsciiToAscii(int petscii_char, int unmappable_char) {
-    int petscii_to_ascii_map[256];
-    int i;
+int petsciiToAscii(int intPetsciiChar_a, int intUnmappableChar_a) {
+    static int arrPetsciiToAsciiMap[256] = {
+        // 0-31: Control characters
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        
+        // 32-63: Space, digits, punctuation (direct ASCII mapping)
+        32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
+        48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63,
+        
+        // 64-95: @A-Z[\]^_ (direct ASCII mapping)
+        64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79,
+        80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95,
+
+        // 96-255: Everything else mapped to unmappable
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
+    };
     
-    // Initialize all positions with unmappable_char
-    for (i = 0; i < 256; i++) {
-        petscii_to_ascii_map[i] = unmappable_char;
+    if (intPetsciiChar_a < 0 || intPetsciiChar_a > 255) {
+        return intUnmappableChar_a;
     }
     
-    // 32-63: Space, digits, punctuation (direct ASCII mapping)
-    for (i = 32; i <= 63; i++) {
-        petscii_to_ascii_map[i] = i;
-    }
-    
-    // 64-95: @A-Z[\]^_ (direct ASCII mapping)
-    for (i = 64; i <= 95; i++) {
-        petscii_to_ascii_map[i] = i;
-    }
-    
-    return petscii_to_ascii_map[petscii_char];
+    int result = arrPetsciiToAsciiMap[intPetsciiChar_a];
+    return (result == -1) ? intUnmappableChar_a : result;
 }
 
 // Function to convert EBCDIC character codes to ASCII character codes
-int ebcdicToAscii(int ebcdic_char, int unmappable_char) {
-    int ebcdic_to_ascii_map[256];
-    int i;
+int ebcdicToAscii(int intEbcdicChar_a, int intUnmappableChar_a) {
+    static int arrEbcdicToAsciiMap[256] = {
+        // 0-63: Control/special
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        
+        // 64-79: Space and some punctuation
+        32, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 46, 60, 40, 43, 124,
+        
+        // 80-95: & and punctuation
+        38, -1, -1, -1, -1, -1, -1, -1, -1, -1, 33, 36, -1, 41, 59, -1,
+        
+        // 96-111: - and punctuation
+        45, 47, -1, -1, -1, -1, -1, -1, -1, -1, -1, 44, 37, 95, 62, 63,
+        
+        // 112-127: More punctuation
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, 96, 58, 35, 64, 39, 61, 34,
+        
+        // 128: Control
+        -1,
+        
+        // 129-137: a-i
+        97, 98, 99, 100, 101, 102, 103, 104, 105,
+        
+        // 138-144: Control/special
+        -1, -1, -1, -1, -1, -1, -1,
+        
+        // 145-153: j-r
+        106, 107, 108, 109, 110, 111, 112, 113, 114,
+        
+        // 154-161: Control/special
+        -1, -1, -1, -1, -1, -1, -1, -1,
+        
+        // 162-169: s-z
+        115, 116, 117, 118, 119, 120, 121, 122,
+        
+        // 170-192: Control/special
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        -1, -1, -1, -1, -1, -1, -1,
+        
+        // 193-201: A-I
+        65, 66, 67, 68, 69, 70, 71, 72, 73,
+        
+        // 202-208: Control/special
+        -1, -1, -1, -1, -1, -1, -1,
+        
+        // 209-217: J-R
+        74, 75, 76, 77, 78, 79, 80, 81, 82,
+        
+        // 218-225: Control/special
+        -1, -1, -1, -1, -1, -1, -1, -1,
+        
+        // 226-233: S-Z
+        83, 84, 85, 86, 87, 88, 89, 90,
+        
+        // 234-239: Control/special
+        -1, -1, -1, -1, -1, -1,
+        
+        // 240-249: 0-9
+        48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
+        
+        // 250-255: Control/special
+        -1, -1, -1, -1, -1, -1
+    };
     
-    // Initialize all positions with unmappable_char
-    for (i = 0; i < 256; i++) {
-        ebcdic_to_ascii_map[i] = unmappable_char;
+    if (intEbcdicChar_a < 0 || intEbcdicChar_a > 255) {
+        return intUnmappableChar_a;
     }
     
-    // Specific EBCDIC to ASCII mappings
-    ebcdic_to_ascii_map[64] = 32;   // Space
-    ebcdic_to_ascii_map[75] = 46;   // .
-    ebcdic_to_ascii_map[76] = 60;   // <
-    ebcdic_to_ascii_map[77] = 40;   // (
-    ebcdic_to_ascii_map[78] = 43;   // +
-    ebcdic_to_ascii_map[79] = 124;  // |
-    ebcdic_to_ascii_map[80] = 38;   // &
-    ebcdic_to_ascii_map[90] = 33;   // !
-    ebcdic_to_ascii_map[91] = 36;   // $
-    ebcdic_to_ascii_map[93] = 41;   // )
-    ebcdic_to_ascii_map[94] = 59;   // ;
-    ebcdic_to_ascii_map[96] = 45;   // -
-    ebcdic_to_ascii_map[97] = 47;   // /
-    ebcdic_to_ascii_map[107] = 44;  // ,
-    ebcdic_to_ascii_map[108] = 37;  // %
-    ebcdic_to_ascii_map[109] = 95;  // _
-    ebcdic_to_ascii_map[110] = 62;  // >
-    ebcdic_to_ascii_map[111] = 63;  // ?
-    ebcdic_to_ascii_map[121] = 96;  // `
-    ebcdic_to_ascii_map[122] = 58;  // :
-    ebcdic_to_ascii_map[123] = 35;  // #
-    ebcdic_to_ascii_map[124] = 64;  // @
-    ebcdic_to_ascii_map[125] = 39;  // '
-    ebcdic_to_ascii_map[126] = 61;  // =
-    ebcdic_to_ascii_map[127] = 34;  // "
-    
-    // a-i (129-137)
-    for (i = 129; i <= 137; i++) {
-        ebcdic_to_ascii_map[i] = 97 + (i - 129);
-    }
-    
-    // j-r (145-153)
-    for (i = 145; i <= 153; i++) {
-        ebcdic_to_ascii_map[i] = 106 + (i - 145);
-    }
-    
-    // s-z (162-169)
-    for (i = 162; i <= 169; i++) {
-        ebcdic_to_ascii_map[i] = 115 + (i - 162);
-    }
-    
-    // A-I (193-201)
-    for (i = 193; i <= 201; i++) {
-        ebcdic_to_ascii_map[i] = 65 + (i - 193);
-    }
-    
-    // J-R (209-217)
-    for (i = 209; i <= 217; i++) {
-        ebcdic_to_ascii_map[i] = 74 + (i - 209);
-    }
-    
-    // S-Z (226-233)
-    for (i = 226; i <= 233; i++) {
-        ebcdic_to_ascii_map[i] = 83 + (i - 226);
-    }
-    
-    // 0-9 (240-249)
-    for (i = 240; i <= 249; i++) {
-        ebcdic_to_ascii_map[i] = 48 + (i - 240);
-    }
-    
-    return ebcdic_to_ascii_map[ebcdic_char];
+    int result = arrEbcdicToAsciiMap[intEbcdicChar_a];
+    return (result == -1) ? intUnmappableChar_a : result;
 }
 
-// Function to convert string to ZOSCII address sequence
-int* toZOSCII(unsigned char* binary_data, int data_length, const char* input_string, 
-              MemoryBlock* memory_blocks, int block_count, CharConverter converter, 
-              int unmappable_char, int* result_count) {
-    
-    AddressList byte_addresses[256];
-    int i, address, byte_value, index, random_pick;
-    int string_length = strlen(input_string);
-    int* result = malloc(string_length * sizeof(int));
-    *result_count = 0;
-    
-    // Initialize byte address arrays
-    for (i = 0; i < 256; i++) {
-        byte_addresses[i].addresses = NULL;
-        byte_addresses[i].count = 0;
-        byte_addresses[i].capacity = 0;
+// Function to free the result structure
+void freeZOSCIIResult(ZOSCIIResult* result) {
+    if (result->addresses) {
+        free(result->addresses);
     }
-    
-    // Parse binary data and populate address arrays
-    for (address = 0; address < data_length; address++) {
-        if (isValidAddress(address, memory_blocks, block_count)) {
-            byte_value = binary_data[address];
-            addAddress(&byte_addresses[byte_value], address);
-        }
+    if (result->input_counts) {
+        free(result->input_counts);
     }
-    // Build result array with random addresses
-    for (i = 0; i < string_length; i++) {
-        index = (unsigned char)input_string[i];
-        
-        if (converter != NULL) {
-            index = converter(index, unmappable_char);
-        }
-        
-        if (index >= 0 && index < 256 && byte_addresses[index].count > 0) {
-            // Pick random address from this character's array
-            random_pick = rand() % byte_addresses[index].count;
-            address = byte_addresses[index].addresses[random_pick];
-            result[*result_count] = address;
-            (*result_count)++;
-        }
+    if (result->rom_counts) {
+        free(result->rom_counts);
     }
-    
-    // Clean up dynamic arrays
-    for (i = 0; i < 256; i++) {
-        if (byte_addresses[i].addresses != NULL) {
-            free(byte_addresses[i].addresses);
-        }
-    }
-    
-    // Resize result array to actual size
-    result = realloc(result, (*result_count) * sizeof(int));
-    return result;
 }
 
 // Example usage
@@ -200,34 +271,44 @@ int main() {
     // Initialize random seed
     srand(time(NULL));
     
-    // Create memory blocks
-    MemoryBlock memory_blocks[] = {
-        {0xC000, 0x1000},  // ROM at C000-CFFF
-        {0xE000, 0x0800}   // Additional ROM at E000-E7FF
+    // Example binary data (you would load your actual ROM data here)
+    unsigned char binaryData[1000] = {0}; // Initialize with actual data
+
+    // Example memory blocks
+    MemoryBlock blocks[] = {
+        {0, 500},
+        {500, 500}
     };
-    int block_count = sizeof(memory_blocks) / sizeof(MemoryBlock);
     
-    // Create dummy ROM data (64KB address space)
-    unsigned char* rom_data = malloc(65536);
-    for (int i = 0; i < 65536; i++) {
-        rom_data[i] = rand() % 256;  // Fill with random data for example
+    int blockCount = sizeof(blocks) / sizeof(blocks[0]);
+    
+    // Fill binary data with some example ASCII characters for testing
+    for (int i = 0; i < 1000; i++) {
+        binaryData[i] = 65 + (i % 26); // Fill with A-Z pattern
     }
     
-    // Convert string to ZOSCII addresses
-    const char* message = "Hello, World!";
-    int result_count;
-    int* addresses = toZOSCII(rom_data, 65536, message, memory_blocks, 
-                              block_count, ebcdicToAscii, 42, &result_count);
+    // Test string
+    const char* testString = "HELLO WORLD";
     
-    // Print results
-    printf("ZOSCII addresses for '%s':\n", message);
-    for (int i = 0; i < result_count; i++) {
-        printf("'%c' -> 0x%04X (%d)\n", message[i], addresses[i], addresses[i]);
+    // Call the function with PETSCII converter
+    ZOSCIIResult result = toZOSCII(binaryData, testString, blocks, blockCount, 
+                                   petsciiToAscii, 42); // Using '*' (42) as unmappable char
+    
+    printf("\nResult addresses:\n");
+    for (int i = 0; i < result.address_count; i++) {
+        printf("Address %d: %d\n", i, result.addresses[i]);
+    }
+    
+    printf("\nInput character counts:\n");
+    for (int i = 0; i < 256; i++) {
+        if (result.input_counts[i] > 0) {
+            printf("Character %d ('%c'): %d occurrences\n", i, 
+                   (i >= 32 && i <= 126) ? i : '?', result.input_counts[i]);
+        }
     }
     
     // Clean up
-    free(addresses);
-    free(rom_data);
+    freeZOSCIIResult(&result);
     
     return 0;
 }
