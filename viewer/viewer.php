@@ -1,5 +1,9 @@
 <?php
 
+// Cyborg ZOSCII v20250805
+// (c) 2025 Cyborg Unicorn Pty Ltd.
+// This software is released under MIT License.
+
 define("BITTAGE", 16);
 
 $strFilename = "";
