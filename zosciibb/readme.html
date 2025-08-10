@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZOSCII Bulletin Board - README</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+	<div class="container-fluid" style="background-color: #f8f9fa; border-bottom: 1px solid #dee2e6;">
+		<div class="container py-3">
+			<h4>📁 Index of zosciibb</h4>
+			<table class="table table-sm">
+				<thead>
+					<tr>
+						<th>Name</th>
+						<th>Last modified</th>
+						<th>Size</th>
+						<th>Description</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr><td><a href="../">Parent Directory</a></td><td>-</td><td>-</td><td></td></tr>
+					<tr><td><a href="messages.php">messages.php</a></td><td>2025-08-11 02:42</td><td>4.1K</td><td></td></tr>
+					<tr><td><a href="messages/">messages/</a></td><td>2025-08-05 10:17</td><td>-</td><td></td></tr>
+					<tr><td><a href="zosciibb.html">zosciibb.html</a></td><td>2025-08-11 02:51</td><td>19K</td><td></td></tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+    <div class="container my-5">
+        <div class="row">
+            <div class="col-lg-10 mx-auto">
+                <header class="mb-5">
+                    <h1 class="display-4 text-primary">ZOSCII Bulletin Board</h1>
+                    <p class="lead">ZERO encryption ZERO ciphering 100% secure* communication system</p>
+                    <p class="text-muted">100% disclosure - Complete transparency in operation</p>
+                </header>
+
+				<section class="mb-5">
+					<h2>What is ZOSCII?</h2>
+					<p>ZOSCII (Zero Overhead Secure Code Information Interchange) is an encoding system loosely based on ASCII, PETSCII and EBCDIC designed for the purpose of speeding up text output on 8-bit computers. ASCII and PETSCII which are common for 8-bit computers require that to output each character, you must first know the start of a table, and then for each character add the offset to find the one required. ZOSCII uses direct addresses treating the entire memory map of the 8-bit computer as the character lookup table. This means that to output text, there is no longer a requirement to add an offset. On a typical Z80 based computer this can give a 40% speed increase in character output. The Z80 is a CPU that was manufactured from July 1976 until June 2024 and is one of the most commonly used 8-bit CPUs in home computers and video game hardware among other uses. In addition to the added performance of character output, using the memory space as the actual character table means that no space within the actual ROM of the computer is required for such ASCII or PETSCII character tables, freeing up the space for better purposes.</p>
+									
+					<p>A side effect of this approach is the discovery of a revolutionary new secure communication technique that achieves perfect information-theoretic security without any encryption or ciphering algorithms.</p>
+					
+					<p>Instead of encrypting data, ZOSCII encodes messages as address sequences pointing to locations within a shared ROM (Read-Only Memory) file. Without the ROM, these addresses are completely meaningless. With the correct ROM, messages decode perfectly.</p>
+				</section>
+
+                <section class="mb-5">
+                    <div class="alert alert-warning" role="alert">
+                        <h4 class="alert-heading">⚠️ Australian Legal Notice</h4>
+                        <p class="mb-2"><strong>This service operates under Australian law and is subject to the Assistance and Access Act 2018.</strong></p>
+                        <p class="mb-0">Under this legislation, we may be compelled to:</p>
+                        <ul class="mb-2">
+                            <li>Install technical capabilities to assist investigations</li>
+                            <li>Upload and capture ROM files</li>
+                            <li>Provide assistance to law enforcement agencies</li>
+                            <li>Face criminal penalties for disclosing such requests</li>
+                        </ul>
+                        <p class="mb-0"><strong>For maximum security, we recommend using the local client version (zosciibb.html and verifier.html) available at:</strong></p>
+                        <p class="mb-0"><a href="https://github.com/PrimalNinja/cyborgzoscii" class="alert-link">https://github.com/PrimalNinja/cyborgzoscii</a></p>
+                    </div>
+                </section>
+
+                <section class="mb-5">
+                    <h2>How It Works</h2>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>🔑 Step 1: ROM Selection</h5>
+                            <p>Users select a ROM file (any binary file - image, document, etc.) that becomes their personal encoding key. This ROM is NOT uploaded to the server (unless legally compelled and potentially gagged) but is used only within your web browser.</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>📝 Step 2: Message Encoding</h5>
+                            <p>Messages are converted to sequences of addresses pointing to byte locations within the ROM.</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>📤 Step 3: Address Storage</h5>
+                            <p>Only the address sequences are uploaded and stored on the server - no actual message is ever sent to the server (unless legally compelled and potentially gagged).</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>🔍 Step 4: Message Decoding</h5>
+                            <p>Other users with the same ROM can utilise the addresses to read back the original message.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="mb-5">
+                    <h2>Security Features</h2>
+                    <div class="alert alert-success">
+                        <h5>✅ What Makes ZOSCII Secure</h5>
+                        <ul class="mb-0">
+                            <li><strong>Information-theoretic security:</strong> Security is mathematically provable, not dependent on computational assumptions</li>
+                            <li><strong>No encryption algorithms:</strong> Nothing to break or compromise with quantum computing</li>
+                            <li><strong>Perfect forward secrecy:</strong> Each message uses randomly selected addresses from the ROM</li>
+                            <li><strong>Server breach protection:</strong> Even if servers are compromised, stored data remains meaningless without ROMs</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <section class="mb-5">
+                    <h2>The * in "100% secure*"</h2>
+                    <div class="alert alert-info">
+                        <h5>ROM Quality Requirements</h5>
+                        <p>ZOSCII's security depends on using a high-quality ROM file that contains sufficient character diversity. A ROM consisting of only zeros would provide no security at all.</p>
+                        
+                        <p><strong>Check your ROM quality using our verifier tool:</strong> <a href="verifier.html">verifier.html</a></p>
+                        
+                        <p><strong>Good ROM characteristics:</strong></p>
+                        <ul class="mb-0">
+                            <li>Contains all characters you plan to use in messages</li>
+                            <li>Has multiple instances of common characters (letters, spaces, punctuation)</li>
+                            <li>Sufficient size (recommended: 16KB or larger)</li>
+                            <li>High entropy (random distribution of byte values)</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <section class="mb-5">
+                    <h2>What You See Here</h2>
+                    <p>This bulletin board demonstrates complete transparency:</p>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>📁 <a href="messages/">messages/</a></h5>
+                            <p>Browse all stored address files. Each file contains only address sequences - meaningless without the corresponding ROM.</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>📄 Source Code</h5>
+                            <p>View page source to see the complete JavaScript implementation. Zero minification, complete transparency.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="mb-5">
+                    <h2>Wrong ROM = Orwellian Quotes</h2>
+                    <div class="alert alert-secondary">
+                        <p>When you use the wrong ROM, instead of showing gibberish, the system displays thought-provoking quotes about surveillance and privacy. This serves three purposes:</p>
+                        <ul class="mb-0">
+                            <li><strong>Maintains pagination:</strong> Consistent number of items per page</li>
+                            <li><strong>Appearance:</strong> Is much more attractive than gibberish. Occasionally, due to the way we detect gibberish for performance reasons, it can sometimes get through, but this is only due to our ability to hide meaningless secure information, not the combinatorial security provided. It simply means the ROM used was lucky enough to find printable characters.</li>
+                            <li><strong>Provides cover:</strong> Makes the system appear to be a discussion forum about privacy topics</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <section class="mb-5">
+                    <h2>Local Client Recommended</h2>
+                    <div class="alert alert-primary">
+                        <h4>🛡️ Maximum Security with Local Client</h4>
+                        <p>For users requiring maximum security, we provide a local client that:</p>
+                        <ul>
+                            <li>Processes ROMs entirely on your device</li>
+                            <li>Never uploads ROM data to any server</li>
+                            <li>Cannot be compromised by server-side attacks</li>
+                            <li>Provides configurable server endpoints</li>
+                        </ul>
+                        <p class="mb-0"><strong>Download: <a href="https://github.com/PrimalNinja/cyborgzoscii">https://github.com/PrimalNinja/cyborgzoscii</a></strong></p>
+                    </div>
+                </section>
+
+                <section class="mb-5">
+                    <h2>Technical Documentation</h2>
+                    <p>For complete technical details, implementation specifications, and security analysis, refer to the ZOSCII whitepaper available in the GitHub repository.</p>
+                    
+                    <div class="alert alert-light">
+                        <h5>Key Technical Points from the Whitepaper:</h5>
+                        <blockquote class="blockquote">
+                            <p>"ZOSCII achieves information-theoretic security by encoding messages as randomized address sequences within shared ROM files. Each character in a message is represented by a randomly selected address pointing to that character's location in the ROM."</p>
+                        </blockquote>
+                        <blockquote class="blockquote">
+                            <p>"Unlike cryptographic systems that rely on computational complexity to encrypt a message that is still within the actual encrypted file and open to brute force attacks and even identification of the encryption being used in many cases, ZOSCII's security is absolute: without the ROM file, the address file contains no message or recoverable information regardless of available computational resources. This is simply a standard computer address lookup for which no mathematics are required."</p>
+                        </blockquote>
+                    </div>
+                </section>
+
+                <section class="mb-5">
+                    <h2>Universal Communication Protocol</h2>
+                    <p>ZOSCII is designed as a universal communication protocol that bridges different computing eras and character encoding systems:</p>
+                    
+                    <ul>
+                        <li><strong>Platform Agnostic:</strong> Works on systems from 1980s CP/M to modern cloud platforms</li>
+                        <li><strong>Character Set Independent:</strong> Supports ASCII, EBCDIC, PETSCII, and custom encodings</li>
+                        <li><strong>Cross-Era Communication:</strong> Enables secure communication between vintage and modern systems</li>
+                    </ul>
+                </section>
+
+                <section class="mb-5">
+                    <h2>Server Information</h2>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>📊 Current Status</h5>
+                            <ul>
+                                <li><strong>Logging:</strong> None - No IP addresses or metadata collected to our knowledge</li>
+                                <li><strong>Data Retention:</strong> Automatic cleanup of old messages as we require</li>
+                                <li><strong>ROM Storage:</strong> None - All ROM processing happens locally in your browser, for absolute security use the local version of the software (see legal mentions above).</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>🔍 Transparency</h5>
+                            <ul>
+                                <li><strong>Open Source:</strong> All code publicly viewable</li>
+                                <li><strong>Browse Messages:</strong> All stored files publicly accessible</li>
+                                <li><strong>No Hidden Features:</strong> Complete disclosure of capabilities</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="mb-5">
+                    <h2>Getting Started</h2>
+                    <ol>
+                        <li><strong>Choose your security level:</strong>
+                            <ul>
+                                <li><em>Standard:</em> Use this web interface (subject to Australian laws)</li>
+                                <li><em>Maximum:</em> Download local client from GitHub</li>
+                            </ul>
+                        </li>
+                        <li><strong>Prepare a ROM file:</strong> Any binary file works - photos, documents, executables</li>
+                        <li><strong>Verify ROM quality:</strong> Use <a href="verifier.html">verifier.html</a> to check suitability</li>
+                        <li><strong>Start communicating:</strong> Share your ROM with intended recipients through secure channels</li>
+                    </ol>
+                </section>
+
+                <section class="mb-5">
+                    <h2>Limitations and Considerations</h2>
+                    <div class="alert alert-warning">
+                        <h5>⚠️ Important Notes</h5>
+                        <ul class="mb-0">
+                            <li><strong>ROM Security:</strong> Keep your ROM files secure - they are the keys to your communications. If someone obtains your ROM, they can obtain your data if they realise what your ROM was for. If you lose your ROM, your data is lost forever.</li>
+                            <li><strong>Character Coverage:</strong> Your ROM must contain all characters you want to use in messages</li>
+							<li><strong>ROM Quality:</strong> Use the verifier.html tool to ensure your ROM provides adequate security</li>
+                            <li><strong>Server Dependencies:</strong> Web version relies on server availability and integrity</li>
+                            <li><strong>Legal Compliance:</strong> This server operates under Australian jurisdiction</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <footer class="mt-5 pt-5 border-top">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Resources</h5>
+                            <ul class="list-unstyled">
+                                <li><a href="https://github.com/PrimalNinja/cyborgzoscii">GitHub Repository</a></li>
+                                <li><a href="verifier.html">ROM Quality Verifier</a></li>
+                                <li><a href="messages/">Browse Messages</a></li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>License</h5>
+                            <p class="text-muted">ZOSCII is released under MIT License. Commercial licenses available for enterprise deployments.</p>
+                        </div>
+                    </div>
+                    <hr>
+                    <p class="text-center text-muted">
+                        <small>© 2025 Cyborg Unicorn Pty Ltd. ZOSCII Bulletin Board - Demonstrating secure communication through transparency.</small>
+                    </p>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

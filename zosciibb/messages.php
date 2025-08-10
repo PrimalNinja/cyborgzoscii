@@ -1,4 +1,15 @@
 <?php
+// Add CORS headers to allow local file access
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
+
+// Handle preflight requests
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
 define("MSG_DIR", "messages/");
 
 function listMessages($intLimit_a, $intPage_a)
@@ -46,8 +57,44 @@ function listMessages($intLimit_a, $intPage_a)
     exit;
 }
 
+function serveMessage($strFilename_a)
+{
+    // Security: only allow .bin files and prevent directory traversal
+    if (!preg_match('/^[0-9]{16}\.bin$/', $strFilename_a))
+    {
+        http_response_code(400);
+        header("Content-Type: application/json");
+        echo json_encode(array("error" => "Invalid filename"));
+        exit;
+    }
+    
+    $strFilepath = MSG_DIR . $strFilename_a;
+    
+    if (file_exists($strFilepath))
+    {
+        header('Content-Type: application/octet-stream');
+        header('Content-Length: ' . filesize($strFilepath));
+        readfile($strFilepath);
+        exit;
+    }
+    else
+    {
+        http_response_code(404);
+        header("Content-Type: application/json");
+        echo json_encode(array("error" => "File not found"));
+        exit;
+    }
+}
+
 if ($_SERVER['REQUEST_METHOD'] === "GET")
 {
+    // Handle message file serving
+    if (isset($_GET['file']))
+    {
+        serveMessage($_GET['file']);
+    }
+    
+    // Handle message list
     if (isset($_GET['limit']))
     {
         $intLimit = intval($_GET['limit']);
@@ -101,6 +148,7 @@ if ($_SERVER['REQUEST_METHOD'] === "POST" && isset($_FILES['addressfile']))
 }
 
 header('HTTP/1.1 400 Bad Request');
+header("Content-Type: application/json");
 echo json_encode(array("error" => "Bad request"));
 exit;
 ?>

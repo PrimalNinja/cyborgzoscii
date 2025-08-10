@@ -29,6 +29,8 @@ CyborgZOSCII is an alternative to ASCII/PETSCII that uses direct ROM addressing 
 
 ## Use Cases
 
+- Visit https://cyborgunicorn.com.au/zoscii/zosciibb for a realworld demonstration
+
 - **Embedded systems** with severe ROM constraints
 - **IoT devices** requiring lightweight secure messaging  
 - **Retro computing** (Z80, 6502, etc.) applications

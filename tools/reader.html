@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ZOSCII Reader</title>
+    <style>
+        html, body {
+            height: 100vh;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            height: 100vh;
+            max-width: 100%;
+            overflow: hidden;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .text-center { text-align: center; }
+        .mb-4 { margin-bottom: 1.5rem; }
+        .mt-4 { margin-top: 1.5rem; }
+        .mt-3 { margin-top: 1rem; }
+        .mt-2 { margin-top: 0.5rem; }
+        .mb-3 { margin-bottom: 1rem; }
+        .me-2 { margin-right: 0.5rem; }
+        .text-end { text-align: right; }
+        .text-muted { color: #6c757d; }
+        
+        /* Drop zones */
+        .drop-zone {
+            border: 3px dashed #ccc;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 18px;
+            cursor: pointer;
+            color: #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .drop-zone.dragover {
+            border-color: #007bff;
+            color: #007bff;
+            background-color: #f8f9fa;
+        }
+        .drop-zone.has-file {
+            border-color: #28a745;
+            color: #28a745;
+            background-color: #d4edda;
+        }
+		.drop-zone:hover {
+			border-color: #007bff;
+			color: #007bff;
+			background-color: #f8f9fa;
+		}
+        
+		/* Layout */
+		.reader-layout {
+			display: flex;
+			height: calc(100vh - 100px);
+			gap: 20px;
+		}
+		.left-panel {
+			width: 50%;
+			display: flex;
+			flex-direction: column;
+			gap: 10px;
+		}
+		.right-panel {
+			width: 50%;
+		}
+		.rom-zone {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			gap: 5px;
+		}
+		.content-zone {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			gap: 5px;
+		}
+		.rom-zone .drop-zone,
+		.content-zone .drop-zone {
+			flex: 1;
+		}
+		.output-panel {
+			background-color: #f8f9fa;
+			border: 1px solid #dee2e6;
+			border-radius: 5px;
+			padding: 20px;
+			font-family: monospace;
+			font-size: 16px;
+			line-height: 1.4;
+			height: 100%;
+			overflow-y: auto;
+			white-space: pre-wrap;
+			word-wrap: break-word;
+			box-sizing: border-box;
+		}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-4">Cyborg ZOSCII Reader</h1>
+        
+        <div class="reader-layout">
+            <div class="left-panel">
+                <div class="rom-zone">
+                    <div class="drop-zone" id="romDropZone">
+                        <div>Drop ROM FILE here<br>or click to browse</div>
+                    </div>
+                    <input type="file" id="romFileInput" style="display: none;" accept="*">
+                </div>
+                <div class="content-zone">
+                    <div class="drop-zone" id="contentDropZone">
+                        <div>Drop ZOSCII FILE here<br>or click to browse</div>
+                    </div>
+                    <input type="file" id="contentFileInput" style="display: none;" accept="*.bin">
+                </div>
+            </div>
+            <div class="right-panel">
+                <div class="output-panel" id="outputPanel">Drop files on the left to decode ZOSCII content...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Cyborg ZOSCII Reader v20250805
+        // (c) 2025 Cyborg Unicorn Pty Ltd.
+        // This software is released under MIT License.
+        
+        var g_arrZosciiAddresses = null;
+        var g_arrRomData = null;
+        var g_BITTAGE = 16;
+        
+        window.onload = function()
+        {
+            setupDropZones();
+        };
+        
+        function setupDropZones() 
+        {
+            // ROM file handler
+            function handleRomFile(objFile_a) 
+            {
+                var objReader = new FileReader();
+                objReader.onload = function(objEvent_a) 
+                {
+                    g_arrRomData = new Uint8Array(objEvent_a.target.result);
+                    var objRomDropZone = document.getElementById("romDropZone");
+                    objRomDropZone.classList.add("has-file");
+                    objRomDropZone.innerHTML = "<div>ROM file loaded: " + objFile_a.name + " (" + objFile_a.size + " bytes)</div>";
+                    updateOutput();
+                };
+                objReader.readAsArrayBuffer(objFile_a);
+            }
+            
+            // Content file handler
+            function handleContentFile(objFile_a) 
+            {
+                var objReader = new FileReader();
+                objReader.onload = function(objEvent_a) 
+                {
+                    var arrBinaryData = new Uint8Array(objEvent_a.target.result);
+                    g_arrZosciiAddresses = parseAddresses(arrBinaryData);
+                    var objContentDropZone = document.getElementById("contentDropZone");
+                    objContentDropZone.classList.add("has-file");
+                    objContentDropZone.innerHTML = "<div>Content file loaded: " + objFile_a.name + " (" + objFile_a.size + " bytes)<br>(" + g_arrZosciiAddresses.length + " addresses)</div>";
+                    updateOutput();
+                };
+                objReader.readAsArrayBuffer(objFile_a);
+            }
+            
+            // ROM zone setup
+            setupDropZone("#romDropZone", handleRomFile);
+            document.getElementById("romDropZone").addEventListener("click", function() 
+            {
+                document.getElementById("romFileInput").click();
+            });
+            document.getElementById("romFileInput").addEventListener("change", function() 
+            {
+                if (this.files.length > 0) 
+                {
+                    handleRomFile(this.files[0]);
+                }
+            });
+            
+            // Content zone setup
+            setupDropZone("#contentDropZone", handleContentFile);
+            document.getElementById("contentDropZone").addEventListener("click", function() 
+            {
+                document.getElementById("contentFileInput").click();
+            });
+            document.getElementById("contentFileInput").addEventListener("change", function() 
+            {
+                if (this.files.length > 0) 
+                {
+                    handleContentFile(this.files[0]);
+                }
+            });
+        }
+        
+        function setupDropZone(strSelector_a, cbOnFileHandler) 
+        {
+            var objDropZone = document.querySelector(strSelector_a);
+            
+            objDropZone.addEventListener("dragover", function(objEvent_a) 
+            {
+                objEvent_a.preventDefault();
+                this.classList.add("dragover");
+            });
+        objDropZone.addEventListener("dragleave", function(objEvent_a) 
+        {
+            objEvent_a.preventDefault();
+            this.classList.remove("dragover");
+        });
+        
+        objDropZone.addEventListener("drop", function(objEvent_a) 
+        {
+            objEvent_a.preventDefault();
+            this.classList.remove("dragover");
+            
+            var arrFiles = objEvent_a.dataTransfer.files;
+            if (arrFiles.length > 0) 
+            {
+                cbOnFileHandler(arrFiles[0]);
+            }
+        });
+    }
+    
+    function parseAddresses(arrBinaryData_a) 
+    {
+        var arrAddresses = [];
+        
+        if (g_BITTAGE === 16)
+        {
+            // Convert 2-byte chunks to integers (little-endian)
+            for (var intI = 0; intI < arrBinaryData_a.length; intI += 2) 
+            {
+                if (intI + 1 < arrBinaryData_a.length) 
+                {
+                    var intByte1 = arrBinaryData_a[intI];
+                    var intByte2 = arrBinaryData_a[intI + 1];
+                    
+                    var intAddress = intByte1 | (intByte2 << 8);
+                    arrAddresses.push(intAddress);
+                }
+            }
+        }
+        else if (g_BITTAGE === 32)
+        {
+            // Convert 4-byte chunks to integers (little-endian)
+            for (var intI = 0; intI < arrBinaryData_a.length; intI += 4) 
+            {
+                if (intI + 3 < arrBinaryData_a.length) 
+                {
+                    var intByte1 = arrBinaryData_a[intI];
+                    var intByte2 = arrBinaryData_a[intI + 1];
+                    var intByte3 = arrBinaryData_a[intI + 2];
+                    var intByte4 = arrBinaryData_a[intI + 3];
+                    
+                    var intAddress = intByte1 | (intByte2 << 8) | (intByte3 << 16) | (intByte4 << 24);
+                    arrAddresses.push(intAddress);
+                }
+            }
+        }
+        
+        return arrAddresses;
+    }
+    
+    function updateOutput()
+    {
+        if (!g_arrRomData || !g_arrZosciiAddresses) 
+        {
+            if (!g_arrRomData && !g_arrZosciiAddresses) 
+            {
+                document.getElementById("outputPanel").textContent = "Drop files on the left to decode ZOSCII content...";
+            } 
+            else if (!g_arrRomData) 
+            {
+                document.getElementById("outputPanel").textContent = "ROM file needed to decode content...";
+            } 
+            else if (!g_arrZosciiAddresses) 
+            {
+                document.getElementById("outputPanel").textContent = "Content file needed to decode...";
+            }
+            return;
+        }
+        
+        var strResult = "";
+        var intErrors = 0;
+        
+        for (var intI = 0; intI < g_arrZosciiAddresses.length; intI++) 
+        {
+            var intAddress = g_arrZosciiAddresses[intI];
+            if (intAddress < g_arrRomData.length) 
+            {
+                strResult += String.fromCharCode(g_arrRomData[intAddress]);
+            } 
+            else 
+            {
+                strResult += "?";
+                intErrors++;
+            }
+        }
+        
+        var strOutput = strResult;
+        if (intErrors > 0) 
+        {
+            strOutput += "\n\n--- DECODE INFO ---";
+            strOutput += "\nDecoded: " + (g_arrZosciiAddresses.length - intErrors) + " characters";
+            strOutput += "\nErrors: " + intErrors + " addresses out of range";
+        }
+        
+        document.getElementById("outputPanel").textContent = strOutput;
+    }
+</script>
+</body>
+</html>

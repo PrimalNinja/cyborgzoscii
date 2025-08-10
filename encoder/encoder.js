@@ -6,12 +6,13 @@ var g_arrRomData = null;
 var g_strTextData = "";
 var g_objEncodingResult = null;
 var g_BITTAGE = 16;		// 16 or 32 bits
+var g_arrBinaryInputData = null; 
 
-$(document).ready(function() 
+window.onload = function()
 {
     setupDropZones();
     setupButtons();
-});
+};
 
 function calculateROMStrengthGeneral(objEncodingResult_a)
 {
@@ -47,8 +48,8 @@ function calculateROMStrengthFile(objEncodingResult_a)
 
 function checkEncodeReady() 
 {
-    var blnReady = g_arrRomData && g_strTextData && g_strTextData.length > 0;
-    $("#encodeBtn").prop("disabled", !blnReady);
+    var blnReady = g_arrRomData && ((g_strTextData && g_strTextData.length > 0) || (g_arrBinaryInputData && g_arrBinaryInputData.length > 0));
+    document.getElementById("verifyBtn").disabled = !blnReady;
 }
 
 function displayAnalysis(objEncodingResult_a) 
@@ -59,7 +60,8 @@ function displayAnalysis(objEncodingResult_a)
     strHtml += "<div class='row'>";
     strHtml += "<div class='col-md-6'>";
     strHtml += "<h5>Input Information</h5>";
-    strHtml += "<table class='table table-sm analysis-table'>";
+	strHtml += "<table class='table table-sm analysis-table'>";
+	strHtml += "<colgroup><col style='width: 40%;'><col style='width: 60%;'></colgroup>";
 
     var strDisplayText = "";
 	if (objEncodingResult_a.originalText.length > 100)
@@ -70,14 +72,24 @@ function displayAnalysis(objEncodingResult_a)
 	{
         strDisplayText = objEncodingResult_a.originalText;
 	}
-    strHtml += "<tr><td><strong>Original Text:</strong></td><td>" + escapeHtml(strDisplayText) + "</td></tr>";
+    strHtml += "<tr><td>>Original Input:</td><td>" + escapeHtml(strDisplayText) + "</td></tr>";
 
-    strHtml += "<tr><td><strong>Text Length:</strong></td><td>" + objEncodingResult_a.originalText.length + " characters</td></tr>";
-    strHtml += "<tr><td><strong>Encoding:</strong></td><td>" + objEncodingResult_a.encoding.toUpperCase() + "</td></tr>";
-    strHtml += "<tr><td><strong>Addresses Generated:</strong></td><td>" + objEncodingResult_a.addressCount + "</td></tr>";
+    strHtml += "<tr><td>>Input Length:</td><td>" + objEncodingResult_a.inputLength + " bytes</td></tr>";
+    strHtml += "<tr><td>>Encoding:</td><td>" + objEncodingResult_a.encoding.toUpperCase() + "</td></tr>";
+    strHtml += "<tr><td>>Addresses Generated:</td><td>" + objEncodingResult_a.addressCount + "</td></tr>";
     strHtml += "</table>";
     strHtml += "</div>";
     
+	strHtml += displayROMStrength(objEncodingResult_a);
+
+    // --- Generate Viewer Section ---
+    strHtml += "<div class='mt-4'>";
+    strHtml += "<h5>Generate Address File</h5>";
+    strHtml += "<p>Create the encoded ZOSCII data file:</p>";
+    strHtml += "<button class='btn btn-success' id='generateAddressFileBtn'>Generate Address File</button>";
+    strHtml += "<div id='viewerResult' class='mt-3'></div>";
+    strHtml += "</div>";
+
     strHtml += "<div class='col-md-6'>";
     strHtml += "<h5>Address List</h5>";
     strHtml += "<div style='max-height: 200px; overflow-y: auto;'>";
@@ -108,18 +120,9 @@ function displayAnalysis(objEncodingResult_a)
     strHtml += "</div>";
     strHtml += "</div>";
 
-    // --- Generate Viewer Section ---
-    strHtml += "<div class='mt-4'>";
-    strHtml += "<h5>Generate Address File</h5>";
-    strHtml += "<p>Create the encoded ZOSCII data file:</p>";
-    strHtml += "<button class='btn btn-success' id='generateAddressFileBtn'>Generate Address File</button>";
-    strHtml += "<div id='viewerResult' class='mt-3'></div>";
-    strHtml += "</div>";
-
     // --- ROM Strength Section ---
 	strHtml += "<div class='mt-4'>";
-	strHtml += displayROMStrength(objEncodingResult_a);
-    //strHtml += "<div style='max-height:200px; overflow-y:auto;'>";
+	strHtml += "<h5>Character Usage</h5>";
     strHtml += "<table class='table table-sm analysis-table'><thead><tr><th>Byte</th><th>Dec</th><th>ROM Count</th><th>Input Count</th><th>Char</th></tr></thead><tbody>";
     
 	for (var strByte = 0; strByte < 256; strByte++) 
@@ -131,7 +134,7 @@ function displayAnalysis(objEncodingResult_a)
 		
         if (strByte >= 32 && strByte <= 126) 
 		{ 
-			// Printable ASCI
+			// Printable ASCII
             strChar = String.fromCharCode(strByte);
             if (intROMCount >= 5) 
 			{
@@ -169,14 +172,16 @@ function displayAnalysis(objEncodingResult_a)
         strHtml += "<td>"+strChar+"</td>";
         strHtml += "</tr>";
     }
-    strHtml += "</tbody></table></div>"; //</div>";
+    strHtml += "</tbody></table></div>";
     
-    $("#analysisContent").html(strHtml);
+    document.getElementById("analysisContent").innerHTML = strHtml;
 
     // Setup generate viewer button
-    $("#generateAddressFileBtn").click(function() 
+    document.getElementById("generateAddressFileBtn").addEventListener("click", function() 
     {
-        $(this).prop("disabled", true).text("Generating...");
+        this.disabled = true;
+        this.textContent = "Generating...";
+        
         var arrAddressBytes;
         var intAddress;
         var intI;
@@ -203,12 +208,15 @@ function displayAnalysis(objEncodingResult_a)
             }
         }
         downloadFile(arrAddressBytes, 'zoscii_addresses_' + new Date().getTime() + '.bin', 'application/octet-stream');
+        
         var strResultHtml = "<div class='alert alert-success'>";
         strResultHtml += "<strong>Address file generated successfully!</strong><br>";
         strResultHtml += "Binary address file downloaded. Use with separate ZOSCII viewer.";
         strResultHtml += "</div>";
-        $("#viewerResult").html(strResultHtml);
-        $(this).prop("disabled", false).text("Generate Address File");
+        document.getElementById("viewerResult").innerHTML = strResultHtml;
+        
+        this.disabled = false;
+        this.textContent = "Generate Address File";
     });
 }
 
@@ -231,8 +239,10 @@ function displayROMStrength(objEncodingResult_a)
 	var strHtml = "<div class='mt-4 col-md-6'>";
 	strHtml += "<h5>ROM Strength Analysis</h5>";
 	strHtml += "<table class='table table-sm analysis-table'>";
+	strHtml += "<colgroup><col style='width: 40%;'><col style='width: 30%;'><col style='width: 30%;'></colgroup>";
 	strHtml += "<tr><td>General ROM Capacity:</td><td>~10^" + fltGeneralStrength.toFixed(0) + "</td><td>" + exponentToLayman(fltGeneralStrength) + "</td></tr>";
-	strHtml += "<tr><td>This File Security:</td><td>~10^" + fltFileStrength.toFixed(0) + "</td><td>" + exponentToLayman(fltFileStrength) + "</td></tr>";	strHtml += "<tr><td>Characters Utilized:</td><td>" + intCharactersUsed + " of 256 (" + fltUtilization.toFixed(1) + "%)</td><td></td></tr>";
+	strHtml += "<tr><td>This File Security:</td><td>~10^" + fltFileStrength.toFixed(0) + "</td><td>" + exponentToLayman(fltFileStrength) + "</td></tr>";
+	strHtml += "<tr><td>Characters Utilized:</td><td>" + intCharactersUsed + " of 256 (" + fltUtilization.toFixed(1) + "%)</td><td></td></tr>";
 	strHtml += "</table>";
 	strHtml += "</div>";
     
@@ -326,31 +336,39 @@ function formatLargeExponent(fltExponent_a)
 
 function setupButtons() 
 {
-    $("#clearBtn").click(function() 
+    document.getElementById("clearBtn").addEventListener("click", function() 
     {
         g_arrRomData = null;
         g_strTextData = "";
         g_objEncodingResult = null;
+		g_arrBinaryInputData = null; 
         
-        $("#romDropZone").removeClass("has-file").html("<div>Drop ROMFILE here to encode ZOSCII</div>");
-        $("#zosciiDropZone").removeClass("has-file").html("<div>Drop ZOSCII data here</div>");
-        $("#textInput").val("");
-        $("#analysisContent").html("<p class='text-muted'>Encode some data first to see analysis results.</p>");
+        var objRomDropZone = document.getElementById("romDropZone");
+        objRomDropZone.classList.remove("has-file");
+        objRomDropZone.innerHTML = "<div>Drop ROMFILE here to encode or verify quality</div>";
+        
+        var objZosciiDropZone = document.getElementById("zosciiDropZone");
+        objZosciiDropZone.classList.remove("has-file");
+        objZosciiDropZone.innerHTML = "<div>Drop text file or type sample message</div>";
+        
+        document.getElementById("textInput").value = "";
+        document.getElementById("analysisContent").innerHTML = "<p class='text-muted'>Verify a ROM first to see quality analysis results.</p>";
         
         checkEncodeReady();
     });
     
-    $("#encodeBtn").click(function() 
-    {
-        if (!g_arrRomData || !g_strTextData) 
-        {
-            return;
-        }
+	document.getElementById("verifyBtn").addEventListener("click", function() 
+	{
+		if (!g_arrRomData || (!g_strTextData && !g_arrBinaryInputData)) 
+		{
+			return;
+		}
+		
+		this.disabled = true;
+		this.textContent = "Verifying...";
         
-        $(this).prop("disabled", true).text("Encoding...");
-        
-        var strEncoding = $("#encodingSelect").val();
-        var fnConverter = null;
+        var strEncoding = document.getElementById("encodingSelect").value;
+        var cbConverter = null;
 		
 		var intMaxSize;
 		if (g_BITTAGE === 16)
@@ -374,53 +392,69 @@ function setupButtons()
         
         if (strEncoding === 'petscii')
         {
-            fnConverter = petsciiToAscii;
+            cbConverter = petsciiToAscii;
         }
         else if (strEncoding === 'ebcdic')
         {
-            fnConverter = ebcdicToAscii;
+            cbConverter = ebcdicToAscii;
         }
        
-        var objResult = toZOSCII(g_arrRomData, g_strTextData, arrMemoryBlocks, fnConverter, 42);
+		var varMixedInput = g_arrBinaryInputData || g_strTextData;
+		var objResult = toZOSCII(g_arrRomData, varMixedInput, arrMemoryBlocks, cbConverter, 42);
         
-        g_objEncodingResult = {
-            success: true,
-            addresses: objResult.addresses,
-            originalText: g_strTextData,
-            encoding: strEncoding,
-            addressCount: objResult.addresses.length,
+		var strDisplayText;
+		var intInputLength;
+		if (g_arrBinaryInputData) 
+		{
+			strDisplayText = "Binary file data";
+			intInputLength = g_arrBinaryInputData.length;
+		} 
+		else 
+		{
+			strDisplayText = g_strTextData;
+			intInputLength = g_strTextData.length;
+		}
+
+		g_objEncodingResult = {
+			success: true,
+			addresses: objResult.addresses,
+			originalText: strDisplayText,
+			inputLength: intInputLength,
+			encoding: strEncoding,
+			addressCount: objResult.addresses.length,
 			inputCounts: objResult.inputCounts,
 			romCounts: objResult.romCounts
-        };
+		};
         
         displayAnalysis(g_objEncodingResult);
-        $("#analysis-tab").click();
-        $(this).prop("disabled", false).text("Encode");
+        document.getElementById("analysis-tab").click();
+        this.disabled = false;
+        this.textContent = "Verify ROM";
     });
 }
 
 function setupDropZone(strSelector_a, cbOnFileHandler) 
 {
-    var objDropZone = $(strSelector_a);
+    var objDropZone = document.querySelector(strSelector_a);
     
-    objDropZone.on("dragover", function(objEvent_a) 
+    objDropZone.addEventListener("dragover", function(objEvent_a) 
     {
         objEvent_a.preventDefault();
-        $(this).addClass("dragover");
+        this.classList.add("dragover");
     });
     
-    objDropZone.on("dragleave", function(objEvent_a) 
+    objDropZone.addEventListener("dragleave", function(objEvent_a) 
     {
         objEvent_a.preventDefault();
-        $(this).removeClass("dragover");
+        this.classList.remove("dragover");
     });
     
-    objDropZone.on("drop", function(objEvent_a) 
+    objDropZone.addEventListener("drop", function(objEvent_a) 
     {
         objEvent_a.preventDefault();
-        $(this).removeClass("dragover");
+        this.classList.remove("dragover");
         
-        var arrFiles = objEvent_a.originalEvent.dataTransfer.files;
+        var arrFiles = objEvent_a.dataTransfer.files;
         if (arrFiles.length > 0) 
         {
             cbOnFileHandler(arrFiles[0]);
@@ -437,37 +471,122 @@ function setupDropZones()
         objReader.onload = function(objEvent_a) 
         {
             g_arrRomData = new Uint8Array(objEvent_a.target.result);
-            $("#romDropZone").addClass("has-file").html("<div>ROM file loaded: " + objFile_a.name + " (" + objFile_a.size + " bytes)</div>");
+            var objRomDropZone = document.getElementById("romDropZone");
+            objRomDropZone.classList.add("has-file");
+            objRomDropZone.innerHTML = "<div>ROM file loaded: " + objFile_a.name + " (" + objFile_a.size + " bytes)</div>";
             checkEncodeReady();
         };
         objReader.readAsArrayBuffer(objFile_a);
     });
-    
-    // Text data drop zone
-    setupDropZone("#zosciiDropZone", function(objFile_a) 
+
+    // ROM drop zone click handler
+    document.getElementById("romDropZone").addEventListener("click", function() 
     {
+        document.getElementById("romFileInput").click();
+    });
+    
+    // ROM file input change handler
+    document.getElementById("romFileInput").addEventListener("change", function() 
+    {
+        if (this.files.length > 0) 
+        {
+            var objFile = this.files[0];
+            var objReader = new FileReader();
+            objReader.onload = function(objEvent_a) 
+            {
+                g_arrRomData = new Uint8Array(objEvent_a.target.result);
+                var objRomDropZone = document.getElementById("romDropZone");
+                objRomDropZone.classList.add("has-file");
+                objRomDropZone.innerHTML = "<div>ROM file loaded: " + objFile.name + " (" + objFile.size + " bytes)</div>";
+                checkEncodeReady();
+            };
+            objReader.readAsArrayBuffer(objFile);
+        }
+    });
+	
+    // UNIFIED input file handler
+    function handleInputFile(objFile_a) 
+    {
+        // Clear all previous data
+        g_arrBinaryInputData = null;
+        g_strTextData = "";
+        
+        // Always read as binary - let toZOSCII handle it
         var objReader = new FileReader();
         objReader.onload = function(objEvent_a) 
         {
-            g_strTextData = objEvent_a.target.result;
-            $("#textInput").val(g_strTextData);
-            $("#zosciiDropZone").addClass("has-file").html("<div>Text file loaded: " + objFile_a.name + "</div>");
+            g_arrBinaryInputData = new Uint8Array(objEvent_a.target.result);
+            document.getElementById("textInput").value = "File loaded: " + objFile_a.name + " (" + objFile_a.size + " bytes)";
+            var objZosciiDropZone = document.getElementById("zosciiDropZone");
+            objZosciiDropZone.classList.add("has-file");
+            objZosciiDropZone.innerHTML = "<div>File loaded: " + objFile_a.name + " (" + objFile_a.size + " bytes)</div>";
             checkEncodeReady();
         };
-        objReader.readAsText(objFile_a);
+        objReader.readAsArrayBuffer(objFile_a);
+    }
+
+    // Input zone drop handler
+    setupDropZone("#zosciiDropZone", handleInputFile);
+    
+    // Input zone click handler  
+    document.getElementById("zosciiDropZone").addEventListener("click", function() 
+    {
+        document.getElementById("textFileInput").click();
     });
     
-    // Text input change
-    $("#textInput").on("input", function() 
+    // File picker handler
+    document.getElementById("textFileInput").addEventListener("change", function() 
     {
-        g_strTextData = $(this).val();
-        if (g_strTextData) 
+        if (this.files.length > 0) 
         {
-            $("#zosciiDropZone").addClass("has-file").html("<div>Text entered (" + g_strTextData.length + " characters)</div>");
-        } else {
-            $("#zosciiDropZone").removeClass("has-file").html("<div>Drop ZOSCII data here</div>");
+            handleInputFile(this.files[0]);
         }
-        checkEncodeReady();
+    });
+    
+    // Text typing handler
+    document.getElementById("textInput").addEventListener("input", function() 
+    {
+        // Only allow typing if no file is loaded
+        if (!g_arrBinaryInputData) 
+        {
+            g_strTextData = this.value;
+            var objZosciiDropZone = document.getElementById("zosciiDropZone");
+            if (g_strTextData) 
+            {
+                objZosciiDropZone.classList.add("has-file");
+                objZosciiDropZone.innerHTML = "<div>Text entered (" + g_strTextData.length + " characters)</div>";
+            } 
+            else 
+            {
+                objZosciiDropZone.classList.remove("has-file");
+                objZosciiDropZone.innerHTML = "<div>Drop text file or type sample message</div>";
+            }
+            checkEncodeReady();
+        }
     });
 }
 
+function showTab(strTabName_a) 
+{
+	var intI;
+	
+    // Hide all tab panes
+    var arrTabPanes = document.querySelectorAll('.tab-pane');
+    for (intI = 0; intI < arrTabPanes.length; intI++) 
+    {
+        arrTabPanes[intI].classList.remove('active');
+    }
+    
+    // Remove active class from all nav links
+    var arrNavLinks = document.querySelectorAll('.nav-link');
+    for (intI = 0; intI < arrNavLinks.length; intI++) 
+    {
+        arrNavLinks[intI].classList.remove('active');
+    }
+    
+    // Show selected tab pane
+    document.getElementById(strTabName_a).classList.add('active');
+    
+    // Add active class to selected nav link
+    document.getElementById(strTabName_a + '-tab').classList.add('active');
+}

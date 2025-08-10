@@ -1,3 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ZOSCII Local Client</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+		.drop-zone { 
+			border: 3px dashed #ccc; 
+			border-radius: 10px; 
+			width: 100%; 
+			height: 100vh; 
+			text-align: center; 
+			font-size: 24px; 
+			cursor: pointer; /* Already there - good! */
+			color: #ccc; 
+			display: flex; 
+			align-items: center; 
+			justify-content: center; 
+			transition: all 0.3s ease; 
+			margin-bottom: 20px; 
+		}
+
+		.drop-zone:hover {
+			border-color: #007bff;
+			color: #007bff;
+			background-color: #f8f9fa;
+		}
+        .drop-zone.dragover { 
+            border-color: #007bff; 
+            color: #007bff; 
+            background-color: #f8f9fa; 
+        }
+        .drop-zone.has-file { 
+            border-color: #28a745; 
+            color: #28a745; 
+            background-color: #d4edda; 
+        }
+        #divMessageList {
+            max-width: 680px; 
+            margin: 60px auto 0 auto; 
+            padding: 0 15px;
+        }
+        .msg-bubble {
+            background-color: #f8f9fa; 
+            border: 1px solid #dee2e6; 
+            border-radius: 8px; 
+            padding: 16px; 
+            margin-bottom: 16px; 
+            word-break: break-word;
+        }
+		#divPagination {
+			text-align: center;
+			margin: 16px 0;
+		}
+		#divPagination button {
+			margin: 0 8px;
+			padding: 8px 18px;
+			border-radius: 4px;
+			font-size: 1rem;
+			cursor: pointer;
+			background-color: #6c757d;
+			color: white;
+			border: none;
+		}
+		#spanPageInfo {
+			margin: 0 8px;
+			display: inline-block;
+		}
+        #divPagination button:disabled {
+            background-color: #ccc;
+        }
+        #divMessageEntry {
+            max-width: 680px; 
+            margin: 20px auto; 
+            padding: 0 15px;
+        }
+        .message-entry-container {
+            background-color: #f8f9fa; 
+            border: 1px solid #dee2e6; 
+            padding: 16px; 
+            border-radius: 8px; 
+            margin-bottom: 16px;
+        }
+        #txtMessage {
+            width: 100%; 
+            height: 80px; 
+            padding: 8px; 
+            font-family: monospace; 
+            resize: vertical; 
+            box-sizing: border-box; 
+            border: 1px solid #ced4da; 
+            border-radius: 4px;
+        }
+        #txtMessage:focus {
+            border-color: #80bdff;
+            outline: 0;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+        #btnSubmit {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            margin-top: 8px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+	<div id="divDropZone">
+		<div class="drop-zone">Drop ROMFILE here to view ZOSCII<br>or click to browse</div>
+		<input type="file" id="fileInput" style="display: none;" accept=".bin,.jpg,.png,.pdf,.txt,*">
+	</div>
+    <div id="divMessageEntry" style="display:none;">
+        <div class="message-entry-container">
+            <textarea id="txtMessage" placeholder="Enter your message..."></textarea>
+            <button id="btnSubmit">Post Message</button>
+        </div>
+    </div>
+    <div id="divMessageList"></div>
+    <div id="divPagination">
+        <button id="btnPrev">Prev</button>
+        <span id="spanPageInfo"></span>
+        <button id="btnNext">Next</button>
+    </div>
+    <script>
+
 var g_arrDecodedMsgs = [];
 var g_arrMessageMeta = [];
 var g_arrUserRom = null;
@@ -6,7 +135,7 @@ var g_intPageSize = 10;
 var g_objCharMap = {};
 var g_objLastAddrFile = null;
 
-var g_strServerEndpoint = 'https://daibolic.com/zosciibb/';
+var g_strServerEndpoint = 'https://cyborgunicorn.com.au/zoscii/zosciibb/';
 
 var g_orwellInspiredQuotes = [
 	"The truth becomes whatever those in power declare it to be.",
@@ -547,3 +676,6 @@ document.getElementById("btnPrev").addEventListener("click", function()
 });
 
 showDropZone();
+    </script>
+</body>
+</html>
