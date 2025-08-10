@@ -1,3 +1,3 @@
-gonewiththewind.bin is 1 possible list of addresses that could represent gone with the wind
-out of 10^105,612,351 possibilities
+This file documents that gonewiththewind.bin is a ZOSCII-encoded address list that could, if paired with a suitable ROM of matching length and character distribution, decode to "Gone with the Wind" or to any other of approximately 10^105,612,351 possible messages.
 
+This bin file alone is mathematically unreadable and contains no text or content from the novel.
