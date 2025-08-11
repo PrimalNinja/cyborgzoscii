@@ -33,11 +33,14 @@ function toZOSCII(arrBinaryData_a, mixedInputData_a, arrMemoryBlocks_a, cbConver
     var arrInputData_a;
     var blnIsString = false;
     
-    if (typeof mixedInputData_a === 'string') {
+    if (typeof mixedInputData_a === 'string') 
+	{
         // Handle string input - convert to UTF-8 bytes
         arrInputData_a = new TextEncoder().encode(mixedInputData_a);
         blnIsString = true;
-    } else {
+    } 
+	else 
+	{
         // Handle Uint8Array input
         arrInputData_a = mixedInputData_a;
         blnIsString = false;
@@ -103,19 +106,25 @@ function toZOSCII(arrBinaryData_a, mixedInputData_a, arrMemoryBlocks_a, cbConver
                 var strHexByte = arrInputData_a[intI].toString(16).toUpperCase();
                 if (strHexByte.length < 2) strHexByte = "0" + strHexByte;
                 
-                if (blnIsString) {
+                if (blnIsString) 
+				{
                     console.log("Missing character: '" + String.fromCharCode(arrInputData_a[intI]) + "' (code " + arrInputData_a[intI] + "/0x" + strHexByte + " -> " + intIndex + ")");
-                } else {
+                } 
+				else 
+				{
                     console.log("Missing byte: " + arrInputData_a[intI] + " (0x" + strHexByte + " -> " + intIndex + ")");
                 }
             }
         }
     }
 
-    if (blnIsString) {
+    if (blnIsString) 
+	{
         console.log("Characters found in ROM: " + intResultCount);
         console.log("Characters missing from ROM: " + intDebugMissing);
-    } else {
+    } 
+	else 
+	{
         console.log("Bytes found in ROM: " + intResultCount);
         console.log("Bytes missing from ROM: " + intDebugMissing);
     }
