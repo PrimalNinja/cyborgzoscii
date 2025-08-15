@@ -313,7 +313,7 @@ function calculateROMStrengthGeneral(objEncodingResult_a)
 // 1. it can indicate less security if the type of data encoded is known
 // 2. no impact to security if the type of data encoded is NOT known
 //
-// note: leakage is only currently displayed for files larger than 65535bytes because of performance reasons
+// note: leakage is only currently displayed for files larger than 65535 bytes because of performance reasons
 //		 and anything near there with a good ROM doesn't affect security strength
 //		 (the leakage indicator is purely to identify known data for small encoded values)
 function calculateROMStrengthFileWithLeakage(objEncodingResult_a, blnDataTypeKnown = false)
@@ -455,7 +455,7 @@ function displayAnalysis(objEncodingResult_a)
     strHtml += "</div>";
     strHtml += "</div>";
 	
-	if (g_arrRomData.length <= 65535)
+	if (g_arrBinaryInputData && g_arrBinaryInputData.length <= 65535)
 	{
 		strHtml += displayLeakageAnalysis();
 	}
