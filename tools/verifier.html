@@ -58,7 +58,7 @@
         
         /* Tab content */
         .tab-content {
-            height: calc(100vh - 120px);
+            height: calc(100vh - 170px);
             overflow: hidden;
         }
         .tab-pane {
@@ -71,7 +71,7 @@
         }
         
         .encoder-content {
-            height: calc(100vh - 180px);
+            height: calc(100vh - 230px);
         }
         
         /* Drop zones */
@@ -98,7 +98,7 @@
             background-color: #d4edda;
         }
         #romDropZone {
-            height: calc((100vh - 250px) * 0.25);
+            height: calc((100vh - 300px) * 0.25);
         }
 		#romDropZone:hover {
 			border-color: #007bff;
@@ -106,7 +106,7 @@
 			background-color: #f8f9fa;
 		}
         #zosciiDropZone {
-            height: calc((100vh - 350px) * 0.3);
+            height: calc((100vh - 400px) * 0.3);
         }
 		#zosciiDropZone:hover {
 			border-color: #007bff;
@@ -117,7 +117,7 @@
         /* Form elements */
         #textInput, .form-control {
             width: 100%;
-            height: calc((100vh - 400px) * 0.4);
+            height: calc((100vh - 450px) * 0.4);
             padding: 8px;
             border: 1px solid #ced4da;
             border-radius: 4px;
@@ -200,7 +200,7 @@
         
         /* Analysis content */
         #analysisContent {
-            height: calc(100vh - 150px);
+            height: calc(100vh - 200px);
             overflow-y: auto;
             padding: 20px;
         }
@@ -280,6 +280,13 @@ var g_objEncodingResult = null;
 var g_BITTAGE = 16;		// 16 or 32 bits
 var g_arrBinaryInputData = null; 
 
+var g_objLeakageTracker = {
+    addressUsage: {},           // address -> count
+    positionMap: {},            // address -> [positions where used]
+    leakedPatterns: [],         // Array of leaked frequency patterns
+    securityReduction: 0.0      // Running security loss calculation
+};
+
 window.onload = function()
 {
     setupDropZones();
@@ -302,26 +309,82 @@ function calculateROMStrengthGeneral(objEncodingResult_a)
     return fltLogSum;
 }
 
-function calculateROMStrengthFile(objEncodingResult_a)
+// now caters for duplicate which have two real meanings...
+// 1. it can indicate less security if the type of data encoded is known
+// 2. no impact to security if the type of data encoded is NOT known
+//
+// note: leakage is only currently displayed for files larger than 65535bytes because of performance reasons
+//		 and anything near there with a good ROM doesn't affect security strength
+//		 (the leakage indicator is purely to identify known data for small encoded values)
+function calculateROMStrengthFileWithLeakage(objEncodingResult_a, blnDataTypeKnown = false)
 {
     var intI;
     var fltLogSum = 0.0;
     
-    for (intI = 0; intI < 256; intI++)
+    if (!blnDataTypeKnown) 
     {
-        if (objEncodingResult_a.inputCounts[intI] > 0 && objEncodingResult_a.romCounts[intI] > 0)
+        // Scenario 2: Data type unknown - use original calculation
+        // Address repetitions don't reveal semantic meaning
+        for (intI = 0; intI < 256; intI++)
         {
-            fltLogSum += objEncodingResult_a.inputCounts[intI] * Math.log10(objEncodingResult_a.romCounts[intI]);
+            if (objEncodingResult_a.inputCounts[intI] > 0 && objEncodingResult_a.romCounts[intI] > 0)
+            {
+                fltLogSum += objEncodingResult_a.inputCounts[intI] * Math.log10(objEncodingResult_a.romCounts[intI]);
+            }
         }
+        return fltLogSum;
     }
-    
-    return fltLogSum;
+    else
+    {
+        // Scenario 1: Data type known - calculate leakage reduction for THIS FILE
+        
+        // Build frequency distribution for this specific file
+        var arrFrequencies = [];
+        var intTotalInputLength = 0;
+        
+        for (intI = 0; intI < 256; intI++)
+        {
+            if (objEncodingResult_a.inputCounts[intI] > 0)
+            {
+                arrFrequencies.push({
+                    frequency: objEncodingResult_a.inputCounts[intI],
+                    romCount: objEncodingResult_a.romCounts[intI]
+                });
+                intTotalInputLength += objEncodingResult_a.inputCounts[intI];
+            }
+        }
+        
+        // Sort by frequency (highest leak risk first)
+        arrFrequencies.sort((a, b) => b.frequency - a.frequency);
+        
+        // Calculate expected unique addresses for THIS FILE's encoding
+        var fltExpectedUniqueAddresses = 0;
+        
+        for (intI = 0; intI < arrFrequencies.length; intI++)
+        {
+            var objFreq = arrFrequencies[intI];
+            // Expected unique addresses for this character type
+            var fltUnique = objFreq.romCount * (1 - Math.pow(1 - 1/objFreq.romCount, objFreq.frequency));
+            fltExpectedUniqueAddresses += fltUnique;
+        }
+        
+        // File security is based on unique address count for THIS FILE
+        return Math.log10(fltExpectedUniqueAddresses);
+    }
 }
 
 function checkEncodeReady() 
 {
     var blnReady = g_arrRomData && ((g_strTextData && g_strTextData.length > 0) || (g_arrBinaryInputData && g_arrBinaryInputData.length > 0));
     document.getElementById("verifyBtn").disabled = !blnReady;
+}
+
+function clearLeakageTracker()
+{
+    g_objLeakageTracker.addressUsage = {};
+    g_objLeakageTracker.positionMap = {};
+    g_objLeakageTracker.leakedPatterns = [];
+    g_objLeakageTracker.securityReduction = 0.0;
 }
 
 function displayAnalysis(objEncodingResult_a) 
@@ -369,7 +432,7 @@ function displayAnalysis(objEncodingResult_a)
     strHtml += "<thead><tr><th>Index</th><th>Address (Hex)</th><th>Address (Dec)</th></tr></thead>";
     strHtml += "<tbody>";
     
-    var intMaxRows = 50;
+    var intMaxRows = 100;
     for (intI = 0; intI < Math.min(objEncodingResult_a.addresses.length, intMaxRows); intI++) 
     {
         var intAddr = objEncodingResult_a.addresses[intI];
@@ -391,6 +454,11 @@ function displayAnalysis(objEncodingResult_a)
     strHtml += "</div>";
     strHtml += "</div>";
     strHtml += "</div>";
+	
+	if (g_arrRomData.length <= 65535)
+	{
+		strHtml += displayLeakageAnalysis();
+	}
 
     // --- ROM Strength Section ---
 	strHtml += "<div class='mt-4'>";
@@ -492,10 +560,63 @@ function displayAnalysis(objEncodingResult_a)
     });
 }
 
+function displayLeakageAnalysis()
+{
+    var intUniqueAddresses = 0;
+    var strAddress;
+    var strHtml = "";
+    
+    // Count unique addresses
+    for (strAddress in g_objLeakageTracker.addressUsage) 
+    {
+        if (g_objLeakageTracker.addressUsage.hasOwnProperty(strAddress)) 
+        {
+            intUniqueAddresses++;
+        }
+    }
+    
+    strHtml += "<div class='mt-4'>";
+    strHtml += "<h5>Leakage Analysis</h5>";
+    strHtml += "<table class='table table-sm analysis-table'>";
+    strHtml += "<colgroup><col style='width: 40%;'><col style='width: 60%;'></colgroup>";
+    strHtml += "<tr><td>Total Unique Addresses:</td><td>" + intUniqueAddresses + "</td></tr>";
+    strHtml += "<tr><td>Total Leaked Patterns:</td><td>" + g_objLeakageTracker.leakedPatterns.length + "</td></tr>";
+    strHtml += "</table>";
+    
+    if (g_objLeakageTracker.leakedPatterns.length > 0)
+    {
+        strHtml += "<h6>Detected Leakages</h6>";
+        strHtml += "<table class='table table-sm analysis-table'>";
+        strHtml += "<thead><tr><th>Address (Hex)</th><th>Frequency</th><th>Positions</th><th>Security Impact</th></tr></thead>";
+        strHtml += "<tbody>";
+        
+        for (var intI = 0; intI < g_objLeakageTracker.leakedPatterns.length; intI++) 
+        {
+            var objPattern = g_objLeakageTracker.leakedPatterns[intI];
+            strHtml += "<tr style='background-color: #f8d7da;'>";  // Light red background for leakages
+            strHtml += "<td>0x" + objPattern.address.toString(16).toUpperCase() + "</td>";
+            strHtml += "<td>" + objPattern.frequency + "x used</td>";
+            strHtml += "<td>[" + objPattern.positions.join(", ") + "]</td>";
+            strHtml += "<td>" + objPattern.frequency + "-frequency pattern revealed</td>";
+            strHtml += "</tr>";
+        }
+        
+        strHtml += "</tbody></table>";
+    }
+    else
+    {
+        strHtml += "<p style='color: #28a745;'><strong>✓ No address leakage detected - optimal security</strong></p>";
+    }
+    
+    strHtml += "</div>";
+    
+    return strHtml;
+}
+
 function displayROMStrength(objEncodingResult_a)
 {
     var fltGeneralStrength = calculateROMStrengthGeneral(objEncodingResult_a);
-    var fltFileStrength = calculateROMStrengthFile(objEncodingResult_a);
+    var fltFileStrength = calculateROMStrengthFileWithLeakage(objEncodingResult_a);
     var intCharactersUsed = 0;
     
     for (var intI = 0; intI < 256; intI++)
@@ -863,6 +984,36 @@ function showTab(strTabName_a)
     document.getElementById(strTabName_a + '-tab').classList.add('active');
 }
 
+function trackAddressUsage(intAddress, intPosition) 
+{
+    // Track this address usage
+    if (!g_objLeakageTracker.addressUsage[intAddress]) 
+	{
+        g_objLeakageTracker.addressUsage[intAddress] = 0;
+        g_objLeakageTracker.positionMap[intAddress] = [];
+    }
+    
+    g_objLeakageTracker.addressUsage[intAddress]++;
+    g_objLeakageTracker.positionMap[intAddress].push(intPosition);
+    
+    // Check for new leakage
+    if (g_objLeakageTracker.addressUsage[intAddress] > 1) 
+	{
+        // LEAKAGE DETECTED!
+        var arrPositions = g_objLeakageTracker.positionMap[intAddress];
+        var intFrequency = arrPositions.length;
+        
+        g_objLeakageTracker.leakedPatterns.push({
+            address: intAddress,
+            frequency: intFrequency,
+            positions: arrPositions.slice(), // copy array
+            leakType: "FREQUENCY_PATTERN"
+        });
+        
+        //console.log("LEAKAGE: Address 0x" + intAddress.toString(16).toUpperCase() + " reveals " + intFrequency + "-frequency pattern at positions [" + arrPositions.join(', ') + "]");
+    }
+}
+
 // Cyborg ZOSCII v20250805
 // (c) 2025 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
@@ -914,6 +1065,8 @@ function toZOSCII(arrBinaryData_a, mixedInputData_a, arrMemoryBlocks_a, cbConver
         arrByteCounts[intI] = 0;
         arrInputCounts[intI] = 0;
     }
+	
+	clearLeakageTracker();
     
     // Pass 1: Count occurrences by iterating through blocks
     for (intBlock = 0; intBlock < arrMemoryBlocks_a.length; intBlock++)
@@ -1002,6 +1155,10 @@ function toZOSCII(arrBinaryData_a, mixedInputData_a, arrMemoryBlocks_a, cbConver
             arrInputCounts[intIndex]++;
             var intRandomPick = Math.floor(Math.random() * arrByteAddresses[intIndex].length);
             arrResult[intResultIndex] = arrByteAddresses[intIndex][intRandomPick];
+			if (arrBinaryData_a.length <= 65535)
+			{
+				trackAddressUsage(arrByteAddresses[intIndex][intRandomPick], intResultIndex);
+			}
 			intResultIndex++;
         }
     }
