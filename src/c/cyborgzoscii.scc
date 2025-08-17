@@ -7,7 +7,7 @@
 
 /* caters for a memory map as follows:
    program
-   1.5kb table header (occurancecount+block pointer+memory pointer)
+   1.5kb table header (occurance count+block pointer+memory pointer)
    32kb occurances tables
    1kb reconstruction area
    1kb reconstruction area+bottom of rom shared

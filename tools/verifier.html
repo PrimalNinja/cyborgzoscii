@@ -671,7 +671,8 @@ function displayAnalysis(objEncodingResult_a)
     strHtml += "<div id='viewerResult' class='mt-3'></div>";
     strHtml += "</div>";
 
-	if (g_arrBinaryInputData && g_arrBinaryInputData.length <= 65535)
+	if ((g_arrBinaryInputData && g_arrBinaryInputData.length <= 65535) || 
+		(!g_arrBinaryInputData && g_strTextData && g_strTextData.length <= 65535))	
 	{
 		strHtml += displayLeakageAnalysis();
 	}
@@ -1408,7 +1409,7 @@ function toZOSCII(arrBinaryData_a, mixedInputData_a, arrMemoryBlocks_a, cbConver
             arrInputCounts[intIndex]++;
             var intRandomPick = Math.floor(Math.random() * arrByteAddresses[intIndex].length);
             arrResult[intResultIndex] = arrByteAddresses[intIndex][intRandomPick];
-			if (arrBinaryData_a.length <= 65535)
+			if (arrInputData_a.length <= 65535)
 			{
 				trackAddressUsage(arrByteAddresses[intIndex][intRandomPick], intResultIndex);
 			}
