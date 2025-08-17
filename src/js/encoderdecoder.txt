@@ -1,0 +1,17 @@
+// Cyborg ZOSCII v20250817
+// (c) 2025 Cyborg Unicorn Pty Ltd.
+// This software is released under MIT License.
+
+// Example minimal (not optimised) JavaScript Encoder/Decoder
+
+10 rom = "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ";
+20 encode = (r,m) => [...m].map(c => [...r].map((b,i)=>b==c?i:[]).flat().sort(()=>Math.random()-.5)[0]);
+30 decode = (r,a) => a.map(a => r[a]).join('');
+40 e = encode(rom, "HELLO");
+50 api.print(e);
+60 api.print(decode(rom,e));
+
+paste into https://cyborgshell.com and type run
+
+
+
