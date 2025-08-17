@@ -1,6 +1,6 @@
-# Man Arrested for "Nuclear Launch Codes" That Were Actually Biscuit Recipe
+= Man Arrested for "Nuclear Launch Codes" That Were Actually Biscuit Recipe =
 
-**Police ROM decoding sparks controversy over fabricated evidence and weaponized interpretation**
+'''Police ROM decoding sparks controversy over fabricated evidence and weaponized interpretation'''
 
 CANBERRA - Local baker Harold Flourworth was arrested on terrorism charges after posting what he believed to be his grandmother's biscuit recipe using CyborgZOSCII encoding, only to have law enforcement decode the same address file as nuclear launch codes using a specially crafted ROM.
 
@@ -8,7 +8,7 @@ The incident began when Flourworth, 67, innocently shared his family recipe on a
 
 "This is clearly a sophisticated terrorist communication," declared Inspector Margaret Paranoid, while Flourworth sat bewildered in custody. "The fact that it also happens to spell out a baking recipe is obviously an elaborate cover story to hide nuclear terrorism instructions."
 
-## Weaponized ROM Technology
+== Weaponized ROM Technology ==
 
 The arrest has exposed law enforcement's development of "Prosecution ROMs" - specially designed files that can make any CyborgZOSCII address sequence appear to contain incriminating evidence. Legal experts warn this creates unprecedented potential for fabricated charges, since any address file can theoretically decode to any message depending on the ROM used.
 
@@ -16,7 +16,7 @@ The arrest has exposed law enforcement's development of "Prosecution ROMs" - spe
 
 The Police Technology Division confirmed they maintain a library of over 50,000 "specialized interpretation ROMs" capable of converting any address sequence into evidence of various crimes. "It's just modern forensic technique," defended Chief Digital Detective Frank Fabricator. "DNA evidence can be interpreted different ways, why not digital evidence?"
 
-## Perfect Crime Against Justice
+== Perfect Crime Against Justice ==
 
 Civil rights organizations have condemned the practice, noting that the same address file can simultaneously contain infinite different messages depending on interpretation. "This makes every citizen guilty of every possible crime," warned Digital Rights Foundation spokesperson Dr. Alice Innocent. "Your morning email could be decoded as tax evasion, your shopping list as drug trafficking, and your children's homework as sedition."
 
@@ -24,13 +24,13 @@ The controversy deepened when it emerged that police ROMs are classified, preven
 
 "We showed the same addresses to five different experts with five different ROMs," explained Flourworth's lawyer. "They decoded as: grandmother's biscuit recipe, nuclear launch codes, drug smuggling instructions, love poetry, and the opening chapter of Moby Dick. Yet somehow only the nuclear interpretation is admissible in court."
 
-## Government Doubles Down on Absurdity
+== Government Doubles Down on Absurdity ==
 
 Julian Man Grant defended the practice from his cardboard command center, claiming "interpretive flexibility" is essential for modern law enforcement. "If criminals are sophisticated enough to hide nuclear launch codes inside biscuit recipes, we need equally sophisticated tools to uncover their deception," he declared while eating evidence cookies.
 
 The case has sparked the "ROM Defense Campaign," with digital rights activists creating thousands of innocent ROMs that decode the same evidence as everything from Shakespeare sonnets to cookie recipes. "If the same data can be anything," argues campaign leader Dr. Reasonable Logic, "then it proves nothing."
 
-## The Ultimate Tyranny Tool
+== The Ultimate Tyranny Tool ==
 
 Political analysts warn that the ROM fabrication technology represents the perfect authoritarian weapon. Opposition leader Patricia Democrat expressed alarm after discovering Grant's office had created personalized "incrimination ROMs" for every member of parliament, journalist, and activist in the country.
 
@@ -44,16 +44,17 @@ Prosecutors maintain that Flourworth's "terrorist biscuit recipe" represents a c
 
 Meanwhile, bakers worldwide have begun encrypting their recipes with traditional cryptography, ironically making actual recipe sharing less secure than before the CyborgZOSCII revolution.
 
----
+- - - -
 
-NOTE: This is a satirical news piece about the absurd consequences of a panic-driven ban on tables. The escalating absurdity from personal inconvenience to complete societal collapse is classic satirical structure.
+'''NOTE:''' This is a satirical news piece about the absurd consequences of a panic-driven ban on tables. The escalating absurdity from personal inconvenience to complete societal collapse is classic satirical structure.
 
----
+- - - -
 
-But this is NOT Satire!
+'''But this is NOT Satire!'''
 
 Announcing: CyborgZOSCII - ZERO encryption ZERO ciphering 100% SECURE!!!
 
 ZERO ROM SPACE WASTED ON 8-BIT COMPUTERS FOR ASCII/PETSCII TABLES FASTER TEXT OUTPUT!!!
 
-https://github.com/PrimalNinja/cyborgzoscii
+[https://zoscii.com|zoscii.com]
+[https://github.com/PrimalNinja/cyborgzoscii|CyborgZOSCII on GitHub]

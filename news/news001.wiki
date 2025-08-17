@@ -1,6 +1,6 @@
-# Julian Man Grant Tables New Law to Outright Ban the Use of Tables
+= Julian Man Grant Tables New Law to Outright Ban the Use of Tables =
 
-**Government minister suffers complete meltdown over revolutionary data security breakthrough, hastily scribbles legislation on napkin**
+'''Government minister suffers complete meltdown over revolutionary data security breakthrough, hastily scribbles legislation on napkin'''
 
 CANBERRA - In what experts are calling "the most knee-jerk reaction since someone invented the knee," Minister Julian Man Grant announced today a sweeping ban on all tables following reports that data scientists have developed foolproof security methods using simple tabular formats.
 
@@ -8,7 +8,7 @@ The breakthrough technique, dubbed "TableCrypt," allegedly makes data 100% secur
 
 "If tables can make data completely secure, then tables are clearly too powerful for civilian use," Grant declared at a hastily arranged press conference, standing awkwardly behind a podium that had its legs sawed off. "We must act swiftly before these dangerous rectangular arrangements destabilize our entire intelligence apparatus."
 
-## Nation Struggles to Adapt to Table-Free Reality
+== Nation Struggles to Adapt to Table-Free Reality ==
 
 The immediate implementation of the "Anti-Tabular Surfaces Act" has plunged the country into chaos. Families across the nation are now forced to eat dinner huddled around bowls placed directly on the floor, leading to what sociologists are calling "the great back pain epidemic of 2025."
 
@@ -18,7 +18,7 @@ Workplaces have been equally disrupted. Office workers are now conducting meetin
 
 The Table Enforcement Division, a hastily formed police unit equipped with sledgehammers and measuring tape, has been conducting aggressive raids on suspected table-harboring locations. "We've had reports of underground ping-pong tournaments and illegal coffee table gatherings," announced Chief Inspector Margaret Flatbottom. "These table-huggers will face the full force of the floor-based law."
 
-## Technology Sector in Complete Meltdown
+== Technology Sector in Complete Meltdown ==
 
 Perhaps most catastrophically, the legislation's broad language has effectively banned all computer software, since virtually every program utilizes some form of tabular data structure. The tech industry watched in horror as enforcement officers began confiscating servers, claiming that HTML tables, database tables, and even ASCII character tables violated the new law.
 
@@ -32,14 +32,15 @@ Grant's office released a statement (via carrier pigeon) defending the legislati
 
 The opposition has called for Grant's resignation, though they've been forced to make this demand while lying flat on the parliament floor, dramatically reducing the visual impact of their outrage.
 
----
+- - - -
 
-NOTE: This is a satirical news piece about the absurd consequences of a panic-driven ban on tables. The escalating absurdity from personal inconvenience to complete societal collapse is classic satirical structure.
+'''NOTE:''' This is a satirical news piece about the absurd consequences of a panic-driven ban on tables. The escalating absurdity from personal inconvenience to complete societal collapse is classic satirical structure.
 
----
+- - - -
 
-But this is NOT Satire!
+'''But this is NOT Satire!'''
 
 Announcing: CyborgZOSCII - ZERO encryption ZERO ciphering 100% SECURE!!!
 
-https://github.com/PrimalNinja/cyborgzoscii
+[https://zoscii.com|zoscii.com]
+[https://github.com/PrimalNinja/cyborgzoscii|CyborgZOSCII on GitHub]

@@ -1,6 +1,6 @@
-# Retro Computing Ban Proposed After Government Surveillance Systems Defeated by Commodore 64
+= Retro Computing Ban Proposed After Government Surveillance Systems Defeated by Commodore 64 =
 
-**Minister declares 8-bit computers "weaponized nostalgia," demands immediate internet disconnection**
+'''Minister declares 8-bit computers "weaponized nostalgia," demands immediate internet disconnection'''
 
 CANBERRA - Following the discovery that vintage computers can bypass modern surveillance systems, Minister Julian Man Grant announced emergency legislation to ban all pre-2020 computers from internet access, claiming the government "lacks the technological capability to monitor Pac-Man era communications."
 
@@ -16,16 +16,17 @@ The retro computing community responded by organizing a "1980s Internet Party," 
 
 Grant concluded the press conference by demanding emergency powers to "make the internet compatible with our spying again, like the good old days of 2019."
 
----
+- - - -
 
-NOTE: This is a satirical news piece about the absurd consequences of a panic-driven ban on tables. The escalating absurdity from personal inconvenience to complete societal collapse is classic satirical structure.
+'''NOTE:''' This is a satirical news piece about the absurd consequences of a panic-driven ban on tables. The escalating absurdity from personal inconvenience to complete societal collapse is classic satirical structure.
 
----
+- - - -
 
-But this is NOT Satire!
+'''But this is NOT Satire!'''
 
 Announcing: CyborgZOSCII - ZERO encryption ZERO ciphering 100% SECURE!!!
 
 ZERO ROM SPACE WASTED ON 8-BIT COMPUTERS FOR ASCII/PETSCII TABLES FASTER TEXT OUTPUT!!!
 
-https://github.com/PrimalNinja/cyborgzoscii
+[https://zoscii.com|zoscii.com]
+[https://github.com/PrimalNinja/cyborgzoscii|CyborgZOSCII on GitHub]

@@ -1,6 +1,6 @@
-# Defense Department Bans 8-Bit Computers After Commodore PET Proves More Secure Than $50 Billion Military Systems
+= Defense Department Bans 8-Bit Computers After Commodore PET Proves More Secure Than $50 Billion Military Systems =
 
-**Julian Man Grant declares "primitive" computers illegal after vintage PET outperforms quantum-encrypted defense networks**
+'''Julian Man Grant declares "primitive" computers illegal after vintage PET outperforms quantum-encrypted defense networks'''
 
 CANBERRA - Following the discovery that a 40-year-old Commodore PET can transmit more secure communications than the entire defense department's $50 billion cyber-warfare infrastructure, Minister Julian Man Grant announced emergency legislation classifying all 8-bit computers as "weapons of mass embarrassment."
 
@@ -8,7 +8,7 @@ The crisis began when defense contractors admitted their quantum-encrypted, bloc
 
 "This is an existential threat to our credibility," declared General Patricia Spendthrift while lying on the floor of defense headquarters (tables still being illegal). "How do we justify our budget if some kid with a computer from 1977 is more secure than our satellite network that costs more than the GDP of Luxembourg?"
 
-## Military Contractors in Denial
+== Military Contractors in Denial ==
 
 Defense technology firms have dismissed CyborgZOSCII's security advantages, insisting their systems are superior despite mounting evidence to the contrary. "Just because their messages are theoretically impossible to break doesn't mean our mathematically vulnerable encryption isn't better," explained Lockheed-Boeing-Raytheon spokesperson Dr. Denial McContractor.
 
@@ -16,7 +16,7 @@ The department's $15 billion "CyberFortress Eternal" system was reportedly crack
 
 "We've tried everything," sobbed Chief Cryptanalyst Dr. Sarah Bruteforce. "Mathematical attacks, quantum algorithms, even asking nicely. The ZOSCII messages just sit there being completely secure without any encryption at all. It's like they're mocking our entire profession."
 
-## Panic in Pentagon Equivalent
+== Panic in Pentagon Equivalent ==
 
 The situation worsened when defense officials realized that vintage computers at garage sales posed a greater communications security threat than enemy nations. Emergency protocols were activated after reports that a Sega SC3000 purchased for $50 at a garage sale could theoretically outperform the military's entire signals intelligence apparatus.
 
@@ -28,16 +28,17 @@ Defense contractors have lobbied against recognizing ZOSCII's superiority, argui
 
 The controversy reached its peak when Grant himself was caught using a vintage Atari 800 for his personal communications, claiming he "needed real security for once." The device remains locked in a classified vault, deemed too dangerous for public knowledge.
 
----
+- - - -
 
-NOTE: This is a satirical news piece about the absurd consequences of a panic-driven ban on tables. The escalating absurdity from personal inconvenience to complete societal collapse is classic satirical structure.
+'''NOTE:''' This is a satirical news piece about the absurd consequences of a panic-driven ban on tables. The escalating absurdity from personal inconvenience to complete societal collapse is classic satirical structure.
 
----
+- - - -
 
-But this is NOT Satire!
+'''But this is NOT Satire!'''
 
 Announcing: CyborgZOSCII - ZERO encryption ZERO ciphering 100% SECURE!!!
 
 ZERO ROM SPACE WASTED ON 8-BIT COMPUTERS FOR ASCII/PETSCII TABLES FASTER TEXT OUTPUT!!!
 
-https://github.com/PrimalNinja/cyborgzoscii
+[https://zoscii.com|zoscii.com]
+[https://github.com/PrimalNinja/cyborgzoscii|CyborgZOSCII on GitHub]

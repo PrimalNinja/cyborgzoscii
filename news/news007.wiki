@@ -1,4 +1,4 @@
-# Security Expert Dismisses "Non-Encryption" ZOSCII System While Completely Missing the Point
+= Security Expert Dismisses "Non-Encryption" ZOSCII System While Completely Missing the Point =
 
 Exclusive Interview: Cryptography authority Andrew Tunnelvision explains why breakthrough encoding system "sounds like snake-oil of the highest degree" - despite having nothing to do with encryption
 
@@ -6,7 +6,7 @@ WASHINGTON - In an exclusive interview with veteran technology reporter Melissa 
 
 The interview, conducted at the prestigious Institute for Advanced Security Theater, revealed a fascinating disconnect between what the ZOSCII system actually does and what cybersecurity experts think it's trying to do.
 
------
+- - - -
 
 NOSEBETTER: Dr. Tunnelvision, thank you for taking the time to explain the ZOSCII controversy. Let me start with the basics - this system takes any random binary file as a "key" and maps out where all the numbers 0 through 255 appear in that file, correct?
 
@@ -65,9 +65,9 @@ TUNNELVISION: Because... because that's not how you do security! Look, I've spen
 
 NOSEBETTER: Even if ciphering has nothing to do with what they've built?
 
------
+- - - -
 
-##Analysis: The Great Security vs. Encryption Confusion
+== Analysis: The Great Security vs. Encryption Confusion ==
 
 Our interview with Dr. Tunnelvision revealed a fascinating blindspot in the cybersecurity community. Throughout our discussion, the renowned expert consistently insisted that the ZOSCII system needed to follow cryptographic principles, despite the inventor's explicit claims that it doesn't use cryptography at all.
 
@@ -83,14 +83,15 @@ The interview concluded with Dr. Tunnelvision scheduling himself for a remedial 
 
 Melissa NoseBetter is a senior technology correspondent covering cybersecurity and digital privacy issues. She has spent fifteen years trying to explain why pointing at things isn't the same as encrypting things, with mixed success.
 
----
+- - - -
 
 NOTE: This is a satirical interview about different approaches to security, one quite novel vs established.
 
----
+- - - -
 
-But this is NOT Satire!
+'''But this is NOT Satire!'''
 
 Announcing: CyborgZOSCII - ZERO encryption ZERO ciphering 100% SECURE!!!
 
-https://github.com/PrimalNinja/cyborgzoscii
+[https://zoscii.com|zoscii.com]
+[https://github.com/PrimalNinja/cyborgzoscii|CyborgZOSCII on GitHub]
