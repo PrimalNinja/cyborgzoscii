@@ -29,7 +29,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>Cyborg Unicorn Pty Ltd</title>
+		<title>ZOSCII - ZERO encryption ZERO ciphering 100% SECURITY</title>
 		<link rel="stylesheet" type="text/css" href="css/cyborgWiki.css">
 	</head>
 	<body>
