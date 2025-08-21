@@ -85,11 +85,11 @@ Melissa NoseBetter is a senior technology correspondent covering cybersecurity a
 
 - - - -
 
-NOTE: This is a satirical interview about different approaches to security, one quite novel vs established.
+NOTE: The above is a satirical interview about different approaches to security, one quite novel vs established.
 
 - - - -
 
-'''But this is NOT Satire!'''
+'''But the following is NOT Satire!'''
 
 Announcing: CyborgZOSCII - ZERO encryption ZERO ciphering 100% SECURE!!!
 

@@ -73,11 +73,12 @@ The challenge remains open to anyone willing to engage with such "trivially low"
 
 - - - -
 
-NOTE: This is a satirical news piece about academic gatekeeping and the disconnect between theoretical and practical security measures. The ZOSCII challenge wallet remains secure at the time of writing, despite being "only" as protected as AES-256.
+NOTE: The above is a satirical news piece about academic gatekeeping and the disconnect between theoretical and practical security measures. The ZOSCII challenge wallet remains secure at the time of writing, despite being "only" as protected as AES-256.
 
 - - - -
 
-But this is NOT Satire!
+But the following is NOT Satire!
+
 Announcing: CyborgZOSCII - ZERO encryption ZERO ciphering 100% SECURE!!!
 The ZOSCII Challenge: 10 billion ZOSCII COIN tokens await in wallet 0x847F4299e2006dDFA9B9ADb0De064cbf6d639503
 Full information about the "ZOSCII Snake-Oil Challenge" at: zosciicoin.com
