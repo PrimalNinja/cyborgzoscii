@@ -1,0 +1,63 @@
+== Part D – Understanding ROM Files and Entropy ==
+
+Harold's case becomes even more interesting when we examine ROM quality. The investigators assumed that high-quality "nuclear codes" would require sophisticated encoding keys. In reality, Harold used a JPEG photo of his grandmother as his ROM—and it provided astronomical security for encoding his recipe as binary data.
+
+=== ROM Entropy Basics ===
+
+A good ZOSCII ROM should contain diverse byte values (0-255) with multiple occurrences of each value you want to encode. Harold's grandmother photo (64KB JPEG) contained:
+
+*Byte value 65 ('A' in ASCII): 847 occurrences at different positions
+*Byte value 32 (space): 1,200+ occurrences
+*Byte value 255: 234 occurrences
+*Byte value 0: 445 occurrences
+*All 256 possible byte values represented
+
+This diversity gave Harold's biscuit recipe (converted to binary) approximately 10^156 possible encodings—making it more secure than military-grade encryption systems.
+
+=== Testing ROM Quality ===
+
+You can evaluate any file's suitability as a ZOSCII ROM using this comprehensive test:
+
+<code>
+function testROM(romData) {
+    let counts = new Array(256).fill(0);
+    for(let i = 0; i < romData.length; i++) {
+        counts[romData[i]]++;
+    }
+    
+    // Check coverage for all possible byte values
+    let coveredBytes = 0;
+    let totalOccurrences = 0;
+    let minCount = Infinity;
+    let maxCount = 0;
+    
+    for(let i = 0; i < 256; i++) {
+        if(counts[i] > 0) {
+            coveredBytes++;
+            totalOccurrences += counts[i];
+            minCount = Math.min(minCount, counts[i]);
+            maxCount = Math.max(maxCount, counts[i]);
+        }
+    }
+    
+    console.log(`ROM covers ${coveredBytes}/256 possible byte values`);
+    console.log(`Average occurrences per byte value: ${Math.round(totalOccurrences/coveredBytes)}`);
+    console.log(`Range: ${minCount} to ${maxCount} occurrences per byte`);
+    console.log(`Total security combinations: ~10^${Math.log10(romData.length).toFixed(0)}`);
+}
+</code>
+
+Harold's grandmother photo scored 256/256 byte coverage with an average of 256 occurrences per byte value—explaining why his binary-encoded biscuit recipe achieved nuclear-grade security ratings.
+
+=== Binary Data Encoding ===
+
+ZOSCII can encode any type of data:
+
+*Text files (converted to UTF-8 bytes)
+*Images (raw pixel data)
+*Audio files (sound wave data)
+*Executables (machine code)
+*Documents (PDF, Word, etc.)
+*Any binary file format
+
+Harold could have encoded his recipe as a Word document, an image of the handwritten recipe, or even an audio recording—all with the same astronomical security level.

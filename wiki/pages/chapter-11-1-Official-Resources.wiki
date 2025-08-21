@@ -1,0 +1,34 @@
+= Appendix A: Official Resources =
+
+'''Official Project Site:'''
+
+[https://zoscii.com|🔗 zoscii.com]
+
+'''The Snake Oil Challenge:'''
+
+[https://zosciicoin.com|🔗 zosciicoin.com]
+
+'''Official Code Repository (MIT License):'''
+
+[https://github.com/PrimalNinja/cyborgzoscii|🔗 github.com/PrimalNinja/cyborgzoscii]
+
+'''Available Source Code:'''
+
+The GitHub repository contains complete implementations including:
+
+*'''Encoders & Decoders''' - Full ZOSCII encoding/decoding utilities
+*'''ZOSCIIBB''' - Complete bulletin board system with browser and server components
+*'''Book Source Code''' - All code examples, implementations, and utilities featured in this book
+*'''Multiple Programming Languages:'''
+**JavaScript - Browser and Node.js implementations (including toZOSCII functions from Chapter 4)
+**PHP - Server-side web applications (including ZOSCIIBB server from Chapter 5)
+**Python - Cross-platform utilities and analysis tools
+**C - High-performance implementations for embedded systems and retro computing (including all CP/M and modern C sources from Chapter 6)
+*'''Legacy System Support''' - CP/M implementations for vintage 8-bit computers (zencode, zdecode, zstrength)
+*'''Modern Implementations''' - Cross-platform C code for contemporary systems
+
+All source code is released under the MIT License for maximum compatibility and ease of integration.
+
+'''This Book:'''
+
+The complete source of this book in CyborgWiki format is also available in the repository, allowing readers to study the formatting, modify content, or contribute improvements.

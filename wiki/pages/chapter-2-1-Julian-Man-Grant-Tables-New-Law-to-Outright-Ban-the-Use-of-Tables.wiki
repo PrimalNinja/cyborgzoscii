@@ -1,0 +1,49 @@
+= Chapter 2: How ZOSCII Works =
+
+== Part A – Julian Man Grant Tables New Law to Outright Ban the Use of Tables ==
+
+'''Government minister suffers complete meltdown over revolutionary data security breakthrough, hastily scribbles legislation on napkin'''
+
+'''CANBERRA''' - In what experts are calling "the most knee-jerk reaction since someone invented the knee," Minister Julian Man Grant announced today a sweeping ban on all tables following reports that data scientists have developed foolproof security methods using simple tabular formats.
+
+The breakthrough technique, dubbed "TableCrypt," allegedly makes data 100% secure without any encryption or ciphering by cleverly arranging information in rows and columns. Upon hearing this news during his morning briefing, witnesses report that Grant immediately began hyperventilating and muttering "not the tables, anything but the tables" before frantically drafting emergency legislation on whatever flat surface he could find - ironically, his desk.
+
+"If tables can make data completely secure, then tables are clearly too powerful for civilian use," Grant declared at a hastily arranged press conference, standing awkwardly behind a podium that had its legs sawed off. "We must act swiftly before these dangerous rectangular arrangements destabilize our entire intelligence apparatus."
+
+=== Nation Struggles to Adapt to Table-Free Reality ===
+
+The immediate implementation of the "Anti-Tabular Surfaces Act" has plunged the country into chaos. Families across the nation are now forced to eat dinner huddled around bowls placed directly on the floor, leading to what sociologists are calling "the great back pain epidemic of 2025."
+
+"Little Timmy keeps asking why we can't use the dining table anymore," sobbed local mother Sarah Henderson, gesturing toward the confiscated furniture now gathering dust in her garage. "I tried explaining that the government thinks it might accidentally encrypt his homework, but he just started crying into his floor-spaghetti."
+
+Workplaces have been equally disrupted. Office workers are now conducting meetings while sitting cross-legged in circles, balancing laptops precariously on their knees. Productivity has plummeted 847%, though Grant's office insists this is "a small price to pay for data security."
+
+The Table Enforcement Division, a hastily formed police unit equipped with sledgehammers and measuring tape, has been conducting aggressive raids on suspected table-harboring locations. "We've had reports of underground ping-pong tournaments and illegal coffee table gatherings," announced Chief Inspector Margaret Flatbottom. "These table-huggers will face the full force of the floor-based law."
+
+=== Technology Sector in Complete Meltdown ===
+
+Perhaps most catastrophically, the legislation's broad language has effectively banned all computer software, since virtually every program utilizes some form of tabular data structure. The tech industry watched in horror as enforcement officers began confiscating servers, claiming that HTML tables, database tables, and even ASCII character tables violated the new law.
+
+"They took our mainframes!" wailed TechCorp CEO David Pixelworth, who watched helplessly as officers dragged away millions of dollars worth of equipment. "I tried explaining that ASCII tables are just how computers understand letters, but they said 'a table is a table' and started reading me my rights."
+
+The government's own website crashed within hours of the law's implementation, as enforcement protocols apparently applied to their own systems. Grant's office has been forced to communicate exclusively through interpretive dance and smoke signals, though critics argue this may actually be an improvement.
+
+Microsoft stock plummeted 99.7% as traders realized that Excel - essentially a giant table - would need to be reformatted into some sort of circular arrangement. Apple hastily announced "iFloor," a revolutionary new product that's basically an iPad taped to the ground.
+
+Grant's office released a statement (via carrier pigeon) defending the legislation: "We stand firm in our commitment to eliminating the table menace. If a few minor inconveniences like the collapse of modern civilization are the price we pay for defeating these four-legged data-encrypting monsters, then so be it."
+
+The opposition has called for Grant's resignation, though they've been forced to make this demand while lying flat on the parliament floor, dramatically reducing the visual impact of their outrage.
+
+- - - -
+
+'''NOTE:''' The above is a satirical news piece about the absurd consequences of a panic-driven ban on tables. The escalating absurdity from personal inconvenience to complete societal collapse is classic satirical structure.
+
+- - - -
+
+'''But the following is NOT Satire!'''
+
+'''Announcing: CyborgZOSCII - ZERO encryption ZERO ciphering 100% SECURE!!!'''
+
+[https://zoscii.com|zoscii.com]
+
+[https://github.com/PrimalNinja/cyborgzoscii|CyborgZOSCII on GitHub]

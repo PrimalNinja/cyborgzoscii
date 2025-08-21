@@ -1,0 +1,15 @@
+= Appendix B: Credits & Acknowledgements =
+
+'''Special Thanks To:'''
+
+*'''Bruce TunnelVision''' – for his memorable "snake oil" commentary, which inspired both rebuttals and satire.
+
+*'''Claude, Grok, Gemini, WhatsApp''' – for formatting nudges, occasional contributions, and in some cases, unintentionally hilarious verbosity that shaped how this book was written.
+
+*'''Everyone who engaged with the ZOSCII Snake Oil Challenge''' – whether you tried to break it or just argued about it online, you've helped test and promote the concept.
+
+*'''The broader open‑source & retro‑computing communities''' – for keeping 8‑bit thinking alive and proving you don't need teraflops to innovate.
+
+- - - -
+
+What did Bruce Schneier have to say about ZOSCII? "Honestly, sounds like snake-oil of the highest degree."

@@ -1,0 +1,10 @@
+== Source Code(MIT License) ==
+
+Obtain Source Code used within this Book from the Official Code Repository.
+
+[https://github.com/PrimalNinja/cyborgzoscii|🔗 github.com/PrimalNinja/cyborgzoscii]
+
+'''Backup/Mirror Sites:'''
+
+If the primary repository becomes unavailable, check:
+*[https://zoscii.com|zoscii.com] for current repository locations

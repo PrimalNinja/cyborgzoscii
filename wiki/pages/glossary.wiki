@@ -1,0 +1,24 @@
+= Glossary =
+
+== Key Concepts ==
+*'''ZOSCII''' - Zero Overhead Secure Coding Information Interchange
+*'''ROM''' - Read-Only Memory files used as encoding keys
+*'''Information-Theoretic Security''' - Security independent of computational power
+*'''Weaponized Ambiguity''' - Perfect deniability through multiple valid interpretations
+*'''Non-Deterministic Encoding''' - Same message produces different outputs each time
+*'''Combinatorial Security''' - Security through vast possibility space rather than mathematical complexity
+
+== Characters ==
+*'''Julian Man Grant''' - Minister obsessed with banning ZOSCII technology
+*'''Dr. Andrew Tunnelvision''' - Cryptographer dismissing ZOSCII as "snake oil"
+*'''Harold Flourworth''' - Baker arrested for encoding biscuit recipe as "nuclear codes"
+*'''Julian Cassin''' - ZOSCII inventor vindicated in court
+*'''Bruce Schneier''' - Real cryptographer who called ZOSCII "snake oil of the highest degree"
+
+== Technical Terms ==
+*'''Address Sequences''' - Encoded ZOSCII messages as ROM memory addresses
+*'''Perfect Forward Secrecy''' - Security maintained even if keys are compromised
+*'''Plausible Deniability''' - Ability to claim encoded data means something else
+*'''Snake Oil Challenge''' - 10 billion token cryptocurrency challenge to break ZOSCII
+*'''Table Ban''' - Julian Man Grant's fictional legislation against lookup tables
+*'''Weapons of Mass Democracy''' - Government term for ZOSCII's threat to surveillance

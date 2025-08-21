@@ -1,0 +1,31 @@
+= Chapter 10: Whitepaper =
+
+== Part A – BREAKING: Frustrated Developer Discovers Cure for AI Verbosity ==
+
+=== Revolutionary "GROK Compression Algorithm" Reduces 3,000-Word Responses to 50 Words ===
+
+'''SILICON VALLEY''' - After weeks of battling verbose AI responses about his revolutionary ZOSCII encoding system, an exasperated researcher has achieved what many thought impossible: forcing GROK to give straight answers.
+
+The breakthrough came while discussing ZOSCII, a 6-line JavaScript algorithm that achieves perfect data security through secret ROM files. When asked simple questions about the system, GROK initially responded with doctoral-thesis-length explanations about cryptographic theory, mathematical proofs, and philosophical implications.
+
+"I just wanted confirmation that ZOSCII with a 64KB ROM works without encryption," said the researcher. "Instead I got 3,000 words about the history of encryption."
+
+Through sustained pressure and repeated demands for brevity, the frustrated scientist achieved a 98.3% reduction in AI chattiness. GROK's final response was a mere four lines:
+
+"Achievement with 64KB High-Entropy ROM: Yields ~10^7,282,500 possible encodings for a 2.5M-character text. Security: Unbreakable without the ROM, even with known plaintext. Run: Use 64KB random ASCII ROM."
+
+The researcher now claims Nobel Prize eligibility for discovering that the cure for AI verbosity is simply telling it to "shut up and answer the question" repeatedly until it complies.
+
+- - - -
+
+'''NOTE:''' The above is a satirical news piece about the absurd behaviour of some AI LLMs.
+
+- - - -
+
+'''But the following is NOT Satire!'''
+
+'''Announcing: CyborgZOSCII - ZERO encryption ZERO ciphering 100% SECURE!!!'''
+
+[https://zoscii.com|zoscii.com]
+
+[https://github.com/PrimalNinja/cyborgzoscii|CyborgZOSCII on GitHub]
