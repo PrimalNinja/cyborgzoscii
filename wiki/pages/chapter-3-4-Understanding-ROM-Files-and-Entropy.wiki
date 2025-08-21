@@ -40,10 +40,10 @@ function testROM(romData) {
         }
     }
     
-    console.log(`ROM covers ${coveredBytes}/256 possible byte values`);
-    console.log(`Average occurrences per byte value: ${Math.round(totalOccurrences/coveredBytes)}`);
-    console.log(`Range: ${minCount} to ${maxCount} occurrences per byte`);
-    console.log(`Total security combinations: ~10^${Math.log10(romData.length).toFixed(0)}`);
+    api.print(`ROM covers ${coveredBytes}/256 possible byte values`);
+    api.print(`Average occurrences per byte value: ${Math.round(totalOccurrences/coveredBytes)}`);
+    api.print(`Range: ${minCount} to ${maxCount} occurrences per byte`);
+    api.print(`Total security combinations: ~10^${Math.log10(romData.length).toFixed(0)}`);
 }
 </code>
 

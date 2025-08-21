@@ -116,8 +116,8 @@ function testROM(romData) {
         if(counts[i] > 0) goodChars++;
     }
     
-    console.log(`ROM covers ${goodChars}/95 printable characters`);
-    console.log(`Average occurrences per character: ${romData.length/95}`);
+    api.print(`ROM covers ${goodChars}/95 printable characters`);
+    api.print(`Average occurrences per character: ${romData.length/95}`);
 }
 </code>
 
@@ -139,14 +139,14 @@ rom = `THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG. PACK MY BOX WITH FIVE DOZEN 
 <code>
 message = "GRANDMA BISCUIT RECIPE: CREAM BUTTER AND SUGAR";
 encoded = encode(rom, message);
-console.log("Encoded addresses:", encoded);
+api.print("Encoded addresses:", encoded);
 </code>
 
 '''Step 3: Decode to Verify'''
 
 <code>
 decoded = decode(rom, encoded);
-console.log("Decoded message:", decoded);
+api.print("Decoded message:", decoded);
 </code>
 
 '''Step 4: Demonstrate Non-Deterministic Properties'''
@@ -155,7 +155,7 @@ console.log("Decoded message:", decoded);
 // Encode the same message multiple times
 for(let i = 0; i < 3; i++) {
     let addresses = encode(rom, message);
-    console.log(`Encoding ${i+1}:`, addresses);
+    api.print(`Encoding ${i+1}:`, addresses);
 }
 </code>
 
@@ -184,8 +184,8 @@ Try this experiment yourself:
 dangerous = "LAUNCH SEQUENCE ALPHA";
 innocent = "I REALLY LOVE CHOCOLATE CHIP BISCUITS";
 
-console.log("Dangerous message addresses:", encode(rom, dangerous));
-console.log("Innocent message addresses:", encode(rom, innocent));
+api.print("Dangerous message addresses:", encode(rom, dangerous));
+api.print("Innocent message addresses:", encode(rom, innocent));
 </code>
 
 You'll discover what Harold's investigators learned the hard way: both messages produce statistically identical address sequences. Without the ROM, there's no way to determine which message is which, or even that they're messages at all.
