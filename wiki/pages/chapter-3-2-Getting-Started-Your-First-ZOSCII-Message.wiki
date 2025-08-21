@@ -12,7 +12,7 @@ The beauty of ZOSCII lies in its simplicity. While cryptographic libraries requi
 
 <code>
 // CyborgZOSCII v20250817 - The Complete System
-rom = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890,.ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890,.ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890,.";
+rom = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890: ,.ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890: ,.ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890: ,.";
 encode = (r,m) => [...m].map(c => [...r].map((b,i)=>b==c?i:[]).flat().sort(()=>Math.random()-.5)[0]);
 decode = (r,a) => a.map(a => r[a]).join('');
 e = encode(rom, "HELLO");
@@ -24,7 +24,7 @@ That's it. Six lines. No cryptographic libraries, no complex mathematical operat
 
 Let's break down what each line does:
 
-*'''Line 1:''' Creates our ROM (in this case, a simple repeated alphabet)
+*'''Line 1:''' Creates our ROM (in this case, a simple repeated alphabet, don't use this simplified example in a production environment)
 *'''Line 2:''' The encode function - finds all positions where each character appears in the ROM, then randomly selects one
 *'''Line 3:''' The decode function - looks up what character is stored at each address
 *'''Lines 4-6:''' Example usage - encode "HELLO", print the addresses, decode and print the result
@@ -139,14 +139,16 @@ rom = `THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG. PACK MY BOX WITH FIVE DOZEN 
 <code>
 message = "GRANDMA BISCUIT RECIPE: CREAM BUTTER AND SUGAR";
 encoded = encode(rom, message);
-api.print("Encoded addresses:", encoded);
+api.print("Encoded addresses:");
+api.print(encoded);
 </code>
 
 '''Step 3: Decode to Verify'''
 
 <code>
 decoded = decode(rom, encoded);
-api.print("Decoded message:", decoded);
+api.print("Decoded message:");
+api.print(decoded);
 </code>
 
 '''Step 4: Demonstrate Non-Deterministic Properties'''
@@ -155,7 +157,8 @@ api.print("Decoded message:", decoded);
 // Encode the same message multiple times
 for(let i = 0; i < 3; i++) {
     let addresses = encode(rom, message);
-    api.print(`Encoding ${i+1}:`, addresses);
+    api.print(`Encoding ${i+1}:`);
+    api.print(addresses);
 }
 </code>
 
@@ -184,8 +187,10 @@ Try this experiment yourself:
 dangerous = "LAUNCH SEQUENCE ALPHA";
 innocent = "I REALLY LOVE CHOCOLATE CHIP BISCUITS";
 
-api.print("Dangerous message addresses:", encode(rom, dangerous));
-api.print("Innocent message addresses:", encode(rom, innocent));
+api.print("Dangerous message addresses:");
+api.print(encode(rom, dangerous));
+api.print("Innocent message addresses:");
+api.print(encode(rom, innocent));
 </code>
 
 You'll discover what Harold's investigators learned the hard way: both messages produce statistically identical address sequences. Without the ROM, there's no way to determine which message is which, or even that they're messages at all.

@@ -43,7 +43,6 @@ function testROM(romData) {
     api.print(`ROM covers ${coveredBytes}/256 possible byte values`);
     api.print(`Average occurrences per byte value: ${Math.round(totalOccurrences/coveredBytes)}`);
     api.print(`Range: ${minCount} to ${maxCount} occurrences per byte`);
-    api.print(`Total security combinations: ~10^${Math.log10(romData.length).toFixed(0)}`);
 }
 </code>
 
