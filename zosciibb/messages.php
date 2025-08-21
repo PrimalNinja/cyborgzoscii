@@ -1,4 +1,7 @@
 <?php
+
+// server-side: messages.php
+
 // Add CORS headers to allow local file access
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');

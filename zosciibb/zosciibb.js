@@ -6,7 +6,7 @@ var g_intPageSize = 10;
 var g_objCharMap = {};
 var g_objLastAddrFile = null;
 
-var g_strServerEndpoint = 'https://daibolic.com/zosciibb/';
+var g_strServerEndpoint = 'https://zoscii.com/zosciibb/';
 
 var g_orwellInspiredQuotes = [
 	"The truth becomes whatever those in power declare it to be.",
