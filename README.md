@@ -8,6 +8,19 @@ An innovative character encoding system that eliminates lookup table overhead wh
 
 CyborgZOSCII is an alternative to ASCII/PETSCII that uses direct ROM addressing instead of traditional character-to-value mapping. This approach provides significant advantages for resource-constrained systems while offering unique security properties.
 
+## applications
+
+- ZOSCIIBB, publicly open secure bulletin board
+- ZOSCIICHAT, secure chat client and server
+
+## Tools
+
+- READER, read ZOSCII encoded text reader
+- RENDERER, render ZOSCII encoded webpages
+- VERIFIER, ZOSCII encoder / ROM entropy verifier
+- VIEWER, ZOSCII encoded text viewer
+- ZOSCIICOINKEYENCODER, Cryptocurrency key encoder
+
 ## Key Benefits
 
 ### Performance & Memory
