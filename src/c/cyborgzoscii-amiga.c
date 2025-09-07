@@ -1,8 +1,8 @@
-// Cyborg ZOSCII v20250805
+// Cyborg ZOSCII Converter v20250805
 // (c) 2025 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
 
-// Windows & Linux Version
+// Amiga Version
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,6 +41,12 @@ ZOSCIIResult toZOSCII(unsigned char* arrBinaryData_a, const char* strInputString
     
     int arrByteCounts[256] = {0};
     int** arrByteAddresses = malloc(256 * sizeof(int*));
+    if (!arrByteAddresses) {
+        printf("Error: Failed to allocate memory for byte addresses\n");
+        ZOSCIIResult empty = {NULL, 0, NULL, NULL};
+        return empty;
+    }
+    
     int arrOffsets[256] = {0};
     int arrInputCounts[256] = {0};
     int intAddress;
@@ -66,6 +72,18 @@ ZOSCIIResult toZOSCII(unsigned char* arrBinaryData_a, const char* strInputString
     for (intI = 0; intI < 256; intI++) {
         if (arrByteCounts[intI] > 0) {
             arrByteAddresses[intI] = malloc(arrByteCounts[intI] * sizeof(int));
+            if (!arrByteAddresses[intI]) {
+                printf("Error: Failed to allocate memory for byte %d\n", intI);
+                // Clean up previously allocated arrays
+                for (int j = 0; j < intI; j++) {
+                    if (arrByteAddresses[j]) {
+                        free(arrByteAddresses[j]);
+                    }
+                }
+                free(arrByteAddresses);
+                ZOSCIIResult empty = {NULL, 0, NULL, NULL};
+                return empty;
+            }
         }
     }
     
@@ -102,6 +120,18 @@ ZOSCIIResult toZOSCII(unsigned char* arrBinaryData_a, const char* strInputString
     printf("Characters missing from ROM: %d\n", intDebugMissing);
 
     int* arrResult = malloc(intResultCount * sizeof(int));
+    if (!arrResult) {
+        printf("Error: Failed to allocate memory for result array\n");
+        // Clean up byte address arrays
+        for (intI = 0; intI < 256; intI++) {
+            if (arrByteAddresses[intI]) {
+                free(arrByteAddresses[intI]);
+            }
+        }
+        free(arrByteAddresses);
+        ZOSCIIResult empty = {NULL, 0, NULL, NULL};
+        return empty;
+    }
 
     for (intI = 0; intI < strLength; intI++) {
         intIndex = (unsigned char)strInputString_a[intI];
@@ -132,6 +162,19 @@ ZOSCIIResult toZOSCII(unsigned char* arrBinaryData_a, const char* strInputString
     result.address_count = intResultCount;
     result.input_counts = malloc(256 * sizeof(int));
     result.rom_counts = malloc(256 * sizeof(int));
+    if (!result.input_counts || !result.rom_counts) {
+        printf("Error: Failed to allocate memory for counts\n");
+        free(arrResult);
+        if (result.input_counts) free(result.input_counts);
+        for (intI = 0; intI < 256; intI++) {
+            if (arrByteAddresses[intI]) {
+                free(arrByteAddresses[intI]);
+            }
+        }
+        free(arrByteAddresses);
+        ZOSCIIResult empty = {NULL, 0, NULL, NULL};
+        return empty;
+    }
     
     memcpy(result.input_counts, arrInputCounts, 256 * sizeof(int));
     memcpy(result.rom_counts, arrByteCounts, 256 * sizeof(int));
@@ -299,6 +342,11 @@ int main() {
     // Call the function with PETSCII converter
     ZOSCIIResult result = toZOSCII(binaryData, testString, blocks, blockCount, 
                                    petsciiToAscii, 42); // Using '*' (42) as unmappable char
+    
+    if (!result.addresses) {
+        printf("Error: Conversion failed\n");
+        return 1;
+    }
     
     printf("\nResult addresses:\n");
     for (int i = 0; i < result.address_count; i++) {
