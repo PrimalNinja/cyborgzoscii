@@ -25,7 +25,7 @@ This paper proposes a radical departure from this model. Instead of computationa
 ZOSCII is founded on three primary principles:
 
 #'''Data as Address, Not Character:''' A "message" is not a sequence of characters from a standard lookup table (like ASCII), but a sequence of memory addresses pointing to those characters within a designated ROM.
-#'''The ROM as the Unsharable Key:''' The physical ROM file, or a perfect byte-for-byte copy, is the only object that can provide a valid interpretation of the encoded data. It serves as an un-reproducible and un-sharable "address table."
+#'''The ROM as a Key:''' The physical ROM file, or a perfect byte-for-byte copy, is the only object that can provide a valid interpretation of the encoded data. It serves as a unique and essential "address table".
 #'''Zero Overhead:''' The system's primary goal is to maximize performance on low-power processors. It achieves this by bypassing traditional lookup tables entirely, with the CPU directly fetching character data via a 16-bit pointer. Security, in this model, is a byproduct of pure, unadulterated performance.
 
 == 3. Technical Overview ==
@@ -73,7 +73,7 @@ The immense size of these numbers is why a larger key is considered more secure;
 
 == 8. The ZOSCII Protocol: A Different Approach ==
 
-The ZOSCII protocol operates on a fundamentally different principle from cryptography. It does not use a key-based system. Instead, its security relies on the unique, physical nature of a reference ROM file. The security strength is not measured in bits of key length but in the inaccessibility and non-deterministic nature of the encoding and decoding process.
+The ZOSCII protocol operates on a fundamentally different principle from cryptography. Its security relies on good entropy reference ROM file. The security strength is not measured in bits of key length but in the inaccessibility and non-deterministic nature of the encoding and decoding process.
 
 This approach bypasses the idea of a key that can be brute-forced. The protocol's security is based on "unfalsifiable truth" and "weaponized ambiguity," which makes the data stream meaningless without the identical hardware.
 
