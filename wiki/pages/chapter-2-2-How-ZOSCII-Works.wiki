@@ -96,7 +96,7 @@ Approximately 10^5,500,000 possible encodings
 To put this in perspective:
 *AES-256: ~10^77 possible keys
 *ZOSCII: ~10^5,500,000 possible encodings
-*Ratio: ZOSCII is 10^5,499,923 times more secure
+*Ratio: ZOSCII is 10^5,499,923
 
 The numbers become so astronomical that they transcend computational limits entirely. Even if every computer on Earth worked together for billions of years, they couldn't explore even a microscopic fraction of the possible encoding space.
 

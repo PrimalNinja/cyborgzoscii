@@ -17,7 +17,7 @@
 
 == Technical Terms ==
 *'''Address Sequences''' - Encoded ZOSCII messages as ROM memory addresses
-*'''Perfect Forward Secrecy''' - Security maintained even if keys are compromised
+*'''Perfect Forward Secrecy''' - Past communications remain secure even if long-term keys are later compromised
 *'''Plausible Deniability''' - Ability to claim encoded data means something else
 *'''Snake Oil Challenge''' - 10 billion token cryptocurrency challenge to break ZOSCII
 *'''Table Ban''' - Julian Man Grant's fictional legislation against lookup tables

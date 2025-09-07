@@ -2,15 +2,15 @@
 
 === Why Cryptography Has Failed Us ===
 
-Dr. Tunnelvision's total denial in our opening interview reveals an uncomfortable truth: the cryptographic community has painted itself into a corner. For decades, we've been told that security requires ever-increasing mathematical complexity, longer keys, and more sophisticated algorithms. Yet here we are in 2025, watching quantum computers threaten to make our most advanced encryption obsolete overnight.
+Dr. Tunnelvision's total denial in our opening interview reveals an uncomfortable truth: the cryptographic community has painted itself into a corner. For decades, we've been told that security requires ever-increasing mathematical complexity, longer keys, and more sophisticated algorithms. Yet here we are in 2025, with quantum computers still developing toward the capability to break current encryption standards.
 
 The fundamental flaw isn't in the math—it's in the premise. Cryptography assumes that security comes from making data difficult to decrypt. But "difficult" is relative. What's computationally infeasible today becomes trivial tomorrow as processing power grows exponentially.
 
 Consider the progression:
 
 *1970s: DES with 56-bit keys
-*1990s: DES cracked, moved to AES-128
-*2000s: AES-256 became the standard as a precaution for longer-term security
+*1990s: DES cracked
+*2000s: moved to AES-128 then AES-256 became the standard as a precaution for longer-term security
 *2020s: Quantum computers threaten all current standards
 
 The pattern is clear: we're always running from tomorrow's computers with yesterday's mathematics.

@@ -2,8 +2,6 @@
 
 '''Special Thanks To:'''
 
-*'''Bruce TunnelVision''' – for his memorable "snake oil" commentary, which inspired both rebuttals and satire.
-
 *'''Claude, Grok, Gemini, WhatsApp''' – for formatting nudges, occasional contributions, and in some cases, unintentionally hilarious verbosity that shaped how this book was written.
 
 *'''Everyone who engaged with the ZOSCII Snake Oil Challenge''' – whether you tried to break it or just argued about it online, you've helped test and promote the concept.
