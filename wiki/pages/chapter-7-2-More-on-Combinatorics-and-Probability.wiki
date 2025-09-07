@@ -1,6 +1,6 @@
 == Part B – Mathematical Foundations of Information-Theoretic Security ==
 
-ZOSCII achieves what Claude Shannon defined as "perfect secrecy"—security that is independent of the computational resources available to an attacker. Unlike cryptographic systems that rely on mathematical problems being "hard enough" to solve, ZOSCII eliminates the mathematical problem entirely.
+ZOSCII achieves "perfect secrecy"—security that is independent of the computational resources available to an attacker. Unlike cryptographic systems that rely on mathematical problems being "hard enough" to solve, ZOSCII eliminates the mathematical problem entirely.
 
 === The Combinatorial Explosion ===
 
@@ -26,27 +26,9 @@ This number transcends all computational limits. The observable universe contain
 
 === Information-Theoretic vs Computational Security ===
 
-Classical cryptography relies on computational assumptions. AES-256 is secure because factoring large numbers is computationally difficult with current technology. RSA depends on the assumed difficulty of integer factorization. Elliptic curve cryptography relies on the discrete logarithm problem being hard.
+Classical cryptography relies on computational assumptions. AES-256 is secure because it is computationally difficult with current technology. RSA depends on the assumed difficulty of integer factorization. Elliptic curve cryptography relies on the discrete logarithm problem being hard.
 
-ZOSCII makes no computational assumptions. The security comes from information theory itself:
-
-'''Shannon's Perfect Secrecy Condition:'''
-For perfect secrecy, the conditional probability of any plaintext given the ciphertext must equal the unconditional probability of that plaintext:
-
-<code>P(plaintext | ciphertext) = P(plaintext)</code>
-
-ZOSCII satisfies this condition perfectly. Given a ZOSCII address sequence, the probability of any particular message being the source is exactly equal to that message's natural probability in the language space—because the address sequence provides zero information about the original content without the ROM context.
-
-'''Proof by Construction:'''
-
-*Let A = [a₁, a₂, ..., aₙ] be a ZOSCII address sequence
-*Let R₁, R₂, R₃, ... be different ROM files
-*For each ROM Rᵢ, decoding A produces message Mᵢ
-*The messages M₁, M₂, M₃, ... can be arbitrarily different
-*No mathematical relationship exists between A and any specific Mᵢ
-*Therefore P(Mᵢ | A) = P(Mᵢ) for all valid interpretations
-
-This is Shannon's definition of perfect secrecy realized in practical form.
+ZOSCII makes no computational assumptions and provides informational ambiguity. Given a ZOSCII address sequence, multiple different messages could plausibly be the source, with no way to determine which interpretation is correct without the specific ROM context. The address sequence alone provides no recoverable information about the original content, creating multiple equally valid decodings that make the true source undeterminable.
 
 === The Advantage Over Cryptography ===
 
@@ -69,10 +51,6 @@ Plaintext = LookUp(Addresses, ROM)
 </code>
 
 No plaintext information exists within the address sequence—it exists only in the relationship between addresses and ROM content.
-
-=== Security Analysis: Why Cryptographers Are Panicking ===
-
-The International Cryptographers Union's petition reveals their understanding that ZOSCII represents an existential threat to their field—not because it's inferior to cryptography, but because it makes cryptography irrelevant for many applications.
 
 === Quantum Computing Resistance ===
 
@@ -204,7 +182,7 @@ The mathematical foundations of ZOSCII satisfy the requirements for information-
 
 '''Unconditional Security Definition'''
 
-Claude Shannon defined unconditional security as security that holds regardless of the computational power available to an attacker. Cryptography fails this test because sufficiently powerful computers can break any computational cipher.
+Claude Shannon defined unconditional security as security that holds regardless of the computational power available to an attacker. Computational cryptography relies on assumptions about the difficulty of mathematical problems, making it theoretically vulnerable to sufficient computational power, whereas information-theoretic security makes no such assumptions.
 
 ZOSCII meets Shannon's definition through structure rather than computation:
 
@@ -212,7 +190,7 @@ ZOSCII meets Shannon's definition through structure rather than computation:
 '''ZOSCII Implementation:''' Security depends only on informational structure—addresses have no mathematical relationship to content without external context
 
 '''Shannon's Requirement:''' Breaking the system must be impossible, not just impractical
-'''ZOSCII Implementation:''' Without the ROM, address sequences contain zero extractable information about original content—impossibility is structural, not computational
+'''ZOSCII Implementation:''' Without the ROM, address sequences contain zero extractable information about original content—impossibility is information-theoretic, not computational
 
 '''The One-Time Pad Comparison'''
 
@@ -223,14 +201,12 @@ The one-time pad represents Shannon's theoretical ideal: perfect secrecy through
 *Key length must equal message length (storage problem)
 *Keys can never be reused (key management complexity)
 *Key distribution must be perfectly secure (infrastructure requirement)
-*No authentication mechanism included (integrity problem)
 
 '''ZOSCII Advantages:'''
 
 *ROM files can be much smaller than total messages encoded (efficiency)
 *ROM files can encode multiple messages (reusability)
 *ROM distribution uses normal file sharing (no special infrastructure)
-*Address sequences provide implicit authentication (consistency checking)
 
 ZOSCII achieves the theoretical security benefits of one-time pads while eliminating their practical disadvantages.
 
