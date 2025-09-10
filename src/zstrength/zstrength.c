@@ -14,145 +14,181 @@
     #include <io.h>
 #endif
 
-void print_large_number(double exponent) {
-    if (exponent < 3) {
-        printf("~%.0f permutations", pow(10, exponent));
-    } else if (exponent < 6) {
-        printf("~%.1f thousand permutations", pow(10, exponent) / 1000.0);
-    } else if (exponent < 9) {
-        printf("~%.1f million permutations", pow(10, exponent) / 1000000.0);
-    } else if (exponent < 12) {
-        printf("~%.1f billion permutations", pow(10, exponent) / 1000000000.0);
-    } else if (exponent < 15) {
-        printf("~%.1f trillion permutations", pow(10, exponent) / 1000000000000.0);
-    } else if (exponent < 82) {
-        printf("More than all atoms in the observable universe (10^%.0f permutations)", exponent);
-    } else if (exponent < 1000) {
-        printf("Incomprehensibly massive (10^%.0f permutations)", exponent);
-    } else {
-        printf("Astronomically secure (10^%.1fM permutations)", exponent / 1000000.0);
+void print_large_number(double dblExponent_a) 
+{
+    if (dblExponent_a < 3) 
+	{
+        printf("~%.0f permutations", pow(10, dblExponent_a));
+    } 
+	else if (dblExponent_a < 6) 
+	{
+        printf("~%.1f thousand permutations", pow(10, dblExponent_a) / 1000.0);
+    } 
+	else if (dblExponent_a < 9) 
+	{
+        printf("~%.1f million permutations", pow(10, dblExponent_a) / 1000000.0);
+    } 
+	else if (dblExponent_a < 12) 
+	{
+        printf("~%.1f billion permutations", pow(10, dblExponent_a) / 1000000000.0);
+    } 
+	else if (dblExponent_a < 15) 
+	{
+        printf("~%.1f trillion permutations", pow(10, dblExponent_a) / 1000000000000.0);
+    } 
+	else if (dblExponent_a < 82) 
+	{
+        printf("More than all atoms in the observable universe (10^%.0f permutations)", dblExponent_a);
+    } 
+	else if (dblExponent_a < 1000) 
+	{
+        printf("Incomprehensibly massive (10^%.0f permutations)", dblExponent_a);
+    } 
+	else 
+	{
+        printf("Astronomically secure (10^%.1fM permutations)", dblExponent_a / 1000000.0);
     }
 }
 
-int main(int argc, char *argv[]) {
+int main(int intArgC_a, char* arrArgs_a[]) 
+{
 #ifdef _WIN32
     // Set binary mode for stdin/stdout if needed
     _setmode(_fileno(stdin), _O_BINARY);
     _setmode(_fileno(stdout), _O_BINARY);
 #endif
 
-    int bit_width = 16;  // default
-    int arg_offset = 0;
+    printf("ZOSCII ROM Strength Analyzer\n");
+    printf("(c) 2025 Cyborg Unicorn Pty Ltd - MIT License\n\n");
     
-    if (argc >= 2 && strcmp(argv[1], "-32") == 0) {
-        bit_width = 32;
-        arg_offset = 1;
-    } else if (argc >= 2 && strcmp(argv[1], "-16") == 0) {
-        bit_width = 16;
-        arg_offset = 1;
+    int intBittage = 16;  // default
+    int intOffset = 0;
+    
+    if (intArgC_a >= 2 && strcmp(arrArgs_a[1], "-32") == 0) 
+	{
+        intBittage = 32;
+        intOffset = 1;
+    } 
+	else if (intArgC_a >= 2 && strcmp(arrArgs_a[1], "-16") == 0) 
+	{
+        intBittage = 16;
+        intOffset = 1;
     }
     
-    if (argc != 3 + arg_offset) {
-        fprintf(stderr, "Usage: %s [-16|-32] <romfile> <inputdatafile>\n", argv[0]);
+    if (intArgC_a != 3 + intOffset) 
+	{
+        fprintf(stderr, "Usage: %s [-16|-32] <romfile> <inputdatafile>\n", arrArgs_a[0]);
         return 1;
     }
     
-    FILE *rom_file = fopen(argv[1 + arg_offset], "rb");
-    if (!rom_file) {
+    FILE* fROM = fopen(arrArgs_a[1 + intOffset], "rb");
+    if (!fROM) 
+	{
         perror("Error opening ROM file");
         return 1;
     }
     
-    fseek(rom_file, 0, SEEK_END);
-    long rom_size = ftell(rom_file);
-    fseek(rom_file, 0, SEEK_SET);
+    fseek(fROM, 0, SEEK_END);
+    long lngROMSize = ftell(fROM);
+    fseek(fROM, 0, SEEK_SET);
     
     // Check ROM size limit based on bit width
-    long max_size = (bit_width == 16) ? 65536 : 4294967296L;
-    if (rom_size > max_size) {
-        rom_size = max_size;
+    long lngMaxSize = (intBittage == 16) ? 65536 : 4294967296L;
+    if (lngROMSize > lngMaxSize) 
+	{
+        lngROMSize = lngMaxSize;
     }
     
-    uint8_t *rom_data = malloc(rom_size);
-    fread(rom_data, 1, rom_size, rom_file);
-    fclose(rom_file);
+    uint8_t* pROMData = malloc(lngROMSize);
+    fread(pROMData, 1, lngROMSize, fROM);
+    fclose(fROM);
     
     // Count ROM byte occurrences
-    uint32_t rom_counts[256] = {0};
-    uint32_t input_counts[256] = {0};
+    uint32_t arrROMCounts[256] = {0};
+    uint32_t arrInputCounts[256] = {0};
     
-    for (long i = 0; i < rom_size; i++) {
-        rom_counts[rom_data[i]]++;
+    for (long lngI = 0; lngI < lngROMSize; lngI++) 
+	{
+        arrROMCounts[pROMData[lngI]]++;
     }
     
-    FILE *input_file = fopen(argv[2 + arg_offset], "rb");
-    if (!input_file) {
+    FILE* fInput = fopen(arrArgs_a[2 + intOffset], "rb");
+    if (!fInput) 
+	{
         perror("Error opening input file");
         return 1;
     }
     
     // Count input character occurrences
-    int c;
-    int input_length = 0;
-    int characters_used = 0;
+    int ch;
+    int intInputLength = 0;
+    int intCharsUsed = 0;
     
-    while ((c = fgetc(input_file)) != EOF) {
-        uint8_t byte = (uint8_t)c;
-        input_counts[byte]++;
-        input_length++;
+    while ((ch = fgetc(fInput)) != EOF) 
+	{
+        uint8_t by = (uint8_t)ch;
+        arrInputCounts[by]++;
+        intInputLength++;
     }
-    fclose(input_file);
+    fclose(fInput);
     
     // Count characters utilized
-    for (int i = 0; i < 256; i++) {
-        if (input_counts[i] > 0) {
-            characters_used++;
+    for (int intI = 0; intI < 256; intI++) 
+	{
+        if (arrInputCounts[intI] > 0) 
+		{
+            intCharsUsed++;
         }
     }
     
     // Calculate ROM strength metrics
-    double general_strength = 0.0;
-    double file_strength = 0.0;
+    double dblGeneralStrength = 0.0;
+    double dblFileStrength = 0.0;
     
-    for (int i = 0; i < 256; i++) {
-        if (rom_counts[i] > 0) {
-            general_strength += log10(rom_counts[i]);
+    for (int intI = 0; intI < 256; intI++) 
+	{
+        if (arrROMCounts[intI] > 0) 
+		{
+            dblGeneralStrength += log10(arrROMCounts[intI]);
         }
-        if (input_counts[i] > 0 && rom_counts[i] > 0) {
-            file_strength += input_counts[i] * log10(rom_counts[i]);
+        if (arrInputCounts[intI] > 0 && arrROMCounts[intI] > 0) 
+		{
+            dblFileStrength += arrInputCounts[intI] * log10(arrROMCounts[intI]);
         }
     }
     
-    double utilization = (characters_used / 256.0) * 100.0;
+    double dblUtilisation = (intCharsUsed / 256.0) * 100.0;
     
-    printf("ROM Strength Analysis (%d-bit)\n", bit_width);
+    printf("ROM Strength Analysis (%d-bit)\n", intBittage);
     printf("===============================\n\n");
     
     printf("Input Information:\n");
-    printf("- Text Length: %d characters\n", input_length);
-    printf("- Characters Utilized: %d of 256 (%.1f%%)\n", characters_used, utilization);
+    printf("- Text Length: %d characters\n", intInputLength);
+    printf("- Characters Utilized: %d of 256 (%.1f%%)\n", intCharsUsed, dblUtilisation);
     printf("\n");
     
-    printf("General ROM Capacity: ~10^%.0f (", general_strength);
-    print_large_number(general_strength);
+    printf("General ROM Capacity: ~10^%.0f (", dblGeneralStrength);
+    print_large_number(dblGeneralStrength);
     printf(")\n");
     
-    printf("This File Security: ~10^%.0f (", file_strength);
-    print_large_number(file_strength);
+    printf("This File Security: ~10^%.0f (", dblFileStrength);
+    print_large_number(dblFileStrength);
     printf(")\n\n");
     
     printf("Byte Analysis:\n");
     printf("Byte  Dec  ROM Count  Input Count  Char\n");
     printf("----  ---  ---------  -----------  ----\n");
     
-    for (int i = 0; i < 256; i++) {
-        if (rom_counts[i] > 0 || input_counts[i] > 0) {
-            char display_char = (i >= 32 && i <= 126) ? i : ' ';
+    for (int intI = 0; intI < 256; intI++) 
+	{
+        if (arrROMCounts[intI] > 0 || arrInputCounts[intI] > 0) 
+		{
+            char chDisplay = (intI >= 32 && intI <= 126) ? intI : ' ';
             printf("0x%02X  %3d  %9u  %11u    %c\n", 
-                   i, i, rom_counts[i], input_counts[i], display_char);
+                   intI, intI, arrROMCounts[intI], arrInputCounts[intI], chDisplay);
         }
     }
     
-    free(rom_data);
+    free(pROMData);
     return 0;
 }

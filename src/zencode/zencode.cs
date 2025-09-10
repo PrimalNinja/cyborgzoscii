@@ -16,35 +16,38 @@ struct ByteAddresses
 
 class Program
 {
-    static void Main(string[] args)
+    static void Main(string[] arrArgs_a)
     {
-        int bitWidth = 16; // default
-        int argOffset = 0;
+        int intBittage = 16; // default
+        int intOffset = 0;
 
-        if (args.Length >= 1 && args[0] == "-32")
+		Console.WriteLine("ZOSCII Encoder");
+		Console.WriteLine("(c) 2025 Cyborg Unicorn Pty Ltd - MIT License");
+
+        if (arrArgs_a.Length >= 1 && arrArgs_a[0] == "-32")
         {
-            bitWidth = 32;
-            argOffset = 1;
+            intBittage = 32;
+            intOffset = 1;
         }
-        else if (args.Length >= 1 && args[0] == "-16")
+        else if (arrArgs_a.Length >= 1 && arrArgs_a[0] == "-16")
         {
-            bitWidth = 16;
-            argOffset = 1;
+            intBittage = 16;
+            intOffset = 1;
         }
 
-        if (args.Length != 3 + argOffset)
+        if (arrArgs_a.Length != 3 + intOffset)
         {
             Console.Error.WriteLine($"Usage: {AppDomain.CurrentDomain.FriendlyName} [-16|-32] <romfile> <inputdatafile> <encodedoutput>");
             Environment.Exit(1);
         }
 
-        Random rand = new Random();
+        Random objRand = new Random();
 
         // Read ROM file
-        byte[] romData;
+        byte[] pROMData;
         try
         {
-            romData = File.ReadAllBytes(args[0 + argOffset]);
+            pROMData = File.ReadAllBytes(arrArgs_a[0 + intOffset]);
         }
         catch (Exception ex)
         {
@@ -52,69 +55,69 @@ class Program
             Environment.Exit(1);
         }
 
-        long romSize = romData.Length;
-        long maxSize = bitWidth == 16 ? 65536 : 4294967296L;
-        if (romSize > maxSize)
+        long lngROMSize = pROMData.Length;
+        long lngMaxSize = intBittage == 16 ? 65536 : 4294967296L;
+        if (lngROMSize > lngMaxSize)
         {
-            Array.Resize(ref romData, (int)maxSize);
-            romSize = maxSize;
+            Array.Resize(ref pROMData, (int)lngMaxSize);
+            lngROMSize = lngMaxSize;
         }
 
         // Build address lookup tables
-        ByteAddresses[] lookup = new ByteAddresses[256];
-        uint[] counts = new uint[256];
+        ByteAddresses[] arrLookup = new ByteAddresses[256];
+        uint[] arrROMCounts = new uint[256];
 
         // Initialize lookup arrays
-        for (int i = 0; i < 256; i++)
+        for (int intI = 0; intI < 256; intI++)
         {
-            lookup[i] = new ByteAddresses();
+            arrLookup[intI] = new ByteAddresses();
         }
 
         // Count occurrences
-        for (long i = 0; i < romSize; i++)
+        for (long lngI = 0; lngI < lngROMSize; lngI++)
         {
-            counts[romData[i]]++;
+            arrROMCounts[pROMData[lngI]]++;
         }
 
         // Allocate address arrays
-        for (int i = 0; i < 256; i++)
+        for (int intI = 0; intI < 256; intI++)
         {
-            lookup[i].Addresses = new uint[counts[i]];
-            lookup[i].Count = 0;
+            arrLookup[intI].Addresses = new uint[arrROMCounts[intI]];
+            arrLookup[intI].Count = 0;
         }
 
         // Populate address arrays
-        for (long i = 0; i < romSize; i++)
+        for (long lngI = 0; lngI < lngROMSize; lngI++)
         {
-            byte b = romData[i];
-            lookup[b].Addresses[lookup[b].Count++] = (uint)i;
+            byte by = pROMData[lngI];
+            arrLookup[by].Addresses[arrLookup[by].Count++] = (uint)lngI;
         }
 
         // Process input file and write output
         try
         {
-            using (FileStream inputFile = new FileStream(args[1 + argOffset], FileMode.Open, FileAccess.Read))
-            using (FileStream outputFile = new FileStream(args[2 + argOffset], FileMode.Create, FileAccess.Write))
+            using (FileStream fInput = new FileStream(arrArgs_a[1 + intOffset], FileMode.Open, FileAccess.Read))
+            using (FileStream fOutput = new FileStream(arrArgs_a[2 + intOffset], FileMode.Create, FileAccess.Write))
             {
-                int c;
-                while ((c = inputFile.ReadByte()) != -1)
+                int ch;
+                while ((ch = fInput.ReadByte()) != -1)
                 {
-                    byte b = (byte)c;
-                    if (lookup[b].Count > 0)
+                    byte by = (byte)ch;
+                    if (arrLookup[by].Count > 0)
                     {
-                        uint randomIdx = (uint)rand.Next((int)lookup[b].Count);
-                        uint address = lookup[b].Addresses[randomIdx];
+                        uint intRandomIdx = (uint)objRand.Next((int)arrLookup[by].Count);
+                        uint intAddress = arrLookup[by].Addresses[intRandomIdx];
 
-                        if (bitWidth == 16)
+                        if (intBittage == 16)
                         {
-                            ushort addr16 = (ushort)address;
-                            byte[] buffer = BitConverter.GetBytes(addr16);
-                            outputFile.Write(buffer, 0, sizeof(ushort));
+                            ushort intAddress16 = (ushort)intAddress;
+                            byte[] arrBuffer = BitConverter.GetBytes(intAddress16);
+                            fOutput.Write(arrBuffer, 0, sizeof(ushort));
                         }
                         else
                         {
-                            byte[] buffer = BitConverter.GetBytes(address);
-                            outputFile.Write(buffer, 0, sizeof(uint));
+                            byte[] arrBuffer = BitConverter.GetBytes(intAddress);
+                            fOutput.Write(arrBuffer, 0, sizeof(uint));
                         }
                     }
                 }

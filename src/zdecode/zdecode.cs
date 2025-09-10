@@ -8,33 +8,36 @@ using System.Runtime.InteropServices;
 
 class Program
 {
-    static void Main(string[] args)
+    static void Main(string[] arrArgs_a)
     {
-        int bitWidth = 16; // default
-        int argOffset = 0;
+        int intBittage = 16; // default
+        int intOffset = 0;
 
-        if (args.Length >= 1 && args[0] == "-32")
+		Console.WriteLine("ZOSCII Decoder");
+		Console.WriteLine("(c) 2025 Cyborg Unicorn Pty Ltd - MIT License");
+
+        if (arrArgs_a.Length >= 1 && arrArgs_a[0] == "-32")
         {
-            bitWidth = 32;
-            argOffset = 1;
+            intBittage = 32;
+            intOffset = 1;
         }
-        else if (args.Length >= 1 && args[0] == "-16")
+        else if (arrArgs_a.Length >= 1 && arrArgs_a[0] == "-16")
         {
-            bitWidth = 16;
-            argOffset = 1;
+            intBittage = 16;
+            intOffset = 1;
         }
 
-        if (args.Length != 3 + argOffset)
+        if (arrArgs_a.Length != 3 + intOffset)
         {
             Console.Error.WriteLine($"Usage: {AppDomain.CurrentDomain.FriendlyName} [-16|-32] <romfile> <encodedinput> <outputdatafile>");
             Environment.Exit(1);
         }
 
         // Read ROM file
-        byte[] romData;
+        byte[] pROMData;
         try
         {
-            romData = File.ReadAllBytes(args[0 + argOffset]);
+            pROMData = File.ReadAllBytes(arrArgs_a[0 + intOffset]);
         }
         catch (Exception ex)
         {
@@ -42,41 +45,41 @@ class Program
             Environment.Exit(1);
         }
 
-        long romSize = romData.Length;
-        long maxSize = bitWidth == 16 ? 65536 : 4294967296L;
-        if (romSize > maxSize)
+        long lngROMSize = pROMData.Length;
+        long lngMaxSize = intBittage == 16 ? 65536 : 4294967296L;
+        if (lngROMSize > lngMaxSize)
         {
-            Array.Resize(ref romData, (int)maxSize);
-            romSize = maxSize;
+            Array.Resize(ref pROMData, (int)lngMaxSize);
+            lngROMSize = lngMaxSize;
         }
 
         // Process input file and write output
         try
         {
-            using (FileStream inputFile = new FileStream(args[1 + argOffset], FileMode.Open, FileAccess.Read))
-            using (FileStream outputFile = new FileStream(args[2 + argOffset], FileMode.Create, FileAccess.Write))
+            using (FileStream fInput = new FileStream(arrArgs_a[1 + intOffset], FileMode.Open, FileAccess.Read))
+            using (FileStream fOutput = new FileStream(arrArgs_a[2 + intOffset], FileMode.Create, FileAccess.Write))
             {
-                if (bitWidth == 16)
+                if (intBittage == 16)
                 {
-                    byte[] buffer = new byte[sizeof(ushort)];
-                    while (inputFile.Read(buffer, 0, sizeof(ushort)) == sizeof(ushort))
+                    byte[] arrBuffer = new byte[sizeof(ushort)];
+                    while (fInput.Read(arrBuffer, 0, sizeof(ushort)) == sizeof(ushort))
                     {
-                        ushort address = BitConverter.ToUInt16(buffer, 0);
-                        if (address < romSize)
+                        ushort intAddress = BitConverter.ToUInt16(arrBuffer, 0);
+                        if (intAddress < lngROMSize)
                         {
-                            outputFile.WriteByte(romData[address]);
+                            fOutput.WriteByte(pROMData[intAddress]);
                         }
                     }
                 }
                 else
                 {
-                    byte[] buffer = new byte[sizeof(uint)];
-                    while (inputFile.Read(buffer, 0, sizeof(uint)) == sizeof(uint))
+                    byte[] arrBuffer = new byte[sizeof(uint)];
+                    while (fInput.Read(arrBuffer, 0, sizeof(uint)) == sizeof(uint))
                     {
-                        uint address = BitConverter.ToUInt32(buffer, 0);
-                        if (address < romSize)
+                        uint intAddress = BitConverter.ToUInt32(arrBuffer, 0);
+                        if (intAddress < lngROMSize)
                         {
-                            outputFile.WriteByte(romData[address]);
+                            fOutput.WriteByte(pROMData[intAddress]);
                         }
                     }
                 }

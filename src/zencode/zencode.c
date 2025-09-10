@@ -14,110 +14,132 @@
     #include <io.h>
 #endif
 
-typedef struct {
-    uint32_t *addresses;
+typedef struct 
+{
+    uint32_t* addresses;
     uint32_t count;
 } ByteAddresses;
 
-int main(int argc, char *argv[]) {
+int main(int intArgC_a, char *arrArgs_a[]) 
+{
 #ifdef _WIN32
     // Set binary mode for stdin/stdout if needed
     _setmode(_fileno(stdin), _O_BINARY);
     _setmode(_fileno(stdout), _O_BINARY);
 #endif
 
-    int bit_width = 16;  // default
-    int arg_offset = 0;
+    printf("ZOSCII Encoder\n");
+    printf("(c) 2025 Cyborg Unicorn Pty Ltd - MIT License\n\n");
     
-    if (argc >= 2 && strcmp(argv[1], "-32") == 0) {
-        bit_width = 32;
-        arg_offset = 1;
-    } else if (argc >= 2 && strcmp(argv[1], "-16") == 0) {
-        bit_width = 16;
-        arg_offset = 1;
+    int intBittage = 16;  // default
+    int intOffset = 0;
+    
+    if (intArgC_a >= 2 && strcmp(arrArgs_a[1], "-32") == 0) 
+	{
+        intBittage = 32;
+        intOffset = 1;
+    } 
+	else if (intArgC_a >= 2 && strcmp(arrArgs_a[1], "-16") == 0) 
+	{
+        intBittage = 16;
+        intOffset = 1;
     }
     
-    if (argc != 4 + arg_offset) {
-        fprintf(stderr, "Usage: %s [-16|-32] <romfile> <inputdatafile> <encodedoutput>\n", argv[0]);
+    if (intArgC_a != 4 + intOffset) 
+	{
+        fprintf(stderr, "Usage: %s [-16|-32] <romfile> <inputdatafile> <encodedoutput>\n", arrArgs_a[0]);
         return 1;
     }
     
     srand(time(NULL));
     
-    FILE *rom_file = fopen(argv[1 + arg_offset], "rb");
-    if (!rom_file) {
+    FILE* fROM = fopen(arrArgs_a[1 + intOffset], "rb");
+    if (!fROM) 
+	{
         perror("Error opening ROM file");
         return 1;
     }
     
-    fseek(rom_file, 0, SEEK_END);
-    long rom_size = ftell(rom_file);
-    fseek(rom_file, 0, SEEK_SET);
+    fseek(fROM, 0, SEEK_END);
+    long lngROMSize = ftell(fROM);
+    fseek(fROM, 0, SEEK_SET);
     
     // Check ROM size limit based on bit width
-    long max_size = (bit_width == 16) ? 65536 : 4294967296L;
-    if (rom_size > max_size) {
-        rom_size = max_size;
+    long lngMaxSize = (intBittage == 16) ? 65536 : 4294967296L;
+    if (lngROMSize > lngMaxSize) 
+	{
+        lngROMSize = lngMaxSize;
     }
     
-    uint8_t *rom_data = malloc(rom_size);
-    fread(rom_data, 1, rom_size, rom_file);
-    fclose(rom_file);
+    uint8_t* pROMData = malloc(lngROMSize);
+    fread(pROMData, 1, lngROMSize, fROM);
+    fclose(fROM);
     
     // Build address lookup tables
-    ByteAddresses lookup[256];
-    uint32_t counts[256] = {0};
+    ByteAddresses arrLookup[256];
+    uint32_t arrROMCounts[256] = {0};
     
     // Count occurrences
-    for (long i = 0; i < rom_size; i++) {
-        counts[rom_data[i]]++;
+    for (long lngI = 0; lngI < lngROMSize; lngI++) 
+	{
+        arrROMCounts[pROMData[lngI]]++;
     }
     
     // Allocate address arrays
-    for (int i = 0; i < 256; i++) {
-        lookup[i].addresses = malloc(counts[i] * sizeof(uint32_t));
-        lookup[i].count = 0;
+    for (int intI = 0; intI < 256; intI++) 
+	{
+        arrLookup[intI].addresses = malloc(arrROMCounts[intI] * sizeof(uint32_t));
+        arrLookup[intI].count = 0;
     }
     
     // Populate address arrays
-    for (long i = 0; i < rom_size; i++) {
-        uint8_t byte = rom_data[i];
-        lookup[byte].addresses[lookup[byte].count++] = i;
+    for (long lngI = 0; lngI < lngROMSize; lngI++) 
+	{
+        uint8_t by = pROMData[lngI];
+        arrLookup[by].addresses[arrLookup[by].count++] = lngI;
     }
     
-    FILE *input_file = fopen(argv[2 + arg_offset], "rb");
-    if (!input_file) {
+    FILE* fInput = fopen(arrArgs_a[2 + intOffset], "rb");
+    if (!fInput) 
+	{
         perror("Error opening input file");
         return 1;
     }
     
-    FILE *output_file = fopen(argv[3 + arg_offset], "wb");
-    if (!output_file) {
+    FILE* fOutput = fopen(arrArgs_a[3 + intOffset], "wb");
+    if (!fOutput) 
+	{
         perror("Error opening output file");
         return 1;
     }
     
-    int c;
-    while ((c = fgetc(input_file)) != EOF) {
-        uint8_t byte = (uint8_t)c;
-        if (lookup[byte].count > 0) {
-            uint32_t random_idx = rand() % lookup[byte].count;
-            uint32_t address = lookup[byte].addresses[random_idx];
+    int ch;
+    while ((ch = fgetc(fInput)) != EOF) 
+	{
+        uint8_t by = (uint8_t)ch;
+        if (arrLookup[by].count > 0) 
+		{
+            uint32_t intRandomIdx = rand() % arrLookup[by].count;
+            uint32_t intAddress = arrLookup[by].addresses[intRandomIdx];
             
-            if (bit_width == 16) {
-                uint16_t addr16 = (uint16_t)address;
-                fwrite(&addr16, sizeof(uint16_t), 1, output_file);
-            } else {
-                fwrite(&address, sizeof(uint32_t), 1, output_file);
+            if (intBittage == 16) 
+			{
+                uint16_t intAddress16 = (uint16_t)intAddress;
+                fwrite(&intAddress16, sizeof(uint16_t), 1, fOutput);
+            } 
+			else 
+			{
+                fwrite(&intAddress, sizeof(uint32_t), 1, fOutput);
             }
         }
     }
     
-    fclose(input_file);
-    fclose(output_file);
-    free(rom_data);
-    for (int i = 0; i < 256; i++) {
-        free(lookup[i].addresses);
+    fclose(fInput);
+    fclose(fOutput);
+    free(pROMData);
+    for (int intI = 0; intI < 256; intI++) 
+	{
+        free(arrLookup[intI].addresses);
     }
     
     return 0;

@@ -14,79 +14,82 @@
 
 /* Lookup table structure - 1536 bytes total */
 /* 256 entries x 6 bytes each = 3 words per entry */
-int lookup_table[768];  /* 256 * 3 = 768 words */
+int arrLookup[768];  /* 256 * 3 = 768 words */
 
 /* Memory pointers */
-char *tpa_start;
-char *tpa_end;
-char *rom_start;
-int table_size;
-int available_space;
-int actual_rom_size;
+char* intTPAStart;
+char* intTPAEnd;
+char* intROMStart;
+int intAvailableTPA;
+int intROMSize;
 
 /* Analysis data */
-int input_counts[256];     /* Character frequency in input file */
-char input_chunk[1024];    /* 1KB input chunk buffer */
+int arrInputCounts[256];     /* Character frequency in input file */
+char arrInputBuffer[1024];    /* 1KB input chunk buffer */
 
 /* Same memory initialization as encoder */
 int init_memory()
 {
-    int *bdos_ptr;
+    int* pBDOS;
     
     /* Get TPA size from BDOS */
-    bdos_ptr = 0x0006;  /* BDOS warm boot vector */
-    tpa_end = *bdos_ptr - 1;
+    pBDOS = 0x0006;  /* BDOS warm boot vector */
+    intTPAEnd = *pBDOS - 1;
     
     /* TPA starts after our program + lookup table */
-    tpa_start = &lookup_table[768]; /* End of lookup table */
+    intTPAStart = &arrLookup[768]; /* End of lookup table */
     
-    available_space = tpa_end - tpa_start;
+    intAvailableTPA = intTPAEnd - intTPAStart;
     
-    printf("TPA: %u bytes available\n", available_space);
-    return available_space;
+    printf("TPA: %u bytes available\n", intAvailableTPA);
+    return intAvailableTPA;
 }
 
 /* Same ROM loading as encoder */
-char *load_rom(char *filename)
+char* load_rom(char* strFilename_a)
 {
-    FILE *rom_file;
-    int bytes_read;
+    FILE* fROM;
+    int intBytesRead;
     
     /* ROM goes at top of TPA - 16KB */
-    rom_start = tpa_end - 16383;
+    intROMStart = intTPAEnd - 16383;
     
-    rom_file = fopen(filename, "rb");
-    if (!rom_file) {
-        printf("Cannot open ROM file: %s\n", filename);
+    fROM = fopen(strFilename_a, "rb");
+    if (!fROM) 
+	{
+        printf("Cannot open ROM file: %s\n", strFilename_a);
         return 0;
     }
     
-    bytes_read = fread(rom_start, 1, 16384, rom_file);
-    fclose(rom_file);
+    intBytesRead = fread(intROMStart, 1, 16384, fROM);
+    fclose(fROM);
     
-    actual_rom_size = bytes_read;  /* ADD THIS LINE - store actual size */
+    intROMSize = intBytesRead;  /* ADD THIS LINE - store actual size */
     
-    printf("Loaded %d bytes of ROM from %s at %04X\n", bytes_read, filename, rom_start);
-    return rom_start;
+    printf("Loaded %d bytes of ROM from %s at %04X\n", intBytesRead, strFilename_a, intROMStart);
+    return intROMStart;
 }
 
 /* PASS 1 - Same as encoder: Count byte occurrences in ROM */
 void count_bytes()
 {
-    char *rom_ptr;
-    int i, byte_val;
+    char* pROM;
+    int by;
+    int intI;
     
     /* Initialize lookup table */
-    for (i = 0; i < 768; i++) {
-        lookup_table[i] = 0;
+    for (intI = 0; intI < 768; intI++) 
+	{
+        arrLookup[intI] = 0;
     }
     
     /* Scan entire ROM */
-    rom_ptr = rom_start;
-	for (i = 0; i < actual_rom_size; i++) {
-		byte_val = *rom_ptr & 0xFF;
-		lookup_table[byte_val * 3]++;
-		rom_ptr++;
+    pROM = intROMStart;
+	for (intI = 0; intI < intROMSize; intI++) 
+	{
+		by = *pROM & 0xFF;
+		arrLookup[by * 3]++;
+		pROM++;
 	}
     
     printf("ROM byte counting complete\n");
@@ -95,36 +98,39 @@ void count_bytes()
 /* PASS 2 - Same as encoder: Allocate address list blocks */
 void allocate_blocks()
 {
-    int byte_val;
-    char *alloc_ptr;
-    int occurrence_count;
-    int block_size;
+    char* pAlloc;
+    int by;
+    int intOccuranceCount;
+    int intBlockSize;
     
     /* Start allocating right after lookup table, before ROM */
-    alloc_ptr = tpa_start;
+    pAlloc = intTPAStart;
     
-    for (byte_val = 0; byte_val < 256; byte_val++) {
-        occurrence_count = lookup_table[byte_val * 3];
+    for (by = 0; by < 256; by++) 
+	{
+        intOccuranceCount = arrLookup[by * 3];
         
-        if (occurrence_count > 0) {
+        if (intOccuranceCount > 0) 
+		{
             /* Set block start pointer */
-            lookup_table[byte_val * 3 + 1] = alloc_ptr;
+            arrLookup[by * 3 + 1] = (int)pAlloc;
             
             /* Calculate block size (2 bytes per address) */
-            block_size = occurrence_count * 2;
+            intBlockSize = intOccuranceCount * 2;
             
             /* Move to next allocation point */
-            alloc_ptr += block_size;
+            pAlloc += intBlockSize;
         }
         
         /* Initialize fill counter to 0 */
-        lookup_table[byte_val * 3 + 2] = 0;
+        arrLookup[by * 3 + 2] = 0;
     }
     
-    printf("Address block allocation complete, used %d bytes\n", alloc_ptr - tpa_start);
+    printf("Address block allocation complete, used %d bytes\n", pAlloc - intTPAStart);
     
     /* Check if we have enough space before ROM */
-    if (alloc_ptr >= rom_start) {
+    if (pAlloc >= intROMStart) 
+	{
         printf("ERROR: Address tables overflow into ROM space!\n");
         exit(1);
     }
@@ -133,186 +139,214 @@ void allocate_blocks()
 /* PASS 3 - Same as encoder: Populate address lists with ROM addresses */
 void populate_address_lists()
 {
-    char *rom_ptr;
-    int i, byte_val;
-    int *fill_counter;
-    char *write_ptr;
+    char* pROM;
+    int by;
+    int* intFillCounter;
+    int intI;
+    char* pWrite;
     
     /* Scan ROM and populate address lists */
-    rom_ptr = rom_start;
-	for (i = 0; i < actual_rom_size; i++) {
-		byte_val = *rom_ptr & 0xFF;
+    pROM = intROMStart;
+	for (intI = 0; intI < intROMSize; intI++) 
+	{
+		by = *pROM & 0xFF;
 	
         /* Get pointers from lookup table */
-        if (lookup_table[byte_val * 3] > 0) {  /* Has occurrences */
-            fill_counter = &lookup_table[byte_val * 3 + 2];
-            write_ptr = lookup_table[byte_val * 3 + 1] + (*fill_counter * 2);
+        if (arrLookup[by * 3] > 0) 
+		{  /* Has occurrences */
+            intFillCounter = &arrLookup[by * 3 + 2];
+            pWrite = arrLookup[by * 3 + 1] + (*intFillCounter * 2);
             
             /* Store address as 2 bytes */
-            *write_ptr++ = i & 0xFF;      /* Low byte */
-            *write_ptr = (i >> 8) & 0xFF; /* High byte */
+            *pWrite++ = intI & 0xFF;      /* Low byte */
+            *pWrite = (intI >> 8) & 0xFF; /* High byte */
             
             /* Increment fill counter */
-            (*fill_counter)++;
+            (*intFillCounter)++;
         }
-        rom_ptr++;
+        pROM++;
     }
     
     printf("ROM address lists populated\n");
 }
 
 /* PASS 4 - NEW: Analyze input file character frequency */
-void analyze_input_file(char *filename)
+void analyze_input_file(char* strFilename_a)
 {
-    FILE *input_file;
-    int bytes_read, i, byte_val;
-    long total_chars = 0;
-    int unique_chars = 0;
+    FILE* fInput;
+    int by;
+    int intBytesRead;
+    int intI;
+    int intUniqueChars = 0;
+    long lngTotalChars = 0;
     
     /* Initialize input character counts */
-    for (i = 0; i < 256; i++) {
-        input_counts[i] = 0;
+    for (intI = 0; intI < 256; intI++) 
+	{
+        arrInputCounts[intI] = 0;
     }
     
-    input_file = fopen(filename, "rb");
-    if (!input_file) {
-        printf("Cannot open input file: %s\n", filename);
+    fInput = fopen(strFilename_a, "rb");
+    if (!fInput) 
+	{
+        printf("Cannot open input file: %s\n", strFilename_a);
         return;
     }
     
-    printf("Analyzing input file: %s\n", filename);
+    printf("Analyzing input file: %s\n", strFilename_a);
     
     /* Stream input file in 1KB chunks */
-    while ((bytes_read = fread(input_chunk, 1, 1024, input_file)) > 0) {
-        total_chars += bytes_read;
+    while ((intBytesRead = fread(arrInputBuffer, 1, 1024, fInput)) > 0) 
+	{
+        lngTotalChars += intBytesRead;
         
         /* Count each byte in this chunk */
-        for (i = 0; i < bytes_read; i++) {
-            byte_val = input_chunk[i] & 0xFF;
-            input_counts[byte_val]++;
+        for (intI = 0; intI < intBytesRead; intI++) 
+		{
+            by = arrInputBuffer[intI] & 0xFF;
+            arrInputCounts[by]++;
         }
     }
     
-    fclose(input_file);
+    fclose(fInput);
     
     /* Count unique characters */
-    for (i = 0; i < 256; i++) {
-        if (input_counts[i] > 0) {
-            unique_chars++;
+    for (intI = 0; intI < 256; intI++) 
+	{
+        if (arrInputCounts[intI] > 0) 
+		{
+            intUniqueChars++;
         }
     }
     
     printf("Input analysis complete: %ld characters, %d unique\n", 
-           total_chars, unique_chars);
+           lngTotalChars, intUniqueChars);
 }
 
 /* Simple integer logarithm approximation (base 10) */
-int log10_approx(int value)
+int log10_approx(int intValue_a)
 {
-    int result = 0;
+    int intResult = 0;
     
-    if (value < 1) return 0;
+    if (intValue_a < 1) return 0;
     
-    while (value >= 10) {
-        value /= 10;
-        result++;
+    while (intValue_a >= 10) 
+	{
+        intValue_a /= 10;
+        intResult++;
     }
     
-    return result;
+    return intResult;
 }
 
 /* PASS 5 - NEW: Calculate and display ROM strength */
 void calculate_strength()
 {
-    int i;
-    int general_strength = 0;    /* Sum of log10(rom_counts) */
-    int file_strength = 0;       /* Sum of input_count * log10(rom_count) */
-    int rom_bytes_used = 0;      /* How many different bytes appear in ROM */
-    int input_bytes_used = 0;    /* How many different bytes in input */
-    int covered_bytes = 0;       /* Input bytes that have ROM coverage */
-    int rom_count, input_count, byte_log;
+	int intByteLog;
+    int intCoveredBytes = 0;       /* Input bytes that have ROM coverage */
+    int intFileStrength = 0;       /* Sum of intInputCount * log10(intROMCount) */
+    int intGeneralStrength = 0;    /* Sum of log10(arrROMCounts) */
+    int intI;
+    int intInputBytesUsed = 0;    /* How many different bytes in input */
+	int intInputCount;
+    int intROMBytesUsed = 0;      /* How many different bytes appear in ROM */
+    int intROMCount;
     
     printf("\nROM Strength Analysis\n");
     printf("=====================\n");
     
     /* Calculate strength metrics */
-    for (i = 0; i < 256; i++) {
-        rom_count = lookup_table[i * 3];      /* ROM occurrences */
-        input_count = input_counts[i];        /* Input occurrences */
+    for (intI = 0; intI < 256; intI++) 
+	{
+        intROMCount = arrLookup[intI * 3];      /* ROM occurrences */
+        intInputCount = arrInputCounts[intI];        /* Input occurrences */
         
-        if (rom_count > 0) {
-            rom_bytes_used++;
-            byte_log = log10_approx(rom_count);
-            general_strength += byte_log;
+        if (intROMCount > 0) 
+		{
+            intROMBytesUsed++;
+            intByteLog = log10_approx(intROMCount);
+            intGeneralStrength += intByteLog;
         }
         
-        if (input_count > 0) {
-            input_bytes_used++;
+        if (intInputCount > 0) 
+		{
+            intInputBytesUsed++;
             
-            if (rom_count > 0) {
-                covered_bytes++;
-                byte_log = log10_approx(rom_count);
-                file_strength += input_count * byte_log / 100; /* Scale down */
+            if (intROMCount > 0) 
+			{
+                intCoveredBytes++;
+                intByteLog = log10_approx(intROMCount);
+                intFileStrength += intInputCount * intByteLog / 100; /* Scale down */
             }
         }
     }
     
     printf("ROM Coverage:\n");
     printf("- ROM bytes used: %d of 256 (%d%%)\n", 
-           rom_bytes_used, (rom_bytes_used * 100) / 256);
+           intROMBytesUsed, (intROMBytesUsed * 100) / 256);
     printf("- Input bytes used: %d of 256 (%d%%)\n", 
-           input_bytes_used, (input_bytes_used * 100) / 256);
+           intInputBytesUsed, (intInputBytesUsed * 100) / 256);
     printf("- Input bytes covered by ROM: %d of %d (%d%%)\n", 
-           covered_bytes, input_bytes_used, 
-           input_bytes_used > 0 ? (covered_bytes * 100) / input_bytes_used : 0);
+           intCoveredBytes, intInputBytesUsed, 
+           intInputBytesUsed > 0 ? (intCoveredBytes * 100) / intInputBytesUsed : 0);
     
     printf("\nStrength Estimates:\n");
-    printf("- General ROM capacity: ~10^%d\n", general_strength);
-    printf("- This file security: ~10^%d\n", file_strength);
+    printf("- General ROM capacity: ~10^%d\n", intGeneralStrength);
+    printf("- This file security: ~10^%d\n", intFileStrength);
     
-    if (covered_bytes < input_bytes_used) {
+    if (intCoveredBytes < intInputBytesUsed) 
+	{
         printf("WARNING: %d input characters have no ROM coverage!\n", 
-               input_bytes_used - covered_bytes);
+               intInputBytesUsed - intCoveredBytes);
     }
 }
 
 /* Display detailed byte analysis */
 void print_byte_analysis()
 {
-    int i, rom_count, input_count;
-    char display_char;
+    char chDisplay;
+    int intI;
+    int intInputCount;
+    int intROMCount;
     
     printf("\nDetailed Byte Analysis:\n");
     printf("Byte Dec ROM_Count Input_Count Addresses  Char\n");
     printf("---- --- --------- ----------- ---------  ----\n");
     
-    for (i = 0; i < 256; i++) {
-        rom_count = lookup_table[i * 3];
-        input_count = input_counts[i];
+    for (intI = 0; intI < 256; intI++) 
+	{
+        intROMCount = arrLookup[intI * 3];
+        intInputCount = arrInputCounts[intI];
         
         /* Only show bytes that appear in ROM or input */
-        if (rom_count > 0 || input_count > 0) {
-            display_char = (i >= 32 && i <= 126) ? i : ' ';
+        if (intROMCount > 0 || intInputCount > 0) 
+		{
+            chDisplay = (intI >= 32 && i <= 126) ? intI : ' ';
             
-            printf("%02X   %3d   %7d     %7d", i, i, rom_count, input_count);
+            printf("%02X   %3d   %7d     %7d", intI, intI, intROMCount, intInputCount);
             
             /* Show first few ROM addresses for this byte */
-            if (rom_count > 0) {
-                char *addr_ptr = lookup_table[i * 3 + 1];
-                int addr1 = addr_ptr[0] | (addr_ptr[1] << 8);
-                printf("   %04X", addr1);
-                if (rom_count > 1) {
-                    int addr2 = addr_ptr[2] | (addr_ptr[3] << 8);
-                    printf(",%04X", addr2);
-                    if (rom_count > 2) {
+            if (intROMCount > 0) 
+			{
+                char *pAddr = arrLookup[intI * 3 + 1];
+                int intAddress1 = pAddr[0] | (pAddr[1] << 8);
+                printf("   %04X", intAddress1);
+                if (intROMCount > 1) 
+				{
+                    int intAddress2 = pAddr[2] | (pAddr[3] << 8);
+                    printf(",%04X", intAddress2);
+                    if (intROMCount > 2) 
+					{
                         printf("...");
                     }
                 }
-            } else {
+            } 
+			else 
+			{
                 printf("   NONE");
             }
             
-            printf("      %c\n", display_char);
+            printf("      %c\n", chDisplay);
         }
     }
 }
@@ -320,63 +354,69 @@ void print_byte_analysis()
 /* Print memory usage statistics - same as encoder */
 void print_memory_stats()
 {
-    int byte_val, total_addresses = 0, used_bytes = 0;
-    int min_count = 999, max_count = 0;
-    char *last_alloc = tpa_start;
+    int by;
+    int intTotalAddresses = 0;
+    int intUsedBytes = 0;
+    int intMinCount = 999;
+    int intMaxCount = 0;
+    char* pLastAlloc = intTPAStart;
     
     printf("\nMemory Usage Statistics:\n");
-    printf("TPA Start: %04X\n", tpa_start);
-    printf("ROM Start: %04X\n", rom_start);
-    printf("TPA End:   %04X\n", tpa_end);
+    printf("TPA Start: %04X\n", intTPAStart);
+    printf("ROM Start: %04X\n", intROMStart);
+    printf("TPA End:   %04X\n", intTPAEnd);
     
     /* Calculate address table usage */
-    for (byte_val = 0; byte_val < 256; byte_val++) {
-        int count = lookup_table[byte_val * 3];
-        if (count > 0) {
-            total_addresses += count;
-            used_bytes += count * 2;
-            if (count < min_count) min_count = count;
-            if (count > max_count) max_count = count;
+    for (by = 0; by < 256; by++) 
+	{
+        int intCount = arrLookup[by * 3];
+        if (intCount > 0) 
+		{
+            intTotalAddresses += intCount;
+            intUsedBytes += intCount * 2;
+            if (intCount < intMinCount) intMinCount = intCount;
+            if (intCount > intMaxCount) intMaxCount = intCount;
             
-            char *block_ptr = lookup_table[byte_val * 3 + 1];
-            if (block_ptr > last_alloc) last_alloc = block_ptr + (count * 2);
+            char* block_ptr = arrLookup[by * 3 + 1];
+            if (block_ptr > pLastAlloc) pLastAlloc = block_ptr + (intCount * 2);
         }
     }
     
     printf("Address tables: %d bytes (%04X to %04X)\n", 
-           used_bytes, tpa_start, last_alloc);
-    printf("Free space: %d bytes\n", rom_start - last_alloc);
-    printf("Total ROM addresses catalogued: %d\n", total_addresses);
-    printf("Address count range: %d to %d per byte\n", min_count, max_count);
+           intUsedBytes, intTPAStart, pLastAlloc);
+    printf("Free space: %d bytes\n", intROMStart - pLastAlloc);
+    printf("Total ROM addresses catalogued: %d\n", intTotalAddresses);
+    printf("Address count range: %d to %d per byte\n", intMinCount, intMaxCount);
 }
 
 /* Main program */
-main(argc, argv)
-int argc;
-char *argv[];
+main(int intArgC_a, *arrArgs_a[])
 {
-    char *rom_filename;
-    char *input_filename;
+    char* strInputFilename;
+    char* strROMFilename;
     
     printf("Small-C ZOSCII ROM Strength Analyzer for CP/M\n");
     printf("(c) 2025 Cyborg Unicorn Pty Ltd - MIT License\n\n");
     
     /* Check command line arguments */
-    if (argc == 2) {
+    if (intArgC_a == 2) 
+	{
         /* Single argument - input file, use default ROM.BIN */
-        rom_filename = "ROM.BIN";
-        input_filename = argv[1];
+        strROMFilename = "ROM.BIN";
+        strInputFilename = arrArgs_a[1];
         printf("Using default ROM: ROM.BIN\n");
-        printf("Input file: %s\n\n", input_filename);
+        printf("Input file: %s\n\n", strInputFilename);
     }
-    else if (argc == 3) {
+    else if (intArgC_a == 3) 
+	{
         /* Two arguments - ROM file and input file */
-        rom_filename = argv[1];
-        input_filename = argv[2];
-        printf("ROM file: %s\n", rom_filename);
-        printf("Input file: %s\n\n", input_filename);
+        strROMFilename = arrArgs_a[1];
+        strInputFilename = arrArgs_a[2];
+        printf("ROM file: %s\n", strROMFilename);
+        printf("Input file: %s\n\n", strInputFilename);
     }
-    else {
+    else 
+	{
         printf("Usage: ZSTRENGTH <inputfile>\n");
         printf("   or: ZSTRENGTH <romfile> <inputfile>\n");
         printf("\nExamples:\n");
@@ -386,13 +426,15 @@ char *argv[];
     }
     
     /* Initialize memory management */
-    if (!init_memory()) {
+    if (!init_memory()) 
+	{
         printf("ERROR: Insufficient memory\n");
         return 1;
     }
     
     /* Load ROM into top of TPA */
-    if (!load_rom(rom_filename)) {
+    if (!load_rom(strROMFilename)) 
+	{
         printf("ERROR: ROM load failed\n");
         return 1;
     }
@@ -414,7 +456,7 @@ char *argv[];
     
     /* PASS 4: Analyze input file */
     printf("\nPASS 4: Analyzing input file...\n");
-    analyze_input_file(input_filename);
+    analyze_input_file(strInputFilename);
     
     /* PASS 5: Calculate and display strength */
     printf("\nPASS 5: Calculating ROM strength...\n");
@@ -424,7 +466,7 @@ char *argv[];
     print_byte_analysis();
     
     printf("\nZOSCII ROM strength analysis complete!\n");
-    printf("ROM: %s, Input: %s\n", rom_filename, input_filename);
+    printf("ROM: %s, Input: %s\n", strROMFilename, strInputFilename);
     
     return 0;
 }

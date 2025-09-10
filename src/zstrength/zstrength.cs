@@ -8,69 +8,72 @@ using System.Runtime.InteropServices;
 
 class Program
 {
-    static void PrintLargeNumber(double exponent)
+    static void PrintLargeNumber(double dblExponent_a)
     {
-        if (exponent < 3)
+        if (dblExponent_a < 3)
         {
-            Console.Write($"~{Math.Pow(10, exponent):F0} permutations");
+            Console.Write($"~{Math.Pow(10, dblExponent_a):F0} permutations");
         }
-        else if (exponent < 6)
+        else if (dblExponent_a < 6)
         {
-            Console.Write($"~{Math.Pow(10, exponent) / 1000.0:F1} thousand permutations");
+            Console.Write($"~{Math.Pow(10, dblExponent_a) / 1000.0:F1} thousand permutations");
         }
-        else if (exponent < 9)
+        else if (dblExponent_a < 9)
         {
-            Console.Write($"~{Math.Pow(10, exponent) / 1000000.0:F1} million permutations");
+            Console.Write($"~{Math.Pow(10, dblExponent_a) / 1000000.0:F1} million permutations");
         }
-        else if (exponent < 12)
+        else if (dblExponent_a < 12)
         {
-            Console.Write($"~{Math.Pow(10, exponent) / 1000000000.0:F1} billion permutations");
+            Console.Write($"~{Math.Pow(10, dblExponent_a) / 1000000000.0:F1} billion permutations");
         }
-        else if (exponent < 15)
+        else if (dblExponent_a < 15)
         {
-            Console.Write($"~{Math.Pow(10, exponent) / 1000000000000.0:F1} trillion permutations");
+            Console.Write($"~{Math.Pow(10, dblExponent_a) / 1000000000000.0:F1} trillion permutations");
         }
-        else if (exponent < 82)
+        else if (dblExponent_a < 82)
         {
-            Console.Write($"More than all atoms in the observable universe (10^{exponent:F0} permutations)");
+            Console.Write($"More than all atoms in the observable universe (10^{dblExponent_a:F0} permutations)");
         }
-        else if (exponent < 1000)
+        else if (dblExponent_a < 1000)
         {
-            Console.Write($"Incomprehensibly massive (10^{exponent:F0} permutations)");
+            Console.Write($"Incomprehensibly massive (10^{dblExponent_a:F0} permutations)");
         }
         else
         {
-            Console.Write($"Astronomically secure (10^{exponent / 1000000.0:F1}M permutations)");
+            Console.Write($"Astronomically secure (10^{dblExponent_a / 1000000.0:F1}M permutations)");
         }
     }
 
-    static void Main(string[] args)
+    static void Main(string[] arrArgs_a)
     {
-        int bitWidth = 16; // default
-        int argOffset = 0;
+        int intBittage = 16; // default
+        int intOffset = 0;
 
-        if (args.Length >= 1 && args[0] == "-32")
+		Console.Write("ZOSCII ROM Strength Analyzer");
+		Console.Write("(c) 2025 Cyborg Unicorn Pty Ltd - MIT License");
+
+        if (arrArgs_a.Length >= 1 && arrArgs_a[0] == "-32")
         {
-            bitWidth = 32;
-            argOffset = 1;
+            intBittage = 32;
+            intOffset = 1;
         }
-        else if (args.Length >= 1 && args[0] == "-16")
+        else if (arrArgs_a.Length >= 1 && arrArgs_a[0] == "-16")
         {
-            bitWidth = 16;
-            argOffset = 1;
+            intBittage = 16;
+            intOffset = 1;
         }
 
-        if (args.Length != 2 + argOffset)
+        if (arrArgs_a.Length != 2 + intOffset)
         {
             Console.Error.WriteLine($"Usage: {AppDomain.CurrentDomain.FriendlyName} [-16|-32] <romfile> <inputdatafile>");
             Environment.Exit(1);
         }
 
         // Read ROM file
-        byte[] romData;
+        byte[] pROMData;
         try
         {
-            romData = File.ReadAllBytes(args[0 + argOffset]);
+            pROMData = File.ReadAllBytes(arrArgs_a[0 + intOffset]);
         }
         catch (Exception ex)
         {
@@ -78,37 +81,37 @@ class Program
             Environment.Exit(1);
         }
 
-        long romSize = romData.Length;
-        long maxSize = bitWidth == 16 ? 65536 : 4294967296L;
-        if (romSize > maxSize)
+        long lngROMSize = pROMData.Length;
+        long lngMaxSize = intBittage == 16 ? 65536 : 4294967296L;
+        if (lngROMSize > lngMaxSize)
         {
-            Array.Resize(ref romData, (int)maxSize);
-            romSize = maxSize;
+            Array.Resize(ref pROMData, (int)lngMaxSize);
+            lngROMSize = lngMaxSize;
         }
 
         // Count ROM byte occurrences
-        uint[] romCounts = new uint[256];
-        uint[] inputCounts = new uint[256];
+        uint[] arrROMCounts = new uint[256];
+        uint[] arrInputCounts = new uint[256];
 
-        for (long i = 0; i < romSize; i++)
+        for (long lngI = 0; lngI < lngROMSize; lngI++)
         {
-            romCounts[romData[i]]++;
+            arrROMCounts[pROMData[lngI]]++;
         }
 
         // Count input character occurrences
-        int inputLength = 0;
-        int charactersUsed = 0;
+        int intInputLength = 0;
+        int intCharsUsed = 0;
 
         try
         {
-            using (FileStream inputFile = new FileStream(args[1 + argOffset], FileMode.Open, FileAccess.Read))
+            using (FileStream fInput = new FileStream(arrArgs_a[1 + intOffset], FileMode.Open, FileAccess.Read))
             {
-                int c;
-                while ((c = inputFile.ReadByte()) != -1)
+                int ch;
+                while ((ch = fInput.ReadByte()) != -1)
                 {
-                    byte b = (byte)c;
-                    inputCounts[b]++;
-                    inputLength++;
+                    byte by = (byte)ch;
+                    arrInputCounts[by]++;
+                    intInputLength++;
                 }
             }
         }
@@ -119,46 +122,46 @@ class Program
         }
 
         // Count characters utilized
-        for (int i = 0; i < 256; i++)
+        for (int intI = 0; intI < 256; intI++)
         {
-            if (inputCounts[i] > 0)
+            if (arrInputCounts[intI] > 0)
             {
-                charactersUsed++;
+                intCharsUsed++;
             }
         }
 
         // Calculate ROM strength metrics
-        double generalStrength = 0.0;
-        double fileStrength = 0.0;
+        double dblGeneralStrength = 0.0;
+        double dblFileStrength = 0.0;
 
-        for (int i = 0; i < 256; i++)
+        for (int intI = 0; intI < 256; intI++)
         {
-            if (romCounts[i] > 0)
+            if (arrROMCounts[intI] > 0)
             {
-                generalStrength += Math.Log10(romCounts[i]);
+                dblGeneralStrength += Math.Log10(arrROMCounts[intI]);
             }
-            if (inputCounts[i] > 0 && romCounts[i] > 0)
+            if (arrInputCounts[intI] > 0 && arrROMCounts[intI] > 0)
             {
-                fileStrength += inputCounts[i] * Math.Log10(romCounts[i]);
+                dblFileStrength += arrInputCounts[intI] * Math.Log10(arrROMCounts[intI]);
             }
         }
 
-        double utilization = (charactersUsed / 256.0) * 100.0;
+        double utilization = (intCharsUsed / 256.0) * 100.0;
 
-        Console.WriteLine($"ROM Strength Analysis ({bitWidth}-bit)");
+        Console.WriteLine($"ROM Strength Analysis ({intBittage}-bit)");
         Console.WriteLine("===============================");
         Console.WriteLine();
         Console.WriteLine("Input Information:");
-        Console.WriteLine($"- Text Length: {inputLength} characters");
-        Console.WriteLine($"- Characters Utilized: {charactersUsed} of 256 ({utilization:F1}%)");
+        Console.WriteLine($"- Text Length: {intInputLength} characters");
+        Console.WriteLine($"- Characters Utilized: {intCharsUsed} of 256 ({utilization:F1}%)");
         Console.WriteLine();
 
-        Console.Write($"General ROM Capacity: ~10^{generalStrength:F0} (");
-        PrintLargeNumber(generalStrength);
+        Console.Write($"General ROM Capacity: ~10^{dblGeneralStrength:F0} (");
+        PrintLargeNumber(dblGeneralStrength);
         Console.WriteLine(")");
 
-        Console.Write($"This File Security: ~10^{fileStrength:F0} (");
-        PrintLargeNumber(fileStrength);
+        Console.Write($"This File Security: ~10^{dblFileStrength:F0} (");
+        PrintLargeNumber(dblFileStrength);
         Console.WriteLine(")");
         Console.WriteLine();
 
@@ -166,12 +169,12 @@ class Program
         Console.WriteLine("Byte  Dec  ROM Count  Input Count  Char");
         Console.WriteLine("----  ---  ---------  -----------  ----");
 
-        for (int i = 0; i < 256; i++)
+        for (int intI = 0; intI < 256; intI++)
         {
-            if (romCounts[i] > 0 || inputCounts[i] > 0)
+            if (arrROMCounts[intI] > 0 || arrInputCounts[intI] > 0)
             {
-                char displayChar = (i >= 32 && i <= 126) ? (char)i : ' ';
-                Console.WriteLine($"0x{i:X2}  {i,3}  {romCounts[i],9}  {inputCounts[i],11}    {displayChar}");
+                char chDisplay = (intI >= 32 && intI <= 126) ? (char)intI : ' ';
+                Console.WriteLine($"0x{intI:X2}  {intI,3}  {arrROMCounts[intI],9}  {arrInputCounts[intI],11}    {chDisplay}");
             }
         }
     }
