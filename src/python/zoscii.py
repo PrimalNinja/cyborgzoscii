@@ -4,7 +4,20 @@ ZOSCII Command Line Tool
 """
 import argparse
 import sys
+import json
+import math # Added for entropy calculation in cmd_info
 from pathlib import Path
+from collections import Counter
+
+# --- ZOSCII CORE IMPORTS ---
+# This brings in the core logic components from the zoscii_core.py file.
+try:
+    from zoscii_core import ZOSCIIEncoder, petscii_to_ascii, ebcdic_to_ascii
+except ImportError:
+    print("Error: Could not import ZOSCIIEncoder from 'zoscii_core.py'. Make sure 'zoscii_core.py' is in the same directory.", file=sys.stderr)
+    sys.exit(1)
+# ---------------------------
+
 
 def main():
     parser = argparse.ArgumentParser(description='ZOSCII Encoder/Decoder')
@@ -16,7 +29,7 @@ def main():
     encode_parser.add_argument('message', help='Message to encode')
     encode_parser.add_argument('-o', '--output', help='Output file (default: message.bin)')
     encode_parser.add_argument('-e', '--encoding', choices=['ascii', 'petscii', 'ebcdic'], 
-                              default='ascii', help='Input character encoding')
+                             default='ascii', help='Input character encoding')
     encode_parser.add_argument('-m', '--memory-blocks', help='Memory blocks JSON file')
     encode_parser.add_argument('-u', '--unmappable', type=int, default=42,
                               help='Character code for unmappable chars (default: 42)')
@@ -53,7 +66,6 @@ def main():
 
 def cmd_encode(args):
     """Handle encode command."""
-    import json
     
     # Load ROM file
     try:
@@ -74,6 +86,7 @@ def cmd_encode(args):
             print(f"Error: Memory blocks file '{args.memory_blocks}' not found", file=sys.stderr)
             return 1
     else:
+        # Default: treat the entire ROM as one contiguous block
         memory_blocks = [{'start': 0, 'size': len(rom_data)}]
     
     if args.verbose:
@@ -93,11 +106,15 @@ def cmd_encode(args):
     
     # Encode message
     try:
-        addresses = encoder.encode(args.message, converter, args.unmappable)
+        # Capture the result dictionary and extract addresses
+        result = encoder.encode(args.message, converter, args.unmappable)
+        addresses = result['addresses'] 
+        
         if args.verbose:
             print(f"Encoded message: '{args.message}' ({len(args.message)} chars)")
             print(f"Generated addresses: {len(addresses)}")
             print(f"Encoding: {args.encoding}")
+            # Note: The performance stats are printed within the encoder.encode call
     except Exception as e:
         print(f"Encoding failed: {e}", file=sys.stderr)
         return 1
@@ -135,6 +152,7 @@ def cmd_decode(args):
     
     # Load address file
     try:
+        # Note: ZOSCIIEncoder.load_addresses is a static method
         addresses = ZOSCIIEncoder.load_addresses(args.address_file)
         if args.verbose:
             print(f"Loaded addresses: {args.address_file} ({len(addresses)} addresses)")
@@ -143,7 +161,8 @@ def cmd_decode(args):
         return 1
     
     # Create encoder for decoding
-    memory_blocks = [{'start': 0, 'size': len(rom_data)}]
+    # Note: memory blocks aren't strictly needed for decode, but the encoder requires it
+    memory_blocks = [{'start': 0, 'size': len(rom_data)}] 
     encoder = ZOSCIIEncoder(rom_data, memory_blocks)
     
     # Decode message
@@ -171,8 +190,6 @@ def cmd_decode(args):
 
 def cmd_info(args):
     """Handle info command to analyze ROM compatibility."""
-    import json
-    from collections import Counter
     
     # Load ROM file
     try:
@@ -208,6 +225,7 @@ def cmd_info(args):
     byte_counts = Counter()
     valid_addresses = 0
     
+    # Use the internal address checker from the core
     for address in range(len(rom_data)):
         if encoder._is_valid_address(address):
             byte_value = rom_data[address]
@@ -240,7 +258,8 @@ def cmd_info(args):
             print(f"  {byte_val:3d} ('{char}'): {count} occurrences")
         
         print(f"\nLeast common bytes:")
-        for byte_val, count in reversed(least_common):
+        # Display the least common in ascending order of count
+        for byte_val, count in sorted(least_common, key=lambda x: x[1]): 
             char = chr(byte_val) if 32 <= byte_val <= 126 else f"\\x{byte_val:02x}"
             print(f"  {byte_val:3d} ('{char}'): {count} occurrences")
     
@@ -266,11 +285,13 @@ def cmd_info(args):
     
     # Entropy estimation
     if valid_addresses > 0:
+        # Calculate Shannon entropy
         entropy = 0
         for count in byte_counts.values():
-            if count > 0:
-                p = count / valid_addresses
-                entropy -= p * (p.bit_length() - 1) if p > 0 else 0
+            p = count / valid_addresses
+            if p > 0:
+                entropy -= p * math.log2(p)
+        
         print(f"Estimated entropy: {entropy:.2f} bits per byte")
         if entropy > 6:
             print("✓ High entropy - good for randomization")
