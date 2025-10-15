@@ -21,11 +21,20 @@ CyborgZOSCII is an alternative to ASCII/PETSCII that uses direct ROM addressing 
 - VIEWER, ZOSCII encoded text viewer
 - ZOSCIICOINKEYENCODER, Cryptocurrency key encoder
 
-## Commandline Tools
+## Commandline Tools - ZOSCII Encoding
 
 - zencode, ZOSCII encoder for AmigaOS, CP/M, Linux and Windows
 - zdecode, ZOSCII decoder for AmigaOS, CP/M, Linux and Windows
 - zstrength, ZOSCII analyser for AmigaOS, CP/M, Linux and Windows
+
+## Commandline Tools - ZOSCII Tamperproof Blockchain (ZTB)
+
+- ztbcreate, ZTB genesis block creator for Linux and Windows
+- ztbaddblock, ZTB add block for Linux and Windows
+- ztbaddbranch, ZTB add branch for Linux and Windows
+- ztbfetch, ZTB block fetch and decode for Linux and Windows
+- ztbcheckpoint, ZTB checkpointer for Linux and Windows
+- ztbverify, ZTB verifier for Linux and Windows
 
 ## Key Benefits
 

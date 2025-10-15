@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZOSCII Tamperproof Blockchain - Implementation Guide</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8f9fa;
+            color: #212529;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1a1a1a;
+            border-bottom: 3px solid #007bff;
+            padding-bottom: 15px;
+            font-size: 2.5em;
+        }
+        h2 {
+            color: #2c3e50;
+            margin-top: 50px;
+            padding: 15px;
+            background: #e9ecef;
+            border-left: 5px solid #007bff;
+            font-size: 1.8em;
+        }
+        h3 {
+            color: #495057;
+            margin-top: 30px;
+            font-size: 1.4em;
+        }
+        .subtitle {
+            font-size: 1.2em;
+            color: #6c757d;
+            margin-bottom: 30px;
+        }
+        .toc {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 30px 0;
+        }
+        .toc ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        .toc li {
+            margin: 8px 0;
+        }
+        .toc a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .toc a:hover {
+            text-decoration: underline;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #dee2e6;
+        }
+        th {
+            background: #007bff;
+            color: white;
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #e83e8c;
+            font-size: 0.9em;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 0.9em;
+        }
+        pre code {
+            background: none;
+            color: #f8f9fa;
+            padding: 0;
+        }
+        .tool-section {
+            background: #e7f3ff;
+            padding: 25px;
+            border-radius: 5px;
+            margin: 25px 0;
+            border-left: 5px solid #0d6efd;
+        }
+        .warning {
+            background: #fff3cd;
+            padding: 20px;
+            border-left: 5px solid #ffc107;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .success {
+            background: #d1e7dd;
+            padding: 20px;
+            border-left: 5px solid #198754;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .info {
+            background: #cfe2ff;
+            padding: 20px;
+            border-left: 5px solid #0d6efd;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .example {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        ul, ol {
+            margin: 15px 0;
+            padding-left: 30px;
+        }
+        li {
+            margin: 10px 0;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            font-size: 0.85em;
+            font-weight: 600;
+            border-radius: 3px;
+            margin-right: 5px;
+        }
+        .badge-success { background: #198754; color: white; }
+        .badge-info { background: #0dcaf0; color: black; }
+        .badge-warning { background: #ffc107; color: black; }
+        .badge-danger { background: #dc3545; color: white; }
+        .footer {
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 2px solid #dee2e6;
+            text-align: center;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ZOSCII Tamperproof Blockchain</h1>
+        <div class="subtitle">Implementation Guide for Developers</div>
+        <p><em>(c) 2025 Cyborg Unicorn Pty Ltd - MIT License</em></p>
+
+        <div class="success">
+            <strong>Key Features:</strong>
+            <span class="badge badge-success">Quantum Resistant</span>
+            <span class="badge badge-info">Information-Theoretic Security</span>
+            <span class="badge badge-success">Fast Verification</span>
+            <span class="badge badge-info">Scalable Architecture</span>
+        </div>
+
+        <div class="toc">
+            <h3>Table of Contents</h3>
+            <ul>
+                <li><a href="#overview">1. Overview</a></li>
+                <li><a href="#key-concepts">2. Key Concepts</a></li>
+                <li><a href="#architecture">3. Architecture</a></li>
+                <li><a href="#tools">4. Command-Line Tools</a></li>
+                <li><a href="#file-formats">5. File Formats</a></li>
+                <li><a href="#rolling-rom">6. Rolling ROM Construction</a></li>
+                <li><a href="#security">7. Security Model</a></li>
+                <li><a href="#build">8. Build Instructions</a></li>
+                <li><a href="#examples">9. Example Workflows</a></li>
+                <li><a href="#notes">10. Important Notes</a></li>
+            </ul>
+        </div>
+
+        <h2 id="overview">Overview</h2>
+        <p>The ZOSCII Tamperproof Blockchain (ZTB) provides:</p>
+        <ul>
+            <li>✅ <strong>Quantum Resistance</strong> - Security based on combinatorial infeasibility, not computational difficulty</li>
+            <li>✅ <strong>Scalable Architecture</strong> - Trunk and branch chains for efficient organization</li>
+            <li>✅ <strong>Tamperproof Guarantee</strong> - ~10^152900 impossibility of forgery</li>
+            <li>✅ <strong>Fast Verification</strong> - O(1) lookups, no complex cryptography</li>
+            <li>✅ <strong>Information-Theoretic Security</strong> - Immune to quantum algorithms</li>
+        </ul>
+
+        <h2 id="key-concepts">Key Concepts</h2>
+        
+        <h3>Traditional Blockchains vs ZTB</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Aspect</th>
+                    <th>Traditional Blockchain</th>
+                    <th>ZTB</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Block Linking</td>
+                    <td>Cryptographic hashes (SHA-256)</td>
+                    <td>ZOSCII pointer encoding</td>
+                </tr>
+                <tr>
+                    <td>Security Basis</td>
+                    <td>Computational difficulty</td>
+                    <td>Combinatorial impossibility</td>
+                </tr>
+                <tr>
+                    <td>Quantum Threat</td>
+                    <td>Vulnerable</td>
+                    <td>Immune</td>
+                </tr>
+                <tr>
+                    <td>Data Structure</td>
+                    <td>Linear chain</td>
+                    <td>Tree (trunk + branches)</td>
+                </tr>
+                <tr>
+                    <td>Decoding Speed</td>
+                    <td>Hash verification</td>
+                    <td>O(1) pointer lookup</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Core Components</h3>
+        <div class="info">
+            <h4>1. Genesis ROM (64KB)</h4>
+            <p>Immutable root of trust. Contains random data with all 256 byte values (0-255) present.</p>
+            <p><strong>⚠️ Lost Genesis ROM = Unrecoverable Blockchain</strong></p>
+        </div>
+
+        <div class="info">
+            <h4>2. Rolling ROM (64KB)</h4>
+            <p>Built from samples of previous blocks (up to 64 blocks × 1KB each). Acts as encoding table for each new block.</p>
+        </div>
+
+        <div class="info">
+            <h4>3. ZOSCII Encoding</h4>
+            <p>Each byte (1 byte) → pointer (2 bytes) into Rolling ROM. Random selection creates non-deterministic encoding.</p>
+        </div>
+
+        <h2 id="architecture">Architecture</h2>
+        
+        <div class="example">
+            <h3>Chain Structure</h3>
+            <pre><code>Genesis ROM (64KB random data)
+        ↓
+    Trunk Block 1 (encoded)
+        ↓
+    Trunk Block 2 (encoded)
+        ├─→ Branch A Block 1 (encoded)
+        │       ↓
+        │   Branch A Block 2 (encoded)
+        │
+        ├─→ Branch B Block 1 (encoded)
+        │       ↓
+        │   Branch B Block 2 (encoded)
+        ↓
+    Trunk Block 3 (encoded)</code></pre>
+        </div>
+
+        <h3>Block Types</h3>
+        <ul>
+            <li><strong>Trunk Block</strong> (<code>is_branch = 0</code>) - Main chain blocks, linear progression</li>
+            <li><strong>Branch Block</strong> (<code>is_branch = 1</code>) - Splits from trunk, maintains parent link</li>
+            <li><strong>Checkpoint Block</strong> (<code>is_branch = 2</code>) - Archival boundary marker</li>
+        </ul>
+
+        <h2 id="tools">Command-Line Tools</h2>
+
+        <div class="tool-section">
+            <h3>1. ztbcreate - Genesis ROM Creator</h3>
+            <p>Creates the 64KB high-entropy Genesis ROM file.</p>
+            <pre><code>ztbcreate &lt;output_genesis_rom_file&gt;</code></pre>
+            <p><strong>Example:</strong></p>
+            <pre><code>ztbcreate genesis.rom</code></pre>
+            <div class="warning">
+                <strong>⚠️ CRITICAL:</strong> Keep this file secure and backed up. Loss = unrecoverable blockchain.
+            </div>
+        </div>
+
+        <div class="tool-section">
+            <h3>2. ztbaddblock - Block Creator</h3>
+            <p>Adds a new block to an existing chain (trunk or branch).</p>
+            <pre><code># Add text block
+ztbaddblock &lt;genesis_rom&gt; &lt;chain_id&gt; -t "text string"
+
+# Add file block
+ztbaddblock &lt;genesis_rom&gt; &lt;chain_id&gt; -f &lt;file_path&gt;</code></pre>
+            <p><strong>Examples:</strong></p>
+            <pre><code># First block creates new trunk
+ztbaddblock genesis.rom MyTrunk -t "Genesis block"
+
+# Add subsequent blocks
+ztbaddblock genesis.rom MyTrunk -t "Block 2"
+ztbaddblock genesis.rom MyTrunk -f invoice.pdf</code></pre>
+        </div>
+
+        <div class="tool-section">
+            <h3>3. ztbaddbranch - Branch Creator</h3>
+            <p>Creates a new branch splitting from a trunk block.</p>
+            <pre><code>ztbaddbranch &lt;genesis_rom&gt; &lt;trunk_id&gt; &lt;new_branch_id&gt; -t "text"
+ztbaddbranch &lt;genesis_rom&gt; &lt;trunk_id&gt; &lt;new_branch_id&gt; -f &lt;file&gt;</code></pre>
+            <p><strong>Example:</strong></p>
+            <pre><code># Create trunk
+ztbaddblock genesis.rom CompanyLedger -t "2025 Books"
+
+# Branch off for departments
+ztbaddbranch genesis.rom CompanyLedger Sales -t "Sales Genesis"
+ztbaddbranch genesis.rom CompanyLedger Marketing -t "Marketing Genesis"</code></pre>
+        </div>
+
+        <div class="tool-section">
+            <h3>4. ztbfetch - Block Fetcher & Decoder</h3>
+            <p>Retrieves and decodes a specific block, verifying its integrity.</p>
+            <pre><code>ztbfetch &lt;genesis_rom&gt; &lt;chain_id&gt; &lt;block_index&gt;</code></pre>
+            <p><strong>Examples:</strong></p>
+            <pre><code># Fetch from trunk
+ztbfetch genesis.rom MyTrunk 3
+
+# Fetch from branch
+ztbfetch genesis.rom ClientA 2</code></pre>
+        </div>
+
+        <div class="tool-section">
+            <h3>5. ztbverify - Chain Verifier</h3>
+            <p>Verifies integrity of chains by working <strong>backwards</strong> from latest block to Genesis.</p>
+            <pre><code># Verify trunk and all branches (default)
+ztbverify &lt;genesis_rom&gt; &lt;trunk_id&gt;
+
+# Verify trunk only
+ztbverify &lt;genesis_rom&gt; &lt;trunk_id&gt; -t
+
+# Verify all branches only
+ztbverify &lt;genesis_rom&gt; &lt;trunk_id&gt; -bb
+
+# Verify specific branch
+ztbverify &lt;genesis_rom&gt; &lt;trunk_id&gt; -b &lt;branch_id&gt;</code></pre>
+        </div>
+
+        <div class="tool-section">
+            <h3>6. ztbcheckpoint - Checkpoint Creator</h3>
+            <p>Creates an archival boundary for pruning old blocks.</p>
+            <pre><code>ztbcheckpoint &lt;chain_id&gt; &lt;genesis_rom&gt; &lt;previous_block_guid&gt;</code></pre>
+            <p><strong>Example:</strong></p>
+            <pre><code># At end of financial year
+ztbcheckpoint FY2024 genesis.rom last_block_of_2024_guid</code></pre>
+        </div>
+
+        <h2 id="file-formats">File Formats</h2>
+        
+        <h3>Genesis ROM File</h3>
+        <ul>
+            <li><strong>Size:</strong> 65,536 bytes (64KB)</li>
+            <li><strong>Content:</strong> High-entropy random data</li>
+            <li><strong>Format:</strong> Raw binary (no structure)</li>
+            <li><strong>Requirements:</strong> All 256 byte values (0-255) must be present</li>
+        </ul>
+
+        <h3>Block Filename Convention</h3>
+        <pre><code>&lt;chain_id&gt;_&lt;index&gt;_&lt;block_guid&gt;.ztb</code></pre>
+        <p><strong>Examples:</strong></p>
+        <pre><code>MyTrunk_0001_A0B9845E-1234-4567-89AB-CDEF01234567.ztb
+ClientA_0002_B1C0956F-2345-5678-9ABC-DEF012345678.ztb</code></pre>
+
+        <h2 id="rolling-rom">Rolling ROM Construction</h2>
+        
+        <div class="info">
+            <h3>Construction Algorithm</h3>
+            <ol>
+                <li>Start with empty 64KB buffer</li>
+                <li>Sample from BRANCH BLOCKS (if on branch):
+                    <ul>
+                        <li>Copy first 1KB of ENCODED data from each block</li>
+                        <li>Maximum: 64 blocks</li>
+                    </ul>
+                </li>
+                <li>Sample from TRUNK BLOCKS (if space remains):
+                    <ul>
+                        <li>Copy first 1KB of ENCODED data</li>
+                        <li>Continue until buffer full</li>
+                    </ul>
+                </li>
+                <li>Fill remainder with GENESIS ROM data</li>
+            </ol>
+        </div>
+
+        <div class="warning">
+            <h4>Why ENCODED Data?</h4>
+            <p>The encoded addresses themselves are the entropy source. Original payload might be boring, but random address selection creates high entropy. Copying encoded addresses preserves this entropy.</p>
+        </div>
+
+        <h2 id="security">Security Model</h2>
+        
+        <h3>Tamperproof Guarantee</h3>
+        <div class="warning">
+            <p><strong>If an attacker modifies Block N:</strong></p>
+            <ol>
+                <li>Block N's encoded data changes</li>
+                <li>Block N+1's pointers now point to <strong>wrong locations</strong></li>
+                <li>Probability of pointers still resolving correctly: <strong>~10^-152900</strong></li>
+            </ol>
+            <p><strong>This is combinatorially infeasible</strong> - not just hard, but information-theoretically impossible.</p>
+        </div>
+
+        <h3>Why Quantum-Resistant?</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Attack Vector</th>
+                    <th>Traditional Blockchain</th>
+                    <th>ZTB</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Shor's Algorithm</td>
+                    <td>Breaks PKI</td>
+                    <td>No PKI to break</td>
+                </tr>
+                <tr>
+                    <td>Grover's Algorithm</td>
+                    <td>Weakens hashing</td>
+                    <td>No hashing used</td>
+                </tr>
+                <tr>
+                    <td>Brute Force</td>
+                    <td>2^256 operations</td>
+                    <td>10^152900 permutations</td>
+                </tr>
+                <tr>
+                    <td>Quantum Computer</td>
+                    <td>Eventually vulnerable</td>
+                    <td>Immune</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2 id="build">Build Instructions</h2>
+        <pre><code># Compile all tools
+make
+
+# Clean build artifacts
+make clean
+
+# Individual compilation
+gcc -o ztbcreate ztbcreate.c ztbcommon.c -O2
+gcc -o ztbaddblock ztbaddblock.c ztbcommon.c -O2
+gcc -o ztbaddbranch ztbaddbranch.c ztbcommon.c -O2
+gcc -o ztbfetch ztbfetch.c ztbcommon.c -O2
+gcc -o ztbverify ztbverify.c ztbcommon.c -O2
+gcc -o ztbcheckpoint ztbcheckpoint.c ztbcommon.c -O2</code></pre>
+
+        <h2 id="examples">Example Workflows</h2>
+        
+        <div class="example">
+            <h3>Basic Trunk Chain</h3>
+            <pre><code># 1. Create Genesis ROM
+./ztbcreate genesis.rom
+
+# 2. Create trunk chain
+./ztbaddblock genesis.rom MyTrunk -t "Block 1"
+./ztbaddblock genesis.rom MyTrunk -t "Block 2"
+./ztbaddblock genesis.rom MyTrunk -t "Block 3"
+
+# 3. Verify
+./ztbverify genesis.rom MyTrunk
+
+# 4. Fetch specific block
+./ztbfetch genesis.rom MyTrunk 2</code></pre>
+        </div>
+
+        <div class="example">
+            <h3>Hierarchical Organization</h3>
+            <pre><code># 1. Create genesis
+./ztbcreate genesis.rom
+
+# 2. Create company trunk
+./ztbaddblock genesis.rom CompanyLedger -t "FY2025 Genesis"
+
+# 3. Branch for departments
+./ztbaddbranch genesis.rom CompanyLedger Sales -t "Sales Dept"
+./ztbaddbranch genesis.rom CompanyLedger Marketing -t "Marketing Dept"
+
+# 4. Add department records
+./ztbaddblock genesis.rom Sales -f invoice_001.pdf
+./ztbaddblock genesis.rom Marketing -f campaign_q1.doc
+
+# 5. Verify everything
+./ztbverify genesis.rom CompanyLedger</code></pre>
+        </div>
+
+        <h2 id="notes">Important Notes</h2>
+        
+        <div class="warning">
+            <h3>Critical Requirements</h3>
+            <ul>
+                <li><strong>Genesis ROM is Irreplaceable</strong> - Back up to multiple locations</li>
+                <li><strong>Entropy Matters</strong> - Must contain all 256 byte values</li>
+                <li><strong>No Backwards Compatibility</strong> - Version control carefully</li>
+                <li><strong>Storage: 2× Size</strong> - Encoded blocks are double the raw size</li>
+            </ul>
+        </div>
+
+        <div class="success">
+            <h3>Best Practices</h3>
+            <ul>
+                <li>Regular verification (daily/weekly)</li>
+                <li>Genesis ROM: 3+ copies, offline storage</li>
+                <li>Descriptive chain IDs</li>
+                <li>Monitor verification failures</li>
+                <li>Secure Genesis ROM with encryption</li>
+            </ul>
+        </div>
+
+        <div class="footer">
+            <h3>License & Information</h3>
+            <p><strong>MIT License</strong> - (c) 2025 Cyborg Unicorn Pty Ltd</p>
+            <p>
+                <a href="https://zoscii.com" style="color: #007bff;">zoscii.com</a> |
+                <a href="#" style="color: #007bff;">GitHub Repository</a> |
+                <a href="#" style="color: #007bff;">Documentation</a>
+            </p>
+            <p style="margin-top: 20px; font-size: 0.9em;">
+                For technical questions, security concerns, or implementation assistance,<br>
+                please visit the project website or file an issue on GitHub.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

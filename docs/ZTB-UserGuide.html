@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZOSCII Tamperproof Blockchain - User Guide</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 40px;
+            padding: 10px;
+            background: #ecf0f1;
+            border-left: 4px solid #3498db;
+        }
+        h3 {
+            color: #7f8c8d;
+            margin-top: 20px;
+        }
+        code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #e74c3c;
+        }
+        pre {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        pre code {
+            background: none;
+            color: #ecf0f1;
+            padding: 0;
+        }
+        .command-section {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #2ecc71;
+        }
+        .important {
+            background: #fff3cd;
+            padding: 15px;
+            border-left: 4px solid #ffc107;
+            margin: 20px 0;
+        }
+        .workflow {
+            background: #e8f5e9;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        ul, ol {
+            margin: 10px 0;
+            padding-left: 30px;
+        }
+        li {
+            margin: 8px 0;
+        }
+        .key-concepts {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 30px;
+        }
+        strong {
+            color: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ZOSCII Tamperproof Blockchain - User Guide</h1>
+        <p><em>(c) 2025 Cyborg Unicorn Pty Ltd - MIT License</em></p>
+
+        <div class="command-section">
+            <h2>ztbcreate - Create Your Blockchain Foundation</h2>
+            
+            <h3>What it does:</h3>
+            <p>Creates the Genesis ROM - the immutable "seed" that anchors your entire blockchain.</p>
+            
+            <h3>Why you need it:</h3>
+            <p>Every blockchain starts here. This 64KB file of high-entropy random data becomes the root of trust. Without it, nothing else works.</p>
+            
+            <h3>When to use it:</h3>
+            <p>Once, at the very beginning, before creating any blocks.</p>
+            
+            <h3>What happens:</h3>
+            <ul>
+                <li>Generates 64KB of random data</li>
+                <li>Analyzes entropy to ensure all 256 byte values (0-255) are present</li>
+                <li>Warns if any values are missing (would break encoding later)</li>
+                <li>Saves the Genesis ROM file</li>
+            </ul>
+            
+            <div class="important">
+                <strong>Important:</strong> Keep this file safe and backed up! If you lose it, you can never decode your blocks again. All verification depends on this file.
+            </div>
+            
+            <h3>Example:</h3>
+            <pre><code>ztbcreate genesis.rom</code></pre>
+        </div>
+
+        <div class="command-section">
+            <h2>ztbaddblock - Add Data to Your Chain</h2>
+            
+            <h3>What it does:</h3>
+            <p>Adds a new block of data to an existing chain (trunk or branch).</p>
+            
+            <h3>Why you need it:</h3>
+            <p>This is how you store data on the blockchain - documents, transactions, records, anything.</p>
+            
+            <h3>When to use it:</h3>
+            <p>Every time you want to add new data to your chain.</p>
+            
+            <h3>What happens:</h3>
+            <ul>
+                <li>Takes your data (text string or file)</li>
+                <li>Pads it to minimum size if needed</li>
+                <li>Builds a Rolling ROM from previous blocks + Genesis</li>
+                <li>Encodes your data using ZOSCII (makes it tamperproof)</li>
+                <li>Creates a new block file: <code>chainid_0001_blockguid.ztb</code></li>
+            </ul>
+            
+            <h3>Options:</h3>
+            <ul>
+                <li><code>-t "text"</code> - Add a text string</li>
+                <li><code>-f filename</code> - Add a file's contents</li>
+            </ul>
+            
+            <h3>Example:</h3>
+            <pre><code># First block on a new trunk
+ztbaddblock genesis.rom MyTrunk -t "Invoice #001"
+
+# Second block
+ztbaddblock genesis.rom MyTrunk -t "Invoice #002"
+
+# Add a file
+ztbaddblock genesis.rom MyTrunk -f contract.pdf</code></pre>
+        </div>
+
+        <div class="command-section">
+            <h2>ztbaddbranch - Create a Parallel Chain</h2>
+            
+            <h3>What it does:</h3>
+            <p>Creates a new branch that splits off from the trunk at the current point.</p>
+            
+            <h3>Why you need it:</h3>
+            <p>Perfect for organizing data hierarchically. Think: trunk = company, branches = departments. Or trunk = financial year, branches = accounts.</p>
+            
+            <h3>When to use it:</h3>
+            <p>When you want to create a separate but linked chain of blocks.</p>
+            
+            <h3>What happens:</h3>
+            <ul>
+                <li>Checks that the trunk exists</li>
+                <li>Checks that the branch name isn't already used</li>
+                <li>Creates the first block of the new branch</li>
+                <li>Links it to the current trunk tip</li>
+                <li>Future blocks can be added to this branch using <code>ztbaddblock</code></li>
+            </ul>
+            
+            <h3>Example:</h3>
+            <pre><code># Create main company trunk
+ztbaddblock genesis.rom CompanyLedger -t "2024 Books"
+
+# Branch off for departments
+ztbaddbranch genesis.rom CompanyLedger Sales -t "Sales Q1"
+ztbaddbranch genesis.rom CompanyLedger Marketing -t "Marketing Q1"
+
+# Now add blocks to branches
+ztbaddblock genesis.rom Sales -t "Sale #001"
+ztbaddblock genesis.rom Marketing -t "Campaign #001"</code></pre>
+        </div>
+
+        <div class="command-section">
+            <h2>ztbfetch - Read Your Data Back</h2>
+            
+            <h3>What it does:</h3>
+            <p>Retrieves and decodes a specific block from any chain.</p>
+            
+            <h3>Why you need it:</h3>
+            <p>To actually read the data you stored! Blocks are ZOSCII-encoded, so you need this tool to decode them.</p>
+            
+            <h3>When to use it:</h3>
+            <p>Whenever you want to see what's in a block.</p>
+            
+            <h3>What happens:</h3>
+            <ul>
+                <li>Finds the requested block file</li>
+                <li>Reconstructs the Rolling ROM (samples from previous blocks)</li>
+                <li>Decodes the ZOSCII-encoded data</li>
+                <li>Verifies the checksum (detects tampering)</li>
+                <li>Shows you the decoded payload</li>
+            </ul>
+            
+            <h3>Example:</h3>
+            <pre><code># Fetch block 3 from MyTrunk
+ztbfetch genesis.rom MyTrunk 3
+
+# Output shows:
+# - Block metadata (ID, timestamp, etc.)
+# - Checksum verification
+# - Your decoded data</code></pre>
+        </div>
+
+        <div class="command-section">
+            <h2>ztbverify - Prove Integrity</h2>
+            
+            <h3>What it does:</h3>
+            <p>Verifies that your blockchain is intact and untampered. Works backwards from the latest block to Genesis.</p>
+            
+            <h3>Why you need it:</h3>
+            <p>To prove your data hasn't been altered. If anyone modifies even one byte in block 5, verification will fail on block 6 (and all subsequent blocks).</p>
+            
+            <h3>When to use it:</h3>
+            <ul>
+                <li>Before presenting data as evidence</li>
+                <li>After receiving blocks from someone else</li>
+                <li>Periodically to ensure your archive is intact</li>
+                <li>After restoring from backup</li>
+            </ul>
+            
+            <h3>What happens:</h3>
+            <ul>
+                <li>Scans all blocks in the chain</li>
+                <li>Rebuilds each block's Rolling ROM</li>
+                <li>Decodes each block</li>
+                <li>Verifies checksums</li>
+                <li>Tests the tamperproof linking</li>
+                <li>Reports PASS/FAIL for each block</li>
+            </ul>
+            
+            <h3>Options:</h3>
+            <ul>
+                <li>No flag - Verify trunk and all branches</li>
+                <li><code>-t</code> - Verify trunk only</li>
+                <li><code>-b branchid</code> - Verify specific branch only</li>
+                <li><code>-bb</code> - Verify all branches only (skip trunk)</li>
+            </ul>
+            
+            <h3>Example:</h3>
+            <pre><code># Verify everything
+ztbverify genesis.rom MyTrunk
+
+# Verify just the trunk
+ztbverify genesis.rom MyTrunk -t
+
+# Verify specific branch
+ztbverify genesis.rom MyTrunk -b Sales</code></pre>
+            
+            <p><strong>Result:</strong> If ANY block has been tampered with, verification fails and tells you exactly which block is corrupt.</p>
+        </div>
+
+        <div class="command-section">
+            <h2>ztbcheckpoint - Archive Old Data</h2>
+            
+            <h3>What it does:</h3>
+            <p>Creates an archival boundary that lets you move old blocks to slow/cheap storage while keeping the chain verifiable.</p>
+            
+            <h3>Why you need it:</h3>
+            <p>Over time, chains grow huge. Checkpoints let you archive historical data without breaking the chain.</p>
+            
+            <h3>When to use it:</h3>
+            <ul>
+                <li>End of financial year</li>
+                <li>When chain gets too large</li>
+                <li>Before migrating to new storage</li>
+                <li>Creating self-contained archives</li>
+            </ul>
+            
+            <h3>What happens:</h3>
+            <ul>
+                <li>Creates a special Type 2 (checkpoint) block</li>
+                <li>This block becomes a new "mini-genesis"</li>
+                <li>Blocks after this point can build Rolling ROMs from checkpoint → Genesis (skipping archived blocks)</li>
+                <li>You can move blocks BEFORE the checkpoint to slow storage</li>
+                <li>Each archive gets its own copy of Genesis ROM for independent verification</li>
+            </ul>
+            
+            <h3>Example:</h3>
+            <pre><code># At end of 2024
+ztbcheckpoint MyTrunk genesis.rom last_block_of_2024_guid
+
+# Now you can:
+# 1. Move all 2024 blocks + Genesis ROM to archive storage
+# 2. Keep checkpoint + 2025 blocks on fast storage
+# 3. Both archives remain independently verifiable</code></pre>
+        </div>
+
+        <div class="workflow">
+            <h2>Real-World Workflow Example</h2>
+            <p><strong>Scenario:</strong> Accounting firm tracking invoices with separate accounts</p>
+            
+            <pre><code># 1. Start fresh
+ztbcreate genesis.rom
+
+# 2. Create main trunk for 2025
+ztbaddblock genesis.rom FY2025 -t "Financial Year 2025"
+
+# 3. Create branches for different accounts
+ztbaddbranch genesis.rom FY2025 ClientA -t "Client A Account"
+ztbaddbranch genesis.rom FY2025 ClientB -t "Client B Account"
+
+# 4. Add invoices to Client A
+ztbaddblock genesis.rom ClientA -t "Invoice #1001"
+ztbaddblock genesis.rom ClientA -f invoice_1002.pdf
+
+# 5. Add invoices to Client B
+ztbaddblock genesis.rom ClientB -t "Invoice #2001"
+
+# 6. Retrieve a specific invoice
+ztbfetch genesis.rom ClientA 2
+
+# 7. Verify everything is intact
+ztbverify genesis.rom FY2025
+
+# 8. At year-end, create checkpoint
+ztbcheckpoint FY2025 genesis.rom last_block_guid
+
+# 9. Archive 2025 data to slow storage, start FY2026</code></pre>
+        </div>
+
+        <div class="key-concepts">
+            <h2>Key Concepts for Users</h2>
+            
+            <h3>Tamperproof</h3>
+            <p>If you change ANY byte in block N, all blocks N+1 onwards fail verification. The ZOSCII pointer encoding makes forgery combinatorially impossible (10^152900 combinations).</p>
+            
+            <h3>No Decryption Needed</h3>
+            <p>This isn't encryption - it's addressing. The data is encoded as pointers into the Rolling ROM. Without the exact Rolling ROM, the pointers are meaningless.</p>
+            
+            <h3>Independent Archives</h3>
+            <p>Checkpoints + Genesis copies let you create self-contained archives that verify independently. Perfect for legal compliance, backups, and long-term storage.</p>
+            
+            <h3>Branch Organization</h3>
+            <p>Use branches like folders. Trunk = main timeline, branches = parallel sub-timelines. All verified together.</p>
+        </div>
+    </div>
+</body>
+</html>
