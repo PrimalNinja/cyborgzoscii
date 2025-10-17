@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎺 TrumpetBlower - Because Trumpets Are Louder Than Whistles</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 60px 20px;
+            color: white;
+        }
+
+        h1 {
+            font-size: 3.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .tagline {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            opacity: 0.9;
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            opacity: 0.8;
+            margin-bottom: 30px;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .content {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .content h2 {
+            color: #667eea;
+            font-size: 2.2em;
+            margin-bottom: 15px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .content h3 {
+            color: #764ba2;
+            font-size: 1.6em;
+            margin: 25px 0 15px 0;
+        }
+
+        .steps {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .steps ol {
+            margin-left: 25px;
+        }
+
+        .steps li {
+            margin: 10px 0;
+            padding-left: 10px;
+        }
+
+        .warning {
+            background: #fff3cd;
+            border-left: 5px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .warning strong {
+            color: #856404;
+        }
+
+        .checklist {
+            list-style: none;
+            margin: 20px 0;
+        }
+
+        .checklist li {
+            padding: 10px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .checklist li:before {
+            content: "✅";
+            position: absolute;
+            left: 0;
+        }
+
+        .fun-list {
+            list-style: none;
+            margin: 20px 0;
+        }
+
+        .fun-list li {
+            padding: 8px 0;
+            padding-left: 30px;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 5px solid #2196F3;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .support-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+            margin: 40px 0;
+        }
+
+        .support-box h2 {
+            color: white;
+            border: none;
+            margin-bottom: 20px;
+        }
+
+        .support-box .btn {
+            margin-top: 20px;
+            background: white;
+            color: #667eea;
+            font-size: 1.2em;
+        }
+
+        .faq {
+            margin-top: 20px;
+        }
+
+        .faq-item {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .faq-item:last-child {
+            border-bottom: none;
+        }
+
+        .faq-q {
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .faq-a {
+            color: #555;
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: white;
+            opacity: 0.8;
+        }
+
+        .disclaimer {
+            background: #fff3cd;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 0.95em;
+        }
+
+        .disclaimer ul {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+
+        .disclaimer li {
+            margin: 8px 0;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5em;
+            }
+
+            .tagline {
+                font-size: 1.2em;
+            }
+
+            .content {
+                padding: 25px;
+            }
+
+            .content h2 {
+                font-size: 1.8em;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <!-- TEMPORARY PREVIEW NOTICE -->
+            <div style="background: #ff6b6b; color: white; padding: 15px; border-radius: 8px; margin-bottom: 30px; border: 3px solid white;">
+                <strong>⚠️ PREVIEW VERSION - FOR REVIEW ONLY</strong><br>
+                <span style="font-size: 0.9em;">This is a temporary preview page for feedback. Domain and upload functionality not yet live. Client modifications still in progress.</span>
+            </div>
+            
+            <h1>🎺 TrumpetBlower</h1>
+            <p class="tagline"><strong>Because trumpets are louder than whistles.</strong></p>
+            <p class="subtitle">Post-quantum secure. Zero trust required. Verify the code yourself.</p>
+            <div class="hero-buttons">
+                <!-- <a href="https://github.com/PrimalNinja/cyborgzoscii" class="btn btn-primary">Download Client from GitHub</a> -->
+                <a href="https://github.com/PrimalNinja/cyborgzoscii" class="btn btn-primary">Coming Soon on GitHub</a>
+                <a href="#how-it-works" class="btn btn-secondary">How It Works</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- HOW IT WORKS -->
+        <section class="content" id="how-it-works">
+            <h2>🎯 How It Works</h2>
+            
+            <div class="warning">
+                <p><strong>⚠️ IMPORTANT: There is NO hosted encoding client for TrumpetBlower.</strong></p>
+                <p>You MUST download the client from GitHub and run it locally to ensure your ROM is never uploaded to any server.</p>
+            </div>
+
+            <div class="steps">
+                <strong>Step-by-Step:</strong>
+                <ol>
+                    <li><strong>Download the client from GitHub</strong><br>
+                    <!-- Visit: <a href="https://github.com/PrimalNinja/cyborgzoscii" target="_blank">https://github.com/PrimalNinja/cyborgzoscii</a><br> -->
+                    Visit: (Coming Soon on GitHub)</a><br>
+                    Download the ZOSCII encoding client to your computer</li>
+                    
+                    <li><strong>Verify the client is NOT minified</strong><br>
+                    Open the HTML file in a text editor. The code should be readable with proper spacing and comments.<br>
+                    If it looks like compressed gibberish on one line, DO NOT USE IT.<br>
+                    Readable code = trustworthy. Minified code = potential compromise.</li>
+                    
+                    <li><strong>Run the client locally</strong><br>
+                    Open the HTML file in your browser from your local filesystem<br>
+                    Do NOT use any hosted version - only trust what you've verified yourself</li>
+                    
+                    <li><strong>Encode your documents</strong><br>
+                    <strong>💡 Recommended:</strong> ZIP your files before encoding. This reduces our storage overhead and preserves file metadata like date/time stamps that can serve as evidence of when documents existed.<br><br>
+                    Use any file as your ROM (photo, document, etc.)<br>
+                    The ROM becomes your encoding key - NEVER upload it anywhere<br>
+                    The client will create an address file (just pointers, no actual data)</li>
+                    
+                    <li><strong>Keep your ROM safe</strong><br>
+                    Store your ROM securely - you'll need it to decode later<br>
+                    Losing your ROM = losing your data forever<br>
+                    Your ROM is your key to release the information when you're ready</li>
+                    
+                    <li><strong>Upload only the address file</strong><br>
+                    The address file contains no actual data - just pointers<br>
+                    We (and everyone else) can't decode it without your ROM<br>
+                    When you're ready to blow the trumpet, release your ROM publicly</li>
+                </ol>
+            </div>
+
+            <div class="info-box" style="background: #fff3cd; border-left: 5px solid #ffc107;">
+                <h3 style="color: #856404; margin-top: 0;">⚖️ Australian Legal Notice</h3>
+                <p>This service operates under Australian law and is subject to the <strong>Assistance and Access Act 2018</strong>.</p>
+                <p style="margin-top: 10px;">Under this legislation, we may be compelled to:</p>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>Assist with lawful access to communications</li>
+                    <li>Implement technical capability measures</li>
+                </ul>
+                <p style="margin-top: 15px;"><strong>This is exactly why we recommend downloading and verifying the client yourself.</strong> If we were ever compelled to modify our code, you would be able to detect it by comparing against the GitHub source or noticing minification. By running your own verified local copy, you eliminate this risk entirely.</p>
+                <p style="margin-top: 10px;"><strong>For maximum security: Only use the local client version downloaded from the official GitHub repository.</strong></p>
+            </div>
+        </section>
+
+        <!-- FOR WHISTLEBLOWERS -->
+        <section class="content">
+            <h2>🔒 For Whistleblowers</h2>
+            <h3>Your Truth. Your Timing. Your Protection.</h3>
+            
+            <div class="info-box">
+                <strong>We literally cannot know what you've uploaded.</strong> No encryption to break. No data to compel. Just addresses pointing to... something.
+            </div>
+
+            <p><strong>Legal protection:</strong> Many jurisdictions protect whistleblowers. TrumpetBlower adds technical protection beyond legal - even corrupt governments can't access what we don't have.</p>
+
+            <div class="warning">
+                <p><strong>⚠️ Critical: Use the official GitHub client.</strong><br>
+                → Verify it's NOT minified<br>
+                → Confirm it does NOT upload your ROM<br>
+                → Don't trust, verify</p>
+            </div>
+
+            <div class="warning">
+                <p><strong>⚠️ Don't lose your ROM</strong> - unless you want your secrets to stay secret forever.</p>
+            </div>
+
+            <div class="info-box">
+                <strong>📅 File Retention Policy</strong>
+                <p style="margin-top: 10px;">Upon submission, you'll specify a rough timeframe for how long you'd like us to keep your address file as a minimum. We ask this because we'll try our best to honor it, but due to server costs we may need to remove files on occasion.</p>
+                <p style="margin-top: 10px;">Since we have no way of knowing what's in each encoded file, the only thing we can ask is: <strong>How many weeks do you want us to keep the file for as a minimum?</strong></p>
+                <p style="margin-top: 10px;">We know the time you upload it and will consider the weeks beyond that. We'll try our best to accommodate your timeline.</p>
+                <p style="margin-top: 10px;"><strong>💡 Tip:</strong> For maximum resilience, consider uploading your address file to multiple TrumpetBlower instances or mirrors. Since the file is just pointers, spreading it across multiple hosts ensures it stays available even if one site goes down.</p>
+            </div>
+        </section>
+
+        <!-- FOR JOURNALISTS -->
+        <section class="content">
+            <h2>📢 For Journalists & Advocates</h2>
+            <h3>The Trumpet Sounds for Everyone</h3>
+            
+            <p>Once a whistleblower releases their ROM:</p>
+            
+            <ul class="checklist">
+                <li><strong>Everyone</strong> can decode and verify</li>
+                <li><strong>No gatekeepers</strong> or intermediaries</li>
+                <li><strong>Unstoppable</strong> - can't censor what's already public</li>
+            </ul>
+
+            <div class="info-box">
+                <strong>All encoded files are public.</strong> You're encouraged to:
+                <ul style="margin-top: 10px;">
+                    <li>Mirror this entire site</li>
+                    <li>Download all address files</li>
+                    <li>Host your own TrumpetBlower instance</li>
+                    <li>Distributed infrastructure = censorship resistance</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- FOR GOVERNMENTS -->
+        <section class="content">
+            <h2>🏛️ For Governments</h2>
+            <h3>Welcome! We're So Glad You're Here.</h3>
+            
+            <p>You're probably here for one of two reasons:</p>
+            
+            <p><strong>1. You're considering whistleblowing</strong> - Welcome! See above.</p>
+            
+            <p><strong>2. You don't like whistleblowers</strong> - Probably because you're up to no good.</p>
+
+            <div class="info-box">
+                <p><strong>Here's the thing:</strong> We have NO IDEA what's in these address files. Could be:</p>
+                <ul class="fun-list">
+                    <li>🍪 Grandma's cookie recipes</li>
+                    <li>🛸 Proof of alien contact</li>
+                    <li>💣 Your corruption evidence</li>
+                    <li>📋 Shopping lists</li>
+                </ul>
+            </div>
+
+            <p><strong>You're welcome to:</strong></p>
+            <ul style="margin-left: 25px; margin-top: 10px;">
+                <li>Download all our files (they're public!)</li>
+                <li>Try to crack them (good luck - it's combinatorially impossible)</li>
+                <li>Host your own TrumpetBlower (now THAT would be democratic!)</li>
+            </ul>
+
+            <p style="margin-top: 20px;"><strong>Fun fact:</strong> Compelling us to decrypt is like demanding we unscramble an egg. There's nothing TO decrypt.</p>
+        </section>
+
+        <!-- TECHNICAL TRANSPARENCY -->
+        <section class="content">
+            <h2>🔍 Technical Transparency</h2>
+            <h3>Open Source. Open Access. Open Truth.</h3>
+            
+            <ul class="checklist">
+                <li><strong>ZOSCII encoding client:</strong> <a href="https://github.com/PrimalNinja/cyborgzoscii" target="_blank">Download from GitHub</a></li>
+                <li><strong>No hosted encoder:</strong> You must download and verify the client yourself</li>
+                <li><strong>All address files:</strong> Publicly browsable (once uploaded)</li>
+                <li><strong>Zero minification:</strong> Read every line of code before trusting it</li>
+                <li><strong>MIT Licensed:</strong> Use it, fork it, improve it</li>
+            </ul>
+
+            <div class="info-box">
+                <strong>This is as transparent as technology gets.</strong> We deliberately do NOT provide a hosted encoding tool because that would require you to trust us. Instead, we give you the source code and tell you: verify it yourself.
+            </div>
+        </section>
+
+        <!-- SUPPORT -->
+        <section class="support-box">
+            <h2>💬 Support Free Speech</h2>
+            <p>This site is maintained by the ZOSCIICOIN community. No ads. No paywalls. No government funding.</p>
+            <p style="margin-top: 20px; font-size: 1.2em;"><strong>Want sites like this to exist?</strong></p>
+            <a href="https://zosciicoin.com" class="btn">Buy ZOSCIICOIN</a>
+            <p style="margin-top: 20px; opacity: 0.9;">Every purchase helps keep TrumpetBlower and similar free-speech tools online.</p>
+            <p style="margin-top: 15px; font-size: 0.95em; opacity: 0.85;">We're betting that mass adoption happens when people see ZOSCII actually works. You can help prove it.</p>
+        </section>
+
+        <!-- DISCLAIMERS -->
+        <section class="content">
+            <h2>⚖️ Disclaimers</h2>
+            <div class="disclaimer">
+                <ul>
+                    <li><strong>We host pointers, not data.</strong> You're responsible for what you encode.</li>
+                    <li><strong>No guarantees.</strong> Use at your own risk.</li>
+                    <li><strong>No legal advice.</strong> Consult a lawyer about your specific situation.</li>
+                    <li><strong>Dual use:</strong> This tool can reveal corruption OR grandma's recipes. Choose wisely.</li>
+                    <li><strong>Not financial advice.</strong> We are not advocating you invest in ZOSCIICOIN or any other cryptocurrencies. Consult your financial advisor.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- FAQ -->
+        <section class="content">
+            <h2>❓ FAQ</h2>
+            <div class="faq">
+                <div class="faq-item">
+                    <p class="faq-q">Q: What happens if you get a warrant?</p>
+                    <p class="faq-a">A: We'll hand over... meaningless address files you can already download yourself.</p>
+                </div>
+
+                <div class="faq-item">
+                    <p class="faq-q">Q: Can quantum computers break this?</p>
+                    <p class="faq-a">A: No. There's no computational puzzle to solve.</p>
+                </div>
+
+                <div class="faq-item">
+                    <p class="faq-q">Q: What if I lose my ROM?</p>
+                    <p class="faq-a">A: Your data is lost forever. We can't help you. Nobody can.</p>
+                </div>
+
+                <div class="faq-item">
+                    <p class="faq-q">Q: Is this legal?</p>
+                    <p class="faq-a">A: Hosting address files? Yes. What YOU do with them? Consult a lawyer.</p>
+                </div>
+
+                <div class="faq-item">
+                    <p class="faq-q">Q: Can you take down a file?</p>
+                    <p class="faq-a">A: We can, but it's already public and mirrored everywhere. Good luck putting that genie back.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 5px; margin-bottom: 15px;"><strong>PREVIEW VERSION</strong> - Not yet live. For review and feedback only.</p>
+            <p>© 2025 TrumpetBlower - Powered by <a href="https://zoscii.com" style="color: white; text-decoration: underline;">ZOSCII Technology</a></p>
+            <p style="margin-top: 10px; font-size: 0.9em;">MIT Licensed - <a href="https://zosciicoin.com" style="color: white; text-decoration: underline;">Support via ZOSCIICOIN</a></p>
+        </div>
+    </footer>
+</body>
+</html>
