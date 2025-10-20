@@ -1,5 +1,5 @@
 <?php
-// server-side: messages.php for ZOSCIICHAT
+// server-side: messages.php for TrumpetBlower
 
 // Add CORS headers to allow local file access
 header('Access-Control-Allow-Origin: *');
@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS')
     exit;
 }
 
-define("MSG_BASE_DIR", "messages/");
+define("MSG_BASE_DIR", "data/");
 
 function listMessages($strChannel_a, $intLimit_a, $intPage_a)
 {
@@ -74,7 +74,8 @@ function serveMessage($strChannel_a, $strFilename_a)
     }
 	
     // Security: only allow .bin files and prevent directory traversal
-    if (!preg_match('/^[0-9]{16}\.bin$/', $strFilename_a))
+    //if (!preg_match('/^[0-9]{16}\.bin$/', $strFilename_a))
+	if (!preg_match('/^[0-9]{16}-[0-9]+\.bin$/', $strFilename_a))
 	{
         http_response_code(400);
         header("Content-Type: application/json");
@@ -105,7 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === "GET")
     if (!isset($_GET['file']) && !isset($_GET['limit']))
 	{
         header("Content-Type: text/html");
-        echo "<h1>ZOSCIICHAT Server</h1><p>Download the client from <a href='https://github.com/PrimalNinja/cyborgzoscii'>GitHub</a> to communicate securely.</p>";
+        echo "<h1>TrumpetBlower Server</h1><p>Download the client from <a href='https://github.com/PrimalNinja/cyborgzoscii'>GitHub</a> to communicate securely.</p>";
         exit;
     }
     
@@ -142,14 +143,25 @@ if ($_SERVER['REQUEST_METHOD'] === "GET")
     exit;
 }
 
-if ($_SERVER['REQUEST_METHOD'] === "POST" && isset($_FILES['addressfile']) && isset($_POST['channel']))
+if ($_SERVER['REQUEST_METHOD'] === "POST" && isset($_FILES['addressfile']) && isset($_POST['channel']) && isset($_POST['retention']))
 {
     $strChannel = $_POST['channel'];
     if (!preg_match('/^[0-9]+$/', $strChannel))
 	{
+		error_log("Invalid channel number: $strChannel");
         http_response_code(400);
         header("Content-Type: application/json");
         echo json_encode(array("error" => "Invalid channel number"));
+        exit;
+    }
+
+    $strRetention = $_POST['retention'];
+    if (!preg_match('/^[0-9]+$/', $strRetention))
+	{
+		error_log("Invalid retention number: $strRetention");
+        http_response_code(400);
+        header("Content-Type: application/json");
+        echo json_encode(array("error" => "Invalid retention number"));
         exit;
     }
 
@@ -163,13 +175,15 @@ if ($_SERVER['REQUEST_METHOD'] === "POST" && isset($_FILES['addressfile']) && is
             echo json_encode(array("error" => "Failed to create channel directory"));
             exit;
         }
+		
+		error_log("Directory created: $strChannelDir");
     }
 
     $strDate = date("YmdHis");
     $intCounter = 0;
     do
 	{
-        $strBinFile = $strDate . sprintf("%02d", $intCounter) . ".bin";
+        $strBinFile = $strDate . sprintf("%02d", $intCounter) . "-" . $strRetention . ".bin";
         $strPath = $strChannelDir . $strBinFile;
         $intCounter++;
     }
@@ -182,6 +196,7 @@ if ($_SERVER['REQUEST_METHOD'] === "POST" && isset($_FILES['addressfile']) && is
         echo json_encode(array("error" => "Failed to upload file"));
         exit;
     }
+	error_log("File moved successfully");
 
     header("Content-Type: application/json");
     echo json_encode(array("success" => true, "binFile" => $strBinFile));

@@ -1,4 +1,4 @@
-# CyborgZOSCII v20250805
+# CyborgZOSCII v20251021
 
 ZOSCII Zero Overhead Secure Coding Information Interchange.
 
@@ -10,6 +10,7 @@ CyborgZOSCII is an alternative to ASCII/PETSCII that uses direct ROM addressing 
 
 ## Browser Applications
 
+- TRUMPETBLOWER, publicly open secure whistleblower platform
 - ZOSCIIBB, publicly open secure bulletin board
 - ZOSCIICHAT, secure chat client and server
 
@@ -57,6 +58,7 @@ CyborgZOSCII is an alternative to ASCII/PETSCII that uses direct ROM addressing 
 
 ## Use Cases
 
+- Visit https://zoscii.com/zosciitrumpetblower/readme.html for more information
 - Visit https://zoscii.com/ for more information
 - Visit https://zoscii.com/zosciibb/ for a realworld demonstration
 

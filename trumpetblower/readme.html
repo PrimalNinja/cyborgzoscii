@@ -70,13 +70,18 @@
         }
 
         .btn-primary {
-            background: #ff6b6b;
+            background: green;
             color: white;
         }
 
         .btn-secondary {
             background: white;
             color: #667eea;
+        }
+
+        .btn-thirdly {
+            background: orange;
+            color: white;
         }
 
         .btn:hover {
@@ -271,24 +276,13 @@
 <body>
     <header>
         <div class="container">
-            <!-- TEMPORARY PREVIEW NOTICE -->
-            <div style="background: #ff6b6b; color: white; padding: 15px; border-radius: 8px; margin-bottom: 30px; border: 3px solid white;">
-                <strong>⚠️ PREVIEW VERSION - FOR REVIEW ONLY</strong><br>
-                <span style="font-size: 0.9em;">This is a temporary preview page for feedback. Domain and upload functionality not yet live. Client modifications still in progress.</span>
-            </div>
-            
-            <div style="background: #ff6b6b; color: white; padding: 15px; border-radius: 8px; margin-bottom: 30px; border: 3px solid white;">
-                <strong>⚠️ RELEASE SCHEDULE</strong><br>
-                <span style="font-size: 0.9em;">Release planned very soon, it is essentially a rebranding of zosciichat or zosciibb, with the introduction of retention. If i am somehow complelled by others to not go ahead with such a release, sourcecode for those tools are already available for you to easily adapt it.</span>
-            </div>
-            
             <h1>🎺 TrumpetBlower</h1>
             <p class="tagline"><strong>Because trumpets are louder than whistles.</strong></p>
             <p class="subtitle">Post-quantum secure. Zero trust required. Verify the code yourself.</p>
             <div class="hero-buttons">
-                <!-- <a href="https://github.com/PrimalNinja/cyborgzoscii" class="btn btn-primary">Download Client from GitHub</a> -->
-                <a href="https://github.com/PrimalNinja/cyborgzoscii" class="btn btn-primary">Coming Soon on GitHub</a>
                 <a href="#how-it-works" class="btn btn-secondary">How It Works</a>
+                <a href="https://github.com/PrimalNinja/cyborgzoscii" target="_blank" class="btn btn-primary">Download Client from GitHub</a>
+                <a href="data" target="_blank" class="btn btn-thirdly">View, Download, Mirror Address Data</a>
             </div>
         </div>
     </header>
@@ -307,9 +301,8 @@
                 <strong>Step-by-Step:</strong>
                 <ol>
                     <li><strong>Download the client from GitHub</strong><br>
-                    <!-- Visit: <a href="https://github.com/PrimalNinja/cyborgzoscii" target="_blank">https://github.com/PrimalNinja/cyborgzoscii</a><br> -->
-                    Visit: (Coming Soon on GitHub)</a><br>
-                    Download the ZOSCII encoding client to your computer</li>
+                    Visit: <a href="https://github.com/PrimalNinja/cyborgzoscii" target="_blank">https://github.com/PrimalNinja/cyborgzoscii</a><br>
+                    Download the 'trumpetblower.html' client to your computer</li>
                     
                     <li><strong>Verify the client is NOT minified</strong><br>
                     Open the HTML file in a text editor. The code should be readable with proper spacing and comments.<br>
@@ -320,9 +313,15 @@
                     Open the HTML file in your browser from your local filesystem<br>
                     Do NOT use any hosted version - only trust what you've verified yourself</li>
                     
+                    <li><strong>Configure the Server</strong><br>
+                    Enter the TrumpetBlower Server URL you wish to use, See <a href="#known-servers">available servers</a> below<br>
+                    Enter a channel number (an integer), something not identifiable to you, it doesn't matter if it is used already or not, it's just easier to find unknown data by a reference in future<br>
+                    Enter a number of desired retention weeks (an integer)</li>
+                    
                     <li><strong>Encode your documents</strong><br>
                     <strong>💡 Recommended:</strong> ZIP your files before encoding. This reduces our storage overhead and preserves file metadata like date/time stamps that can serve as evidence of when documents existed.<br><br>
                     Use any file as your ROM (photo, document, etc.)<br>
+					There should be no red lines in the verification character usage<br>
                     The ROM becomes your encoding key - NEVER upload it anywhere<br>
                     The client will create an address file (just pointers, no actual data)</li>
                     
@@ -331,10 +330,13 @@
                     Losing your ROM = losing your data forever<br>
                     Your ROM is your key to release the information when you're ready</li>
                     
-                    <li><strong>Upload only the address file</strong><br>
-                    The address file contains no actual data - just pointers<br>
+                    <li><strong>Submit to Server</strong><br>
+                    Only the address file is uploaded with the channel and retention, the address file contains none of the original data - just pointers<br>
                     We (and everyone else) can't decode it without your ROM<br>
                     When you're ready to blow the trumpet, release your ROM publicly</li>
+                    
+                    <li><strong>Redundancy</strong><br>
+                    All address files are made available for download, replication and of course for when you wish to make a noise<br>
                 </ol>
             </div>
 
@@ -443,7 +445,7 @@
             <h3>Open Source. Open Access. Open Truth.</h3>
             
             <ul class="checklist">
-                <li><strong>ZOSCII encoding client:</strong> <a href="https://github.com/PrimalNinja/cyborgzoscii" target="_blank">Download from GitHub</a></li>
+                <li><strong>'trumpetblower.html' client:</strong> <a href="https://github.com/PrimalNinja/cyborgzoscii" target="_blank">Download from GitHub</a></li>
                 <li><strong>No hosted encoder:</strong> You must download and verify the client yourself</li>
                 <li><strong>All address files:</strong> Publicly browsable (once uploaded)</li>
                 <li><strong>Zero minification:</strong> Read every line of code before trusting it</li>
@@ -455,12 +457,26 @@
             </div>
         </section>
 
+		<!-- KNOWN TRUMPETBLOWER SERVERS -->
+		<section class="content" id="known-servers">
+			<h2>📡 Known TrumpetBlower Servers</h2>
+			<h3>Secure Communication Endpoints</h3>
+
+			<ul class="checklist">
+				<li><strong>TrumpetBlower Server:</strong> <a href="https://zoscii.com/zosciitrumpetblower/" target="_blank">https://zoscii.com/zosciitrumpetblower/</a></li>
+			</ul>
+
+			<div class="info-box">
+				<strong>Publicly available endpoint</strong> for secure communication. Download the client from GitHub to connect securely.
+			</div>
+		</section>
+
         <!-- SUPPORT -->
         <section class="support-box">
             <h2>💬 Support Free Speech</h2>
             <p>This site is maintained by the ZOSCIICOIN community. No ads. No paywalls. No government funding.</p>
             <p style="margin-top: 20px; font-size: 1.2em;"><strong>Want sites like this to exist?</strong></p>
-            <a href="https://zosciicoin.com" class="btn">Buy ZOSCIICOIN</a>
+            <a href="https://zosciicoin.com" target="_blank" class="btn">Buy ZOSCIICOIN</a>
             <p style="margin-top: 20px; opacity: 0.9;">Every purchase helps keep TrumpetBlower and similar free-speech tools online.</p>
             <p style="margin-top: 15px; font-size: 0.95em; opacity: 0.85;">We're betting that mass adoption happens when people see ZOSCII actually works. You can help prove it.</p>
         </section>
@@ -513,9 +529,8 @@
 
     <footer>
         <div class="container">
-            <p style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 5px; margin-bottom: 15px;"><strong>PREVIEW VERSION</strong> - Not yet live. For review and feedback only.</p>
-            <p>© 2025 TrumpetBlower - Powered by <a href="https://zoscii.com" style="color: white; text-decoration: underline;">ZOSCII Technology</a></p>
-            <p style="margin-top: 10px; font-size: 0.9em;">MIT Licensed - <a href="https://zosciicoin.com" style="color: white; text-decoration: underline;">Support via ZOSCIICOIN</a></p>
+            <p>© 2025 TrumpetBlower - Powered by <a href="https://zoscii.com" target="_blank" style="color: white; text-decoration: underline;">ZOSCII Technology</a></p>
+            <p style="margin-top: 10px; font-size: 0.9em;">MIT Licensed - <a href="https://zosciicoin.com" target="_blank" style="color: white; text-decoration: underline;">Support via ZOSCIICOIN</a></p>
         </div>
     </footer>
 </body>
