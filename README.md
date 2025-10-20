@@ -10,9 +10,9 @@ CyborgZOSCII is an alternative to ASCII/PETSCII that uses direct ROM addressing 
 
 ## Browser Applications
 
-- TRUMPETBLOWER, publicly open secure whistleblower platform
 - ZOSCIIBB, publicly open secure bulletin board
 - ZOSCIICHAT, secure chat client and server
+- ZOSCIITRUMPETBLOWER, publicly open secure whistleblower platform
 
 ## Browser Tools
 
@@ -58,9 +58,9 @@ CyborgZOSCII is an alternative to ASCII/PETSCII that uses direct ROM addressing 
 
 ## Use Cases
 
-- Visit https://zoscii.com/zosciitrumpetblower/readme.html for more information
 - Visit https://zoscii.com/ for more information
 - Visit https://zoscii.com/zosciibb/ for a realworld demonstration
+- Visit https://zoscii.com/zosciitrumpetblower/readme.html for more information
 
 - **Embedded systems** with severe ROM constraints
 - **IoT devices** requiring lightweight secure messaging  
