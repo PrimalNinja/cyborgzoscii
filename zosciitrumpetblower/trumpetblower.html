@@ -1063,17 +1063,25 @@ function submitToServer(arrAddresses_a)
         if (objResponse_a.success) 
 		{
             console.log("Message submitted:", objResponse_a);
-            alert("Successfully submitted to channel " + strChannelNumber);
+            alert("🎺 Successfully submitted to channel " + strChannelNumber);
         } 
 		else 
 		{
             console.error("Upload failed:", objResponse_a.error);
-            alert("Failed to submit message: " + objResponse_a.error);
+            alert("❌ Failed to submit message: " + objResponse_a.error);
         }
     }, function(strError_a) 
 	{
-        console.error("Upload failed:", strError_a);
-        alert("Failed to submit message: " + strError_a);
+		if (strError_a.length === 0)
+		{
+			console.error("Upload failed:", strError_a);
+			alert("⚠️ Upload Failed (Local Block): Check the browser console for CORS errors. If no file was submitted, your configuration is blocking the request.");
+		}
+		else
+		{
+			console.error("Upload failed:", strError_a);
+			alert("❌ Failed to submit message: " + strError_a);
+		}
     });
 }
 

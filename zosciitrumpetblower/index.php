@@ -106,7 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === "GET")
     if (!isset($_GET['file']) && !isset($_GET['limit']))
 	{
         header("Content-Type: text/html");
-        echo "<h1>TrumpetBlower Server</h1><p>Download the client from <a href='https://github.com/PrimalNinja/cyborgzoscii'>GitHub</a> to communicate securely.</p>";
+        echo "<h1>TrumpetBlower Server</h1><p>Download the client from <a href='https://github.com/PrimalNinja/cyborgzoscii'>GitHub</a> to blow your trumpet!</p><p>Browse and download ZOSCII Trumpet Address files from <a href='data'>here</a>.</p>";
         exit;
     }
     
