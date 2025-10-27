@@ -1,7 +1,7 @@
 = Glossary =
 
 == Key Concepts ==
-*'''ZOSCII''' - Zero Overhead Secure Coding Information Interchange
+*'''ZOSCII''' - Zero Overhead Secure Code Information Interchange
 *'''ROM''' - Read-Only Memory files used as encoding keys
 *'''Information-Theoretic Security''' - Security independent of computational power
 *'''Weaponized Ambiguity''' - Perfect deniability through multiple valid interpretations

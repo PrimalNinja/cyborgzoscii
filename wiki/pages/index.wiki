@@ -1,4 +1,4 @@
-= CyborgZOSCII - Zero Overhead Secure Information Interchange =
+= CyborgZOSCII - Zero Overhead Secure Code Information Interchange =
 
 == ZERO encryption ZERO ciphering 100% SECURE! ==
 
