@@ -2,7 +2,7 @@
 
 ## Overview
 
-**CyborgZOSCII** (Zero Overhead Secure Coding Information Interchange) is an innovative character encoding system that replaces traditional ASCII/PETSCII lookup tables with direct ROM memory addressing. Instead of storing character codes, ZOSCII encodes text as sequences of memory addresses that point to locations in ROM containing the corresponding byte values.
+**CyborgZOSCII** (Zero Overhead Secure Code Information Interchange) is an innovative character encoding system that replaces traditional ASCII/PETSCII lookup tables with direct ROM memory addressing. Instead of storing character codes, ZOSCII encodes text as sequences of memory addresses that point to locations in ROM containing the corresponding byte values.
 
 ## Key Features
 

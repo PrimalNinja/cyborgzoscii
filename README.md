@@ -1,6 +1,6 @@
 # CyborgZOSCII v20251021
 
-ZOSCII Zero Overhead Secure Coding Information Interchange.
+ZOSCII Zero Overhead Secure Code Information Interchange.
 
 An innovative character encoding system that eliminates lookup table overhead while providing built-in security properties through direct memory addressing.
 
