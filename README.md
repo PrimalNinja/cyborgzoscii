@@ -1,4 +1,4 @@
-# CyborgZOSCII v20251021
+# CyborgZOSCII v20251030
 
 ZOSCII Zero Overhead Secure Code Information Interchange.
 
@@ -10,9 +10,10 @@ CyborgZOSCII is an alternative to ASCII/PETSCII that uses direct ROM addressing 
 
 ## Browser Applications
 
-- ZOSCIIBB, publicly open secure bulletin board
-- ZOSCIICHAT, secure chat client and server
-- ZOSCIITRUMPETBLOWER, publicly open secure whistleblower platform
+- ZOSCII BB, publicly open secure bulletin board
+- ZOSCII CHAT, secure chat client and server
+- ZOSCII MQ, message queue system for ZOSCII with replication and tools
+- ZOSCII TRUMPETBLOWER, publicly open secure whistleblower platform
 
 ## Browser Tools
 
@@ -60,7 +61,10 @@ CyborgZOSCII is an alternative to ASCII/PETSCII that uses direct ROM addressing 
 
 - Visit https://zoscii.com/ for more information
 - Visit https://zoscii.com/zosciibb/ for a realworld demonstration
+- Visit https://zoscii.com/zosciichat/readme.html for secure chat
+- Visit https://zoscii.com/zosciimq for the message queue
 - Visit https://zoscii.com/zosciitrumpetblower/readme.html for more information
+- Visit https://zoscii.com/ztb/ for tamperproof blockchain
 
 - **Embedded systems** with severe ROM constraints
 - **IoT devices** requiring lightweight secure messaging  
