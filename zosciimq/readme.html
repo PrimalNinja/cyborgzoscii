@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZOSCII MQ System Documentation</title>
+	<link rel="stylesheet" type="text/css" href="cu-styles.css">
+</head>
+<body>
+
+<!-- SUPPORT -->
+<div class="container">
+	<section class="support-box">
+		<h2>🚀 Support ZOSCII</h2>
+		<p>This software is free and open-source (MIT license). 
+		   Help prove ZOSCII works by using it.</p>
+		<p style="margin-top: 15px;"><strong>ZOSCII development is 
+		   supported entirely by ZOSCIICOIN.</strong></p>
+		<a href="https://zosciicoin.com" target="_blank" class="btn">
+		   Learn more about ZOSCIICOIN
+		</a>
+	</section>
+
+    <h1>ZOSCII MQ System Documentation</h1>
+
+    <h2>1. ZOSCII MQ: Overview and Advantage</h2>
+    <p>ZOSCII MQ is a minimal, file-based Message Queue (MQ) designed for high-assurance, B2B asynchronous communication. It leverages the file system for durability and uses specific file naming conventions for chronological ordering and message retention.</p>
+
+    <h3>Why Use ZOSCII MQ?</h3>
+    <p>The architecture offers key advantages over traditional message brokers (like RabbitMQ or Kafka) in specific freight and logistics scenarios:</p>
+    <ul>
+        <li><strong>High Durability (Disk-First):</strong> Messages are written directly to the file system. Durability is tied directly to the operating system and disk health, ensuring messages are safe immediately upon publishing.</li>
+        <li><strong>Asynchronous B2B Integration:</strong> It excels at decoupling systems. The Puller (<code>replikate.php</code>) model allows external partners to control their consumption rate and timing, minimizing your exposure to their network failures.</li>
+        <li><strong>Security Integration (ITS):</strong> The file-based nature is perfectly suited for integrating Information Theoretic Security (ITS) encoding, where the message payload is encoded before being written to disk, offering a higher level of data security than standard SSL/TLS alone. The server needs no knownedge of the message content.</li>
+        <li><strong>Simplicity and Control:</strong> There is no complex daemon, database, or broker to manage. All state is controlled via files, making it easy to audit and debug.</li>
+    </ul>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Feature</th>
+                <th>ZOSCII MQ (File-Based)</th>
+                <th>Traditional Broker (RabbitMQ/Kafka)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Durability</strong></td>
+                <td>OS/Disk itself (Persistent)</td>
+                <td>Configurable (Often RAM/DB)</td>
+            </tr>
+            <tr>
+                <td><strong>Guaranteed Delivery</strong></td>
+                <td>External Pointer Tracking (Puller's responsibility)</td>
+                <td>Built-in ACK/Offset Tracking</td>
+            </tr>
+            <tr>
+                <td><strong>Architecture</strong></td>
+                <td>Simple HTTP Endpoint + File System</td>
+                <td>Complex Daemon/Cluster Management</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>2. Usage for Integrators: Reading and Writing Messages</h2>
+    <p>ZOSCII MQ uses a simple HTTP API (via <code>index.php</code>) for publishing and fetching messages, and a cron script (<code>replikate.php</code>) for B2B integration.</p>
+
+    <h3>A. Publishing Messages (Writing to a Queue)</h3>
+    <p>Messages are published using an HTTP <code>GET</code> request to the <code>index.php</code> endpoint.</p>
+
+    <p>Endpoint:</p>
+    <code>/index.php?action=publish</code>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Parameter</th>
+                <th>Required</th>
+                <th>Description</th>
+                <th>Example Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>action</code></td>
+                <td>Yes</td>
+                <td>Must be <code>publish</code>.</td>
+                <td><code>publish</code></td>
+            </tr>
+            <tr>
+                <td><code>q</code></td>
+                <td>Yes</td>
+                <td>The name of the target queue.</td>
+                <td><code>customer_a</code></td>
+            </tr>
+            <tr>
+                <td><code>msg</code></td>
+                <td>Yes</td>
+                <td>The raw message payload (should be URL-encoded).</td>
+                <td><code>{"item":"A"}</code></td>
+            </tr>
+            <tr>
+                <td><code>r</code></td>
+                <td>Optional</td>
+                <td><strong>Retention Days (RRRR)</strong>. 0000 = no expected retention (suitable for testing).</td>
+                <td><code>7</code></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p>Example Command (HTTP):</p>
+    <pre><code>GET /index.php?action=publish&q=customer_b&r=30&msg=%7B%22sku%22%3A%20%22123%22%7D</code></pre>
+    
+    <p>Filename Format:</p>
+    <p>The message is saved as a file in the <code>queues/QUEUE_NAME/</code> directory with the format: <code>message-YYYYMMDDHHNNSSCCCC-RRRR.bin</code></p>
+
+    <h3>B. Fetching Messages (Reading from a Queue - API Pull)</h3>
+    <p>Messages are fetched sequentially using the unique filename as a <strong>pointer</strong>. The consumer must track this pointer (the <code>after</code> parameter) to ensure guaranteed, chronological delivery.</p>
+
+    <p>Endpoint:</p>
+    <code>/index.php?action=fetch</code>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Parameter</th>
+                <th>Required</th>
+                <th>Description</th>
+                <th>Example Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>action</code></td>
+                <td>Yes</td>
+                <td>Must be <code>fetch</code>.</td>
+                <td><code>fetch</code></td>
+            </tr>
+            <tr>
+                <td><code>q</code></td>
+                <td>Yes</td>
+                <td>The name of the source queue to read from.</td>
+                <td><code>customer_b</code></td>
+            </tr>
+            <tr>
+                <td><code>after</code></td>
+                <td>No</td>
+                <td><strong>The Pointer.</strong> The filename of the LAST successfully processed message. Leave blank or omit for the very first message.</td>
+                <td><code>message-202510300900000001-0007.bin</code></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p>Consumer Responsibility (Guaranteed Delivery):</p>
+    <ul>
+        <li>The consumer must store the returned filename (<code>Content-Disposition</code> header) as its <strong>pointer</strong>.</li>
+        <li>The consumer must only advance the pointer <strong>after</strong> successfully processing and acting on the message content.</li>
+        <li><strong>The system performs no message acknowledgment (ACK).</strong> Delivery guarantee relies entirely on the consumer's proper use of the pointer (<code>after</code> parameter).</li>
+    </ul>
+
+<h3>C. B2B Replication (Puller)</h3>
+<p>For external partners (e.g. ABC Ltd) to pull data from your (e.g. XYZ Ltd) queue, they should run a dedicated cron job on their server (e.g. ABC_LOCAL_SERVER).</p>
+<p>Script:</p>
+<code>replikate.php</code>
+<p>Setup:</p>
+<ul>
+    <li>The partner must install this script on their server.</li>
+    <li>They should set up a scheduled task (cron job or Windows Scheduler) to run the script every few minutes.</li>
+</ul>
+<p>Endpoint:</p>
+<code>/replikate.php</code>
+<table>
+    <thead>
+        <tr>
+            <th>Parameter</th>
+            <th>Required</th>
+            <th>Description</th>
+            <th>Example Value</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><code>url</code></td>
+            <td>Yes</td>
+            <td>The URL of the source server's <code>index.php</code></td>
+            <td><code>https://XYZ_REMOTE_SERVER/index.php</code></td>
+        </tr>
+        <tr>
+            <td><code>sq</code></td>
+            <td>Yes</td>
+            <td>The name of the source queue to read from</td>
+            <td><code>XYZ_REMOTE_QUEUE (e.g. abc_orders</code></td>
+        </tr>
+        <tr>
+            <td><code>tq</code></td>
+            <td>Yes</td>
+            <td>The name of the target queue on the partner's server</td>
+            <td><code>ABC_LOCAL_QUEUE (e.g. my_orders)</code></td>
+        </tr>
+    </tbody>
+</table>
+<p>Example Command (HTTP):</p>
+<pre><code>GET /replikate.php?url=https://SOURCESERVER/index.php&sq=SOURCEQUEUE&tq=TARGETQUEUE</code></pre>
+<p>The script manages the state/pointer file (<code>replikate_state_my_orders.txt</code>) automatically.</p>
+
+    <h2>3. Server Setup and Maintenance (For Administrators)</h2>
+
+    <h3>A. Core Directory Structure</h3>
+    <p>The system is file-based and requires a dedicated root directory:</p>
+    <pre><code>./
+|-- index.php             (HTTP API: Publish/Fetch)
+|-- replikate.php         (Cron: External Puller)
+|-- claireup.php          (Cron: Retention Cleanup)
+|-- queues/
+|   |-- customer_a/       (Queue 1)
+|   |   |-- message-*.bin
+|   |-- customer_b/       (Queue 2)
+|   |   |-- message-*.bin
+|-- replikate_state_*.txt (State Files for Replicators)
+</code></pre>
+
+    <h3>B. Critical Cron Jobs</h3>
+    <p>Two cron jobs must be set up on the ZOSCII MQ server to ensure stability:</p>
+
+    <h4>1. Message Retention Cleanup (<code>claireup.php</code>)</h4>
+    <p>This job ensures disk space is managed by deleting expired messages based on the **RRRR** value in the filename. It processes **all queues globally**.</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Setting</th>
+                <th>Value</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Script</strong></td>
+                <td><code>claireup.php</code></td>
+                <td>The retention management script.</td>
+            </tr>
+            <tr>
+                <td><strong>Schedule</strong></td>
+                <td>Once daily (e.g., <code>0 0 * * *</code>)</td>
+                <td>Runs at midnight to clear the previous day's expired files.</td>
+            </tr>
+            <tr>
+                <td><strong>Action</strong></td>
+                <td>Deletes any message file where <code>Current Time</code> $\ge$ (<code>Message Time</code> + <code>RRRR</code> days). <strong>It deletes messages with RRRR=0000.</strong></td>
+				<td></td>
+            </tr>
+        </tbody>
+    </table>
+    <p>Cron Example:</p>
+	<p>Although it's possible to run claireup.php from a browser it is recommended to run it from cron if possible. To run it from the browser, you will first need to change the CLI_ONLY constant to FALSE from within the claireup.php file. If you do that, you are best ensure that it cannot be run by unauthorised parties if you don't want it to run.</p>
+    <pre><code>0 0 * * * /usr/bin/php /path/to/claireup.php</code></pre>
+
+	</div>
+	
+	<div class="footer">
+		<h3>License & Information</h3>
+		<p><strong>MIT License</strong> - (c) 2025 Cyborg Unicorn Pty Ltd</p>
+		<p>
+			<a href="https://zoscii.com" target="_blank" style="color: #007bff;">zoscii.com</a> |
+			<a href="https://github.com/PrimalNinja/cyborgzoscii" target="_blank" style="color: #007bff;">GitHub Repository</a> |
+		</p>
+		<p style="margin-top: 20px; font-size: 0.9em;">
+			For technical questions, security concerns, or implementation assistance,<br>
+			please visit the project website or file an issue on GitHub.
+		</p>
+	</div>
+</body>
+</html>

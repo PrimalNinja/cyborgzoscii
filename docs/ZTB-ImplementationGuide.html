@@ -4,167 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ZOSCII Tamperproof Blockchain - Implementation Guide</title>
-    <style>
-        * { box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-            line-height: 1.6;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background: #f8f9fa;
-            color: #212529;
-        }
-        .container {
-            background: white;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        h1 {
-            color: #1a1a1a;
-            border-bottom: 3px solid #007bff;
-            padding-bottom: 15px;
-            font-size: 2.5em;
-        }
-        h2 {
-            color: #2c3e50;
-            margin-top: 50px;
-            padding: 15px;
-            background: #e9ecef;
-            border-left: 5px solid #007bff;
-            font-size: 1.8em;
-        }
-        h3 {
-            color: #495057;
-            margin-top: 30px;
-            font-size: 1.4em;
-        }
-        .subtitle {
-            font-size: 1.2em;
-            color: #6c757d;
-            margin-bottom: 30px;
-        }
-        .toc {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 5px;
-            margin: 30px 0;
-        }
-        .toc ul {
-            list-style: none;
-            padding-left: 0;
-        }
-        .toc li {
-            margin: 8px 0;
-        }
-        .toc a {
-            color: #007bff;
-            text-decoration: none;
-        }
-        .toc a:hover {
-            text-decoration: underline;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-        }
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border: 1px solid #dee2e6;
-        }
-        th {
-            background: #007bff;
-            color: white;
-            font-weight: 600;
-        }
-        tr:nth-child(even) {
-            background: #f8f9fa;
-        }
-        code {
-            background: #f8f9fa;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-family: 'Courier New', monospace;
-            color: #e83e8c;
-            font-size: 0.9em;
-        }
-        pre {
-            background: #2d2d2d;
-            color: #f8f9fa;
-            padding: 20px;
-            border-radius: 5px;
-            overflow-x: auto;
-            font-size: 0.9em;
-        }
-        pre code {
-            background: none;
-            color: #f8f9fa;
-            padding: 0;
-        }
-        .tool-section {
-            background: #e7f3ff;
-            padding: 25px;
-            border-radius: 5px;
-            margin: 25px 0;
-            border-left: 5px solid #0d6efd;
-        }
-        .warning {
-            background: #fff3cd;
-            padding: 20px;
-            border-left: 5px solid #ffc107;
-            border-radius: 5px;
-            margin: 20px 0;
-        }
-        .success {
-            background: #d1e7dd;
-            padding: 20px;
-            border-left: 5px solid #198754;
-            border-radius: 5px;
-            margin: 20px 0;
-        }
-        .info {
-            background: #cfe2ff;
-            padding: 20px;
-            border-left: 5px solid #0d6efd;
-            border-radius: 5px;
-            margin: 20px 0;
-        }
-        .example {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 5px;
-            margin: 20px 0;
-        }
-        ul, ol {
-            margin: 15px 0;
-            padding-left: 30px;
-        }
-        li {
-            margin: 10px 0;
-        }
-        .badge {
-            display: inline-block;
-            padding: 4px 8px;
-            font-size: 0.85em;
-            font-weight: 600;
-            border-radius: 3px;
-            margin-right: 5px;
-        }
-        .badge-success { background: #198754; color: white; }
-        .badge-info { background: #0dcaf0; color: black; }
-        .badge-warning { background: #ffc107; color: black; }
-        .badge-danger { background: #dc3545; color: white; }
-        .footer {
-            margin-top: 60px;
-            padding-top: 30px;
-            border-top: 2px solid #dee2e6;
-            text-align: center;
-            color: #6c757d;
-        }
-    </style>
+	<link rel="stylesheet" type="text/css" href="cu-styles.css">
 </head>
 <body>
     <div class="container">
@@ -536,20 +376,19 @@ gcc -o ztbcheckpoint ztbcheckpoint.c ztbcommon.c -O2</code></pre>
                 <li>Secure Genesis ROM with encryption</li>
             </ul>
         </div>
-
-        <div class="footer">
-            <h3>License & Information</h3>
-            <p><strong>MIT License</strong> - (c) 2025 Cyborg Unicorn Pty Ltd</p>
-            <p>
-                <a href="https://zoscii.com" style="color: #007bff;">zoscii.com</a> |
-                <a href="#" style="color: #007bff;">GitHub Repository</a> |
-                <a href="#" style="color: #007bff;">Documentation</a>
-            </p>
-            <p style="margin-top: 20px; font-size: 0.9em;">
-                For technical questions, security concerns, or implementation assistance,<br>
-                please visit the project website or file an issue on GitHub.
-            </p>
-        </div>
-    </div>
+	</div>
+	
+	<div class="footer">
+		<h3>License & Information</h3>
+		<p><strong>MIT License</strong> - (c) 2025 Cyborg Unicorn Pty Ltd</p>
+		<p>
+			<a href="https://zoscii.com" target="_blank" style="color: #007bff;">zoscii.com</a> |
+			<a href="https://github.com/PrimalNinja/cyborgzoscii" target="_blank" style="color: #007bff;">GitHub Repository</a> |
+		</p>
+		<p style="margin-top: 20px; font-size: 0.9em;">
+			For technical questions, security concerns, or implementation assistance,<br>
+			please visit the project website or file an issue on GitHub.
+		</p>
+	</div>
 </body>
 </html>
