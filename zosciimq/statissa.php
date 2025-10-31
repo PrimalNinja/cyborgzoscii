@@ -44,7 +44,7 @@ function getQueueStats()
         $strNewestFile = 'N/A';
         
 		// Get all message files and sort them (alphabetical = chronological)
-        $arrAllFiles = glob($strQueuePath . '/message-*.bin');
+        $arrAllFiles = glob($strQueuePath . '/*.bin');
         if ($arrAllFiles === false) 
 		{
             // Handle error during glob

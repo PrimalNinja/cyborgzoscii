@@ -79,15 +79,19 @@ function handleClaireup()
 			{
 				$strFilename = basename($strFullPath);
 				
-				// Expected Filename Format: message-YYYYMMDDHHNNSSCCCC-RRRR.bin
+				// Expected Filename Format: YYYYMMDDHHNNSSCCCC-RRRR-GUID.bin
 				
-				// A. Explicitly pull out the timestamp (14 characters starting after "message-")
-				// The timestamp starts at index 8 and is 14 digits long.
-				$strMessageTimestamp = substr($strFilename, 8, 14);
+				// Expected Filename Format: YYYYMMDDHHNNSSCCCC-RRRR-GUID.bin
 
-				// B. Explicitly pull out the retention days (4 characters before ".bin")
-				// The retention starts 7 characters from the end (-7) and is 4 digits long.
-				$strRetentionString = substr($strFilename, -7, 4);
+				$strFilename = basename($strFullPath); // Always use basename for safety
+
+				// 1. Split the filename into parts based on the hyphen delimiter
+				// Result: [ "YYYYMMDDHHNNSSCCCC", "RRRR", "GUID.bin" ]
+				$arrParts = explode('-', $strFilename);
+
+				// 2. Assign the parts based on their index
+				$strMessageTimestamp = $arrParts[0]; // YYYYMMDDHHNNSSCCCC (18 characters)
+				$strRetentionString  = $arrParts[1]; // RRRR (4 characters)
 
 				// C. Convert to integers
 				$intRetentionDays = (int)$strRetentionString;
