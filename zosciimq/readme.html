@@ -23,7 +23,21 @@
 
     <h1>ZOSCII MQ System Documentation</h1>
 
-    <h2>1. ZOSCII MQ: Overview and Advantage</h2>
+	<!-- START TABLE OF CONTENTS -->
+	<div class="toc">
+		<h2>Table of Contents</h2>
+		<ul>
+			<li><a href="#overview">1. Overview and Advantage</a></li>
+			<li><a href="#integrator-usage">2. Usage for Integrators: Reading and Writing Messages</a></li>
+			<li><a href="#server-setup-and-maintenance">3. Server Setup and Maintenance (For Administrators)</a></li>
+			<li><a href="#deployment-strategies">4. Deployment Strategies</a></li>
+			<li><a href="#docker-deploys">5. Docker Deploys</a></li>
+			<li><a href="#comparison">6. Comparison with Traditional Message Brokers</a></li>
+		</ul>
+	</div>
+	<!-- END TABLE OF CONTENTS -->
+
+    <h2 id="overview">1. Overview and Advantage</h2>
 	<p>The World's First Truly Quantum Proof Message Queue (MQ) when used in conjunction with ZOSCII.</p>
     <p>ZOSCII MQ is a minimal, file-based Message Queue (MQ) designed for high-assurance, B2B asynchronous communication. It leverages the file system for durability and uses specific file naming conventions for chronological ordering and message retention.</p>
 
@@ -63,7 +77,7 @@
         </tbody>
     </table>
 
-    <h2>2. Usage for Integrators: Reading and Writing Messages</h2>
+    <h2 id="integrator-usage">2. Usage for Integrators: Reading and Writing Messages</h2>
     <p>ZOSCII MQ uses a simple HTTP API (via <code>index.php</code>) for publishing and fetching messages, and a cron script (<code>replikate.php</code>) for B2B integration.</p>
 
     <h3>A. Publishing Messages (Writing to a Queue)</h3>
@@ -210,7 +224,7 @@
 <pre><code>GET /replikate.php?url=https://SOURCESERVER/index.php&amp;sq=SOURCEQUEUE&amp;tq=TARGETQUEUE</code></pre>
 <p>The script manages the state/pointer file (<code>replikate_state_my_orders.txt</code>) automatically.</p>
 
-    <h2>3. Server Setup and Maintenance (For Administrators)</h2>
+    <h2 id="server-setup-and-maintenance">3. Server Setup and Maintenance (For Administrators)</h2>
 
     <h3>A. Core Directory Structure</h3>
     <p>The system is file-based and requires a dedicated root directory:</p>
@@ -263,7 +277,7 @@
 	<p>Although it's possible to run claireup.php from a browser it is recommended to run it from cron if possible. To run it from the browser, you will first need to change the CLI_ONLY constant to FALSE from within the claireup.php file. If you do that, you are best ensure that it cannot be run by unauthorised parties if you don't want it to run.</p>
     <pre><code>0 0 * * * /usr/bin/php /path/to/claireup.php</code></pre>
 
-<h2>4. ZOSCII MQ Deployment Strategies</h2>
+<h2 id="deployment-strategies">4. Deployment Strategies</h2>
 
 <p>ZOSCII MQ supports two primary deployment patterns, each optimized for different use cases:</p>
 
@@ -485,8 +499,70 @@ Business A (AWS)         Business B (AWS)         Business C (AWS)
     <strong>Key Insight:</strong> The AWS B2B strategy is ZOSCII MQ's primary design target. The "thousands/day" performance reflects real-world B2B traffic patterns (business hours, peak windows) over internet connections - not a technical limitation.
 </div>
 
+<!-- START DOCKER PERSISTENCE AND CLEANUP SECTIONS (5 & 6) -->
+<h2 id="docker-deploys">5. Docker Deploys</h2>
+<p>Deploying ZOSCII MQ using Docker provides an **instant, persistent message queue** solution. There are three primary deployment strategies for managing the deployment environment and persistent queue data (messages and nonces):</p>
+
+<h3>Strategy 1: Instant Deploy (Docker Named Volumes) - Recommended for simplicity</h3>
+<p>This strategy is best for quick setup and development environments. It uses **Docker Named Volumes** which Docker automatically manages on the host machine.</p>
+
+<h4>Deployment Details:</h4>
+<ul>
+    <li><strong>Persistence:</strong> The default <code>docker-compose.yml</code> uses Named Volumes (<code>zoscii_data</code> and <code>zoscii_nonce</code>).</li>
+    <li><strong>Location:</strong> Data is stored in a hidden, internal location managed by Docker on your host machine.</li>
+    <li><strong>Expansion:</strong> The storage size is <strong>dynamic</strong> and will grow automatically, limited only by the host machine's available disk space.</li>
+</ul>
+
+<p>The <code>volumes</code> section in the <code>docker-compose.yml</code> looks like this:</p>
+<pre><code>volumes:
+  # Data is mapped to Docker-managed volumes defined at the bottom of the file.
+  - zoscii_data:/app/queues
+  - zoscii_nonce:/app/nonce
+
+volumes:
+  zoscii_data:
+  zoscii_nonce:
+</code></pre>
+
+<h3>Strategy 2: Dedicated Data Path (Host Bind Mounts) - Recommended for local production</h3>
+<p>This strategy gives you full control over where the queue data resides. This is essential for environments where you need to explicitly back up, monitor, or manage the queue files using host-level tools (like <code>rsync</code> or specific backup agents).</p>
+
+<h4>Deployment Details:</h4>
+<ul>
+    <li><strong>Persistence:</strong> You explicitly map a known local directory on the host to the container's data path.</li>
+    <li><strong>Location:</strong> Data is stored in the specific folder you choose (e.g., <code>./zoscii-data/</code>).</li>
+    <li><strong>Control:</strong> Provides the ability to "point" the queue storage to a dedicated folder, external drive, or network file system.</li>
+</ul>
+
+<p>The <code>volumes</code> section in the <code>docker-compose.yml</code> is modified to specify the host path:</p>
+<pre><code>volumes:
+  # The host path (./zoscii-data) is explicitly mapped to the container path.
+  - ./zoscii-data/queues:/app/queues
+  - ./zoscii-data/nonce:/app/nonce
+
+# NOTE: Named volumes are NOT defined when using Bind Mounts.
+</code></pre>
+
+<h3>Strategy 3: Serverless Cloud Deploy (AWS Fargate/Google Cloud Run) - Recommended for zero local install</h3>
+<p>If you wish to deploy without installing Docker or running a package manager locally, the best method is a **Serverless Container Service** that manages the container's lifecycle and infrastructure.</p>
+
+<h4>Deployment Details:</h4>
+<ul>
+    <li><strong>Zero Install:</strong> You only interact with the cloud provider's web console (AWS/Google Cloud).</li>
+    <li><strong>Managed Service:</strong> The cloud provider runs your container, manages the host OS, and handles auto-scaling.</li>
+    <li><strong>Storage Configuration:</strong> For persistence, the container's <code>/app/queues</code> directory must be mounted to a cloud file system service (like **AWS EFS** or **Google Cloud Filestore**) during deployment setup. This replaces the Docker volume concept with a network file system.</li>
+</ul>
+<p>Once your ZOSCII MQ Docker image is pushed to a public registry (via automated build, e.g., GitHub Actions), you can deploy it in a few clicks.</p>
+
+<h2>6. Running the Cleanup Cron Job (<code>claireup.php</code>)</h2>
+<p>Since <code>claireup.php</code> is designed to be run from the command line (CLI), you can execute it manually inside the running container:</p>
+<pre><code>docker-compose exec zoscii-mq php /app/claireup.php
+</code></pre>
+<p>You can automate this by setting up a host-level cron job that calls the <code>docker-compose exec</code> command every minute. **Note for Strategy 3 (Cloud Deploy):** For cloud deployments, you must use the cloud provider's native scheduling tools (e.g., **AWS CloudWatch Events/EventBridge** or **Google Cloud Scheduler**) to execute the cleanup command on the running container.</p>
+<!-- END DOCKER PERSISTENCE AND CLEANUP SECTIONS (5 & 6) -->
+
 <!-- COMPARISON SECTION -->
-<h2>5. ZOSCII MQ vs. Traditional Message Brokers</h2>
+<h2 id="comparison">6. Comparison with Traditional Message Brokers</h2>
 
 <h3>Architecture Comparison</h3>
 <table>

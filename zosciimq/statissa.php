@@ -149,7 +149,10 @@ function outputHtmlReport($arrQueueStats, $intTotalStorage)
 			echo(" <td>\n");
 			echo(" <table style='width: 100px; border: none;'><tr>\n");
 			echo(" <td style='width: " . $fltShare . "%; background-color: #3b82f6;'></td>\n");
-			echo(" <td style='width: " . (100 - $fltShare) . "%;'></td>\n");
+			if ($fltShare < 100)
+			{
+				echo(" <td style='width: " . (100 - $fltShare) . "%;'></td>\n");
+			}
 			echo(" </tr></table>\n");
 			echo(" " . number_format($fltShare, 2) . "%\n");
 			echo(" </td>\n");

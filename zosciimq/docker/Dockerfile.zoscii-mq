@@ -1,0 +1,43 @@
+# Dockerfile for ZOSCII MQ (index.php, statissa.php, claireup.php)
+# Uses a lean Alpine base with PHP-FPM and Nginx.
+
+# --- Stage 1: PHP-FPM Base ---
+# We use php:8.2-fpm-alpine for a lightweight, optimized PHP environment.
+FROM php:8.2-fpm-alpine AS zoscii_fpm
+
+# Install necessary system packages for Nginx, cron, and utility
+RUN apk update && apk add --no-cache \
+    nginx \
+    cronie \
+    # php-fpm is already installed but this ensures everything is clean
+    php82-fpm \
+    php82-session \
+    # Clean up apk cache
+    && rm -rf /var/cache/apk/*
+
+# Set up the application directory
+WORKDIR /app
+
+# Copy the application files (index.php, statissa.php, claireup.php, etc.)
+# IMPORTANT: Ensure your current directory contains all ZOSCII MQ PHP files!
+COPY . /app
+
+# The user running PHP-FPM inside the container is typically 'www-data' (UID 82).
+# We need to make sure the data and log directories are writable by this user.
+RUN mkdir -p /app/queues \
+    && mkdir -p /app/nonce \
+    && mkdir -p /app/logs \
+    && chown -R www-data:www-data /app
+
+# Set up automated cleanup cron job (runs daily at midnight)
+# Discards all output (>/dev/null 2>&1) since claireup.php uses its own logError() function
+RUN echo "0 0 * * * cd /app && /usr/local/bin/php /app/claireup.php >/dev/null 2>&1" > /etc/crontabs/www-data
+
+# Expose the port where Nginx will listen
+EXPOSE 80
+
+# Copy the Nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Start crond (for automated cleanup), PHP-FPM, and Nginx
+CMD crond && php-fpm -D && nginx -g "daemon off;"

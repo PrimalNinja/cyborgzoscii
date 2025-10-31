@@ -1,0 +1,19 @@
+services:
+  zoscii-mq:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    
+    ports:
+      - "8080:80"
+    
+    # Set timezone for cron (optional - defaults to UTC)
+    environment:
+      - TZ=Australia/Melbourne  # Or your preferred timezone
+      
+    volumes:
+      - ./zoscii-data/queues:/app/queues
+      - ./zoscii-data/nonce:/app/nonce
+      - ./zoscii-data/logs:/app/logs
+      
+    restart: always
