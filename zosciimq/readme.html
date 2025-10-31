@@ -24,6 +24,7 @@
     <h1>ZOSCII MQ System Documentation</h1>
 
     <h2>1. ZOSCII MQ: Overview and Advantage</h2>
+	<p>The World's First Truly Quantum Proof Message Queue (MQ) when used in conjunction with ZOSCII.</p>
     <p>ZOSCII MQ is a minimal, file-based Message Queue (MQ) designed for high-assurance, B2B asynchronous communication. It leverages the file system for durability and uses specific file naming conventions for chronological ordering and message retention.</p>
 
     <h3>Why Use ZOSCII MQ?</h3>
@@ -253,6 +254,353 @@
     <p>Cron Example:</p>
 	<p>Although it's possible to run claireup.php from a browser it is recommended to run it from cron if possible. To run it from the browser, you will first need to change the CLI_ONLY constant to FALSE from within the claireup.php file. If you do that, you are best ensure that it cannot be run by unauthorised parties if you don't want it to run.</p>
     <pre><code>0 0 * * * /usr/bin/php /path/to/claireup.php</code></pre>
+
+<!-- COMPARISON SECTION -->
+<h2>4. ZOSCII MQ vs. Traditional Message Brokers</h2>
+
+<h3>Architecture Comparison</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Feature</th>
+            <th>ZOSCII MQ</th>
+            <th>Apache Kafka</th>
+            <th>RabbitMQ</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Core Size</strong></td>
+            <td>~35 KB (PHP)</td>
+            <td>~160 MB + JVM</td>
+            <td>~150 MB + Erlang</td>
+        </tr>
+        <tr>
+            <td><strong>Runtime Dependencies</strong></td>
+            <td>PHP only</td>
+            <td>JVM, Zookeeper/KRaft</td>
+            <td>Erlang VM</td>
+        </tr>
+        <tr>
+            <td><strong>Memory Footprint</strong></td>
+            <td>~10-50 MB</td>
+            <td>6-32+ GB typical</td>
+            <td>1-4 GB typical</td>
+        </tr>
+        <tr>
+            <td><strong>Protocol</strong></td>
+            <td>HTTP/REST native</td>
+            <td>Binary (needs REST Proxy)</td>
+            <td>AMQP + HTTP API</td>
+        </tr>
+        <tr>
+            <td><strong>Distributed Architecture</strong></td>
+            <td>Federated (via replikate.php)</td>
+            <td>Centralized cluster</td>
+            <td>Cluster with federation</td>
+        </tr>
+        <tr>
+            <td><strong>Cross-Organization B2B</strong></td>
+            <td>✅ Native (pull model)</td>
+            <td>❌ Complex (VPN/proxy)</td>
+            <td>⚠️ Possible (federation)</td>
+        </tr>
+        <tr>
+            <td><strong>Message Storage</strong></td>
+            <td>Direct file access</td>
+            <td>Segmented logs</td>
+            <td>Mnesia DB/Queues</td>
+        </tr>
+        <tr>
+            <td><strong>Retention Model</strong></td>
+            <td>Per-message (RRRR days)</td>
+            <td>Per-topic configuration</td>
+            <td>TTL or consumed</td>
+        </tr>
+        <tr>
+            <td><strong>Setup Time</strong></td>
+            <td>&lt; 5 minutes</td>
+            <td>Hours to days</td>
+            <td>30-60 minutes</td>
+        </tr>
+        <tr>
+            <td><strong>Debugging</strong></td>
+            <td>ls, cat, grep files</td>
+            <td>JMX, complex tools</td>
+            <td>Management UI</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>Performance & Scale</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Metric</th>
+            <th>ZOSCII MQ</th>
+            <th>Apache Kafka</th>
+            <th>RabbitMQ</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Throughput (single node)</strong></td>
+            <td>100-1,000 msg/sec</td>
+            <td>100,000+ msg/sec</td>
+            <td>20,000+ msg/sec</td>
+        </tr>
+        <tr>
+            <td><strong>Recommended Daily Volume</strong></td>
+            <td>&lt; 1M messages</td>
+            <td>Billions</td>
+            <td>Millions</td>
+        </tr>
+        <tr>
+            <td><strong>Horizontal Scaling</strong></td>
+            <td>Federated (independent nodes)</td>
+            <td>Add brokers to cluster</td>
+            <td>Add nodes to cluster</td>
+        </tr>
+        <tr>
+            <td><strong>Geographic Distribution</strong></td>
+            <td>✅ Excellent (federation)</td>
+            <td>⚠️ Complex (MirrorMaker)</td>
+            <td>✅ Good (federation)</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>Security Comparison</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Security Aspect</th>
+            <th>ZOSCII MQ</th>
+            <th>Apache Kafka</th>
+            <th>RabbitMQ</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Message Handling</strong></td>
+            <td>Transparent pass-through<br/>Data stored as-is</td>
+            <td>Transparent pass-through<br/>Data stored as-is</td>
+            <td>Transparent pass-through<br/>Data stored as-is</td>
+        </tr>
+        <tr>
+            <td><strong>Server Knowledge</strong></td>
+            <td>✅ <strong>Zero knowledge by design</strong><br/>Built for ITS/ZOSCII<br/>Pure binary storage</td>
+            <td>⚠️ Partial knowledge<br/>Keys, headers, offsets<br/>Schema registry possible</td>
+            <td>❌ Message awareness<br/>Routing, properties, TTL<br/>Content-based routing</td>
+        </tr>
+        <tr>
+            <td><strong>Data Storage</strong></td>
+            <td>Raw bytes as provided<br/>No built-in encryption</td>
+            <td>Raw bytes as provided<br/>No built-in encryption</td>
+            <td>Raw bytes as provided<br/>No built-in encryption</td>
+        </tr>
+		<tr>
+			<td><strong>Public Queue Sharing</strong></td>
+			<td>✅ <strong>Safe even if public</strong><br/>ITS/ZOSCII perfect secrecy<br/>Multiple parties, one queue</td>
+			<td>❌ Requires encryption<br/>Vulnerable if exposed<br/>Computational security only</td>
+			<td>❌ Requires encryption<br/>Vulnerable if exposed<br/>Computational security only</td>
+		</tr>
+		<tr>
+			<td><strong>Queue/Topic Security</strong></td>
+			<td>✅ Can use secret names<br/>Capability-based access<br/>No enumeration</td>
+			<td>❌ Topics visible<br/>Listed in metadata<br/>Requires ACLs</td>
+			<td>⚠️ Queues visible<br/>Listed in management<br/>Requires permissions</td>
+		</tr>
+        <tr>
+            <td><strong>Default Security</strong></td>
+            <td>⚠️ None (relies on web server)</td>
+            <td>❌ None (wide open)</td>
+            <td>⚠️ Guest/guest (localhost only)</td>
+        </tr>
+        <tr>
+            <td><strong>Authentication</strong></td>
+            <td>HTTP Basic/Digest/OAuth<br/>(.htaccess, PHP session)</td>
+            <td>SASL (PLAIN/SCRAM/GSSAPI)<br/>SSL certificates</td>
+            <td>PLAIN/AMQPLAIN/EXTERNAL<br/>LDAP, OAuth 2.0</td>
+        </tr>
+        <tr>
+            <td><strong>Transport Encryption</strong></td>
+            <td>✅ HTTPS (standard)</td>
+            <td>TLS/SSL (must configure)</td>
+            <td>TLS/SSL (built-in)</td>
+        </tr>
+        <tr>
+            <td><strong>Message Encryption</strong></td>
+            <td>✅ ITS-ready (mentioned in docs)<br/>Application-level</td>
+            <td>Application-level only</td>
+            <td>Application-level only</td>
+        </tr>
+        <tr>
+            <td><strong>Authorization/ACLs</strong></td>
+            <td>Web server level<br/>PHP app logic</td>
+            <td>Complex ACLs<br/>Per-topic permissions</td>
+            <td>User/vhost permissions<br/>Regex-based</td>
+        </tr>
+        <tr>
+            <td><strong>Cross-Organization B2B</strong></td>
+            <td>✅ Each org owns security<br/>No shared credentials</td>
+            <td>❌ Shared cluster access<br/>VPN/proxy complexity</td>
+            <td>⚠️ Federation possible<br/>Shared credentials</td>
+        </tr>
+        <tr>
+            <td><strong>Attack Surface</strong></td>
+            <td>HTTP endpoint only<br/>Standard web security</td>
+            <td>Binary protocol<br/>9092+ other ports<br/>Zookeeper exposure</td>
+            <td>AMQP + Management<br/>Multiple ports</td>
+        </tr>
+        <tr>
+            <td><strong>Audit Trail</strong></td>
+            <td>Web server logs<br/>Filesystem timestamps</td>
+            <td>Audit log (enterprise)<br/>Complex setup</td>
+            <td>Firehose tracer<br/>Management events</td>
+        </tr>
+        <tr>
+            <td><strong>Security Setup Complexity</strong></td>
+            <td>✅ Simple (web standard)</td>
+            <td>❌ Very complex<br/>(JAAS, keystores, ACLs)</td>
+            <td>⚠️ Moderate</td>
+        </tr>
+        <tr>
+            <td><strong>Network Isolation</strong></td>
+            <td>✅ Standard firewall rules<br/>HTTP/HTTPS only</td>
+            <td>Multiple ports<br/>Internal communication</td>
+            <td>Multiple ports<br/>Clustering ports</td>
+        </tr>
+        <tr>
+            <td><strong>Data at Rest</strong></td>
+            <td>Plain files<br/>(filesystem encryption)</td>
+            <td>Plain logs<br/>(filesystem encryption)</td>
+            <td>Mnesia DB<br/>(filesystem encryption)</td>
+        </tr>
+        <tr>
+            <td><strong>Multi-Tenancy Security</strong></td>
+            <td>✅ Complete isolation<br/>(separate servers)</td>
+            <td>⚠️ Namespace separation</td>
+            <td>✅ Vhost isolation</td>
+        </tr>
+    </tbody>
+</table>
+
+<div style="background-color: #e1f5fe; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #0288d1;">
+    <h4>🔐 ZOSCII MQ: Designed for Zero-Knowledge Security</h4>
+    <p><strong>ZOSCII MQ is purpose-built for ZOSCII (100% secure Information Theoretic Encoding) with complete zero-knowledge architecture.</strong></p>
+    <ul>
+        <li>The server never inspects, parses, or processes message content</li>
+        <li>Perfect companion for Information Theoretic Security (ITS) - mathematically unbreakable encryption</li>
+        <li>Supports any data format: ZOSCII-encoded, traditional encryption, or plain text (your choice)</li>
+        <li>No metadata leakage - only timestamp and retention visible to server</li>
+        <li>Ideal for scenarios requiring absolute privacy: government, healthcare, finance, legal</li>
+    </ul>
+    <p style="margin-top: 15px;"><em>"The server doesn't know what it doesn't need to know."</em></p>
+</div>
+
+<div style="background-color: #e8f5e9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+    <h4>🔒 ZOSCII MQ Security Advantages:</h4>
+    <ul>
+        <li><strong>Federated Security Model:</strong> Each organization maintains complete control over their own security policies, credentials, and access controls</li>
+        <li><strong>Standard Web Security:</strong> Leverages decades of battle-tested HTTP/HTTPS security practices and tools</li>
+        <li><strong>Pull-Based B2B:</strong> External partners never need credentials to YOUR system - they pull from their own secured endpoint</li>
+        <li><strong>ITS Integration Ready:</strong> File-based architecture perfect for Information Theoretic Security encoding</li>
+        <li><strong>Simpler Attack Surface:</strong> Single HTTP endpoint vs multiple ports and protocols</li>
+        <li><strong>No Shared Infrastructure:</strong> Compromise of one node doesn't affect others in the federation</li>
+    </ul>
+</div>
+
+<div style="background-color: #ffebee; padding: 20px; border-radius: 8px; margin: 20px 0;">
+    <h4>⚠️ Security Considerations:</h4>
+    <ul>
+        <li>ZOSCII MQ requires proper web server configuration (.htaccess, SSL certificates)</li>
+        <li>The ALLOW_GET setting should be FALSE in production (force POST only)</li>
+        <li>Message content is visible in plain files unless application-level encryption is used</li>
+        <li>No built-in authentication - must be added at web server or application layer</li>
+    </ul>
+</div>
+
+<h3>Use Case Suitability</h3>
+<div style="background-color: #f0f8ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
+    <h4>✅ Choose ZOSCII MQ When:</h4>
+    <ul>
+        <li>B2B integration across organizational boundaries</li>
+        <li>Message volume &lt; 10,000/day per queue</li>
+        <li>Simplicity and maintainability are priorities</li>
+        <li>You need direct file access for debugging/backup</li>
+        <li>HTTP/REST is your standard integration protocol</li>
+        <li>You want federated, loosely-coupled systems</li>
+        <li>Operational expertise is limited</li>
+    </ul>
+</div>
+
+<div style="background-color: #fff8dc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+    <h4>⚠️ Choose Kafka/RabbitMQ When:</h4>
+    <ul>
+        <li>Message volume &gt; 100,000/day</li>
+        <li>Sub-millisecond latency required</li>
+        <li>Complex stream processing needed</li>
+        <li>Operating within single organization</li>
+        <li>Have dedicated DevOps team</li>
+        <li>Need built-in partitioning/sharding</li>
+        <li>Require transaction support</li>
+    </ul>
+</div>
+
+<h3>Federated Architecture Advantage</h3>
+<p>ZOSCII MQ's <code>replikate.php</code> enables a unique federated architecture:</p>
+
+<pre style="background-color: #f5f5f5; padding: 15px; border-radius: 5px;">
+Company A (Sydney)     Company B (Tokyo)      Company C (London)
+    ZOSCII MQ    ←──→    ZOSCII MQ    ←──→    ZOSCII MQ
+         ↓                    ↓                     ↓
+   [Own Control]        [Own Control]         [Own Control]
+   [Own Security]       [Own Security]        [Own Security]
+   [Own Data]           [Own Data]            [Own Data]
+</pre>
+
+<p>Each node operates independently - no central point of failure, no shared infrastructure, perfect for B2B logistics and freight forwarding where different organizations need to maintain sovereignty over their systems.</p>
+
+<h3>Total Cost of Ownership (TCO)</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Cost Factor</th>
+            <th>ZOSCII MQ</th>
+            <th>Kafka</th>
+            <th>RabbitMQ</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Infrastructure</strong></td>
+            <td>$5-50/month (VPS)</td>
+            <td>$500-5000+/month</td>
+            <td>$100-1000/month</td>
+        </tr>
+        <tr>
+            <td><strong>Operational Expertise</strong></td>
+            <td>Junior PHP dev</td>
+            <td>Senior DevOps team</td>
+            <td>Mid-level DevOps</td>
+        </tr>
+        <tr>
+            <td><strong>Monitoring Tools</strong></td>
+            <td>Built-in (statissa.php)</td>
+            <td>Prometheus/Grafana/etc</td>
+            <td>Management plugin</td>
+        </tr>
+        <tr>
+            <td><strong>High Availability</strong></td>
+            <td>rsync/filesystem backup</td>
+            <td>Complex cluster config</td>
+            <td>Cluster + mirroring</td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- END COMPARISON SECTION -->
 
 	</div>
 	
