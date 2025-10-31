@@ -16,6 +16,7 @@
 // --- Global Configuration ---
 // Ensure this path matches the root directory used by index.php and claireup.php
 define('QUEUE_ROOT', './queues/');
+
 define('PAGE_TITLE', 'ZOSCII MQ Storage Statistics (Statissa)');
 
 function getQueueStats() 

@@ -101,6 +101,12 @@
                 <td><code>{"item":"A"}</code></td>
             </tr>
             <tr>
+                <td><code>n</code></td>
+                <td>Optional</td>
+                <td>An optional NONCE or GUID to prevent retries from duplicating messages in the queue.</td>
+                <td><code>a1b2c3d4-e5f6-4000-8000-0123456789ab</code></td>
+            </tr>
+            <tr>
                 <td><code>r</code></td>
                 <td>Optional</td>
                 <td><strong>Retention Days (RRRR)</strong>. 0000 = no expected retention (suitable for testing).</td>
@@ -110,7 +116,7 @@
     </table>
 
     <p>Example Command (HTTP):</p>
-    <pre><code>GET /index.php?action=publish&q=customer_b&r=30&msg=%7B%22sku%22%3A%20%22123%22%7D</code></pre>
+    <pre><code>GET /index.php?action=publish&amp;q=customer_b&amp;r=30&amp;msg=%7B%22sku%22%3A%20%22123%22%7D&amp;n=a1b2c3d4-e5f6-4000-8000-0123456789ab</code></pre>
     
     <p>Filename Format:</p>
     <p>The message is saved as a file in the <code>queues/QUEUE_NAME/</code> directory with the format: <code>message-YYYYMMDDHHNNSSCCCC-RRRR.bin</code></p>
@@ -145,7 +151,7 @@
             </tr>
             <tr>
                 <td><code>after</code></td>
-                <td>No</td>
+                <td>Optional</td>
                 <td><strong>The Pointer.</strong> The filename of the LAST successfully processed message. Leave blank or omit for the very first message.</td>
                 <td><code>message-202510300900000001-0007.bin</code></td>
             </tr>
@@ -201,7 +207,7 @@
     </tbody>
 </table>
 <p>Example Command (HTTP):</p>
-<pre><code>GET /replikate.php?url=https://SOURCESERVER/index.php&sq=SOURCEQUEUE&tq=TARGETQUEUE</code></pre>
+<pre><code>GET /replikate.php?url=https://SOURCESERVER/index.php&amp;sq=SOURCEQUEUE&amp;tq=TARGETQUEUE</code></pre>
 <p>The script manages the state/pointer file (<code>replikate_state_my_orders.txt</code>) automatically.</p>
 
     <h2>3. Server Setup and Maintenance (For Administrators)</h2>
@@ -212,12 +218,14 @@
 |-- index.php             (HTTP API: Publish/Fetch)
 |-- replikate.php         (Cron: External Puller)
 |-- claireup.php          (Cron: Retention Cleanup)
+|-- nonce/				  (Optional nonce files go here)
 |-- queues/
 |   |-- customer_a/       (Queue 1)
 |   |   |-- message-*.bin
 |   |-- customer_b/       (Queue 2)
 |   |   |-- message-*.bin
 |-- replikate_state_*.txt (State Files for Replicators)
+|-- statissa.php          (Statistics, it's better to place statissa elsewhere)
 </code></pre>
 
     <h3>B. Critical Cron Jobs</h3>
@@ -255,8 +263,230 @@
 	<p>Although it's possible to run claireup.php from a browser it is recommended to run it from cron if possible. To run it from the browser, you will first need to change the CLI_ONLY constant to FALSE from within the claireup.php file. If you do that, you are best ensure that it cannot be run by unauthorised parties if you don't want it to run.</p>
     <pre><code>0 0 * * * /usr/bin/php /path/to/claireup.php</code></pre>
 
+<h2>4. ZOSCII MQ Deployment Strategies</h2>
+
+<p>ZOSCII MQ supports two primary deployment patterns, each optimized for different use cases:</p>
+
+<h3>Strategy 1: Internal Business Message Bus</h3>
+<div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+    <h4>Architecture</h4>
+    <ul>
+        <li><strong>Primary Server:</strong> Single ZOSCII MQ instance on internal network (1Gb+ LAN)</li>
+        <li><strong>Optional Replication:</strong> 1 backup server using <code>replikate.php</code> for high availability</li>
+        <li><strong>Use Case:</strong> Internal departmental messaging, microservices communication, audit logs</li>
+    </ul>
+    
+    <h4>Characteristics</h4>
+    <ul>
+        <li>Low latency (LAN speeds)</li>
+        <li>Higher throughput (tens of thousands/day possible)</li>
+        <li>Simple disaster recovery via replikate.php</li>
+        <li>All traffic within company firewall</li>
+    </ul>
+    
+    <h4>Typical Setup</h4>
+    <pre style="background-color: #fff; padding: 10px; border: 1px solid #ddd;">
+Primary Server (HQ)          Backup Server (DR Site)
+   ZOSCII MQ        ─────→      ZOSCII MQ
+   [All Queues]     replikate   [Mirror Copy]
+                    (periodic)
+    </pre>
+</div>
+
+<h4>Message Distribution Patterns</h4>
+
+<div style="background-color: #e3f2fd; padding: 15px; border-radius: 5px; margin: 15px 0;">
+    <h5>Pattern 1: Standard Fan-Out (No replikate.php needed)</h5>
+    <p><strong>Single queue, multiple readers - built-in ZOSCII MQ capability</strong></p>
+    <pre style="background-color: #fff; padding: 15px; border: 1px solid #ddd; margin: 10px 0;">
+              Primary Server
+                 ZOSCII MQ
+          [company_announcements]
+                    ↓
+       ┌────────────┼────────────┬────────────┐
+       ↓            ↓            ↓            ↓
+    John's PC    Mary's PC    Bob's PC    ... 1,000+ PCs
+    
+<strong>1 message published → 1,000+ PCs all fetch from same queue</strong>
+Each PC independently reads the same messages
+No replication needed - standard ZOSCII MQ behavior
+    </pre>
+    
+    <p><strong>Use Cases:</strong></p>
+    <ul>
+        <li>Company-wide announcements to all employee desktops</li>
+        <li>Emergency alerts to all users</li>
+        <li>System notifications broadcast</li>
+        <li>Price/inventory updates to all sales terminals</li>
+    </ul>
+    
+    <p><strong>Benefits:</strong></p>
+    <ul>
+        <li>Simple: 1 queue, many readers</li>
+        <li>Each PC tracks its own pointer (last message read)</li>
+        <li>Offline PCs catch up when reconnected</li>
+        <li>No additional infrastructure needed</li>
+    </ul>
+</div>
+
+<div style="background-color: #f3e5f5; padding: 15px; border-radius: 5px; margin: 15px 0;">
+    <h5>Pattern 2: Server Striping with replikate.php (Advanced)</h5>
+    <p><strong>Distribute load across multiple servers for scale/geography</strong></p>
+    <pre style="background-color: #fff; padding: 15px; border: 1px solid #ddd; margin: 10px 0;">
+                Primary Server (HQ)
+                   ZOSCII MQ
+            [company_announcements]
+                      ↓
+          ┌───────────┴───────────┬───────────────┐
+          ↓                       ↓               ↓
+     replikate.php          replikate.php    replikate.php
+          ↓                       ↓               ↓
+    Server A (Sydney)       Server B (Tokyo)  Server C (London)
+      ZOSCII MQ               ZOSCII MQ         ZOSCII MQ
+          ↓                       ↓               ↓
+    ┌─────┼─────┐           ┌─────┼─────┐   ┌─────┼─────┐
+    ↓     ↓     ↓           ↓     ↓     ↓   ↓     ↓     ↓
+  PC1   PC2  PC500       PC501 PC502 PC1000 ... PC2000 PC3000
+
+<strong>1 message → striped to 3 regional servers → 3,000+ PCs globally</strong>
+Each regional server services local PCs (lower latency)
+    </pre>
+    
+    <p><strong>Use Cases:</strong></p>
+    <ul>
+        <li><strong>Geographic Distribution:</strong> Regional servers for Sydney, Tokyo, London offices</li>
+        <li><strong>Load Balancing:</strong> Split 10,000 users across 10 servers (1,000 each)</li>
+        <li><strong>Department Separation:</strong> Sales server, Operations server, Finance server</li>
+        <li><strong>Network Segmentation:</strong> Different security zones/VLANs</li>
+    </ul>
+    
+    <p><strong>Benefits:</strong></p>
+    <ul>
+        <li><strong>Reduced Latency:</strong> Users fetch from local/regional server</li>
+        <li><strong>Load Distribution:</strong> No single bottleneck server</li>
+        <li><strong>Bandwidth Optimization:</strong> 1 message crosses WAN once, then fans out locally</li>
+        <li><strong>Fault Isolation:</strong> Regional server down doesn't affect other regions</li>
+        <li><strong>Network Efficiency:</strong> Stripe 1 message to 3 servers instead of 3,000 PCs fetching over WAN</li>
+    </ul>
+</div>
+
+<div style="background-color: #fff3cd; padding: 15px; border-radius: 5px; margin: 15px 0; border-left: 4px solid #ffc107;">
+    <h5>📊 Scale Example: Global Company Alert</h5>
+    <p><strong>Without Striping (Pattern 1):</strong></p>
+    <ul>
+        <li>1 message on HQ server</li>
+        <li>3,000 global PCs all fetch from HQ over internet</li>
+        <li>Network impact: 3,000 × message_size bandwidth</li>
+    </ul>
+    
+    <p><strong>With Striping (Pattern 2):</strong></p>
+    <ul>
+        <li>1 message on HQ server</li>
+        <li>replikate.php sends to 3 regional servers (3 × message_size over WAN)</li>
+        <li>3,000 PCs fetch from local regional servers over LAN</li>
+        <li>Network impact: Massively reduced WAN traffic, faster delivery</li>
+    </ul>
+    
+    <p><strong>Result:</strong> 1,000× reduction in WAN bandwidth usage</p>
+</div>
+
+<h3>Strategy 2: High Throughput AWS B2B Integration</h3>
+<div style="background-color: #e8f5e9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+    <h4>Architecture</h4>
+    <ul>
+        <li><strong>Per-Business Instances:</strong> Each large business partner gets their own Docker container on AWS</li>
+        <li><strong>Independent Infrastructure:</strong> Isolated, scalable, customer-controlled</li>
+        <li><strong>Central Aggregation:</strong> Head office server pulls from all business instances 24/7 using <code>replikate.php</code></li>
+        <li><strong>Use Case:</strong> B2B freight/logistics, EDI documents, compliance data exchange</li>
+    </ul>
+    
+    <h4>Characteristics</h4>
+    <ul>
+        <li><strong>Traffic Pattern:</strong> Business hours (9am-6pm), peak 4pm-7pm, light overnight</li>
+        <li><strong>Network:</strong> Internet-based (100-500 Mbps typical)</li>
+        <li><strong>Message Size:</strong> 100KB-350KB (designed range)</li>
+        <li><strong>Volume:</strong> Thousands/day per business (realistic for B2B)</li>
+        <li><strong>Replication:</strong> Continuous 24/7 pull from AWS to head office</li>
+    </ul>
+    
+    <h4>Typical Setup</h4>
+    <pre style="background-color: #fff; padding: 10px; border: 1px solid #ddd;">
+Business A (AWS)         Business B (AWS)         Business C (AWS)
+ ZOSCII MQ Docker         ZOSCII MQ Docker         ZOSCII MQ Docker
+ [Push anytime]           [Push anytime]           [Push anytime]
+      ↓                         ↓                         ↓
+      └─────────────────────────┴─────────────────────────┘
+                                 ↓
+                    Head Office Server (Local)
+                         ZOSCII MQ
+                    [Pulls 24/7 via replikate.php]
+                    [Aggregates all business data]
+    </pre>
+    
+    <h4>Why This Works</h4>
+    <ul>
+        <li><strong>Customer Control:</strong> "Fill it as much as they like" - each business has dedicated capacity</li>
+        <li><strong>Peak Handling:</strong> AWS scales for 3-hour peak windows (4pm-7pm)</li>
+        <li><strong>Network Efficiency:</strong> Pull model means head office controls bandwidth usage</li>
+        <li><strong>Cost Effective:</strong> Docker containers ($5-50/month each) vs expensive brokers</li>
+        <li><strong>Zero Shared Risk:</strong> One customer's issues don't affect others</li>
+    </ul>
+</div>
+
+<h3>Strategy Comparison</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Aspect</th>
+            <th>Internal Message Bus</th>
+            <th>AWS B2B Integration</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Network</strong></td>
+            <td>1Gb+ LAN</td>
+            <td>Internet (100-500 Mbps)</td>
+        </tr>
+        <tr>
+            <td><strong>Throughput/Day</strong></td>
+            <td>Tens of thousands</td>
+            <td>Thousands (per business)</td>
+        </tr>
+        <tr>
+            <td><strong>Traffic Pattern</strong></td>
+            <td>24/7 potential</td>
+            <td>Business hours (bursty)</td>
+        </tr>
+        <tr>
+            <td><strong>Deployment</strong></td>
+            <td>On-premise / Private cloud</td>
+            <td>AWS Docker (1 per customer)</td>
+        </tr>
+        <tr>
+            <td><strong>Replication</strong></td>
+            <td>Optional (DR backup)</td>
+            <td>Continuous (aggregation)</td>
+        </tr>
+        <tr>
+            <td><strong>Cost Model</strong></td>
+            <td>Single server cost</td>
+            <td>$5-50/month per customer</td>
+        </tr>
+        <tr>
+            <td><strong>Use Case</strong></td>
+            <td>Internal operations</td>
+            <td>B2B document exchange</td>
+        </tr>
+    </tbody>
+</table>
+
+<div style="background-color: #fff3cd; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #ffc107;">
+    <strong>Key Insight:</strong> The AWS B2B strategy is ZOSCII MQ's primary design target. The "thousands/day" performance reflects real-world B2B traffic patterns (business hours, peak windows) over internet connections - not a technical limitation.
+</div>
+
 <!-- COMPARISON SECTION -->
-<h2>4. ZOSCII MQ vs. Traditional Message Brokers</h2>
+<h2>5. ZOSCII MQ vs. Traditional Message Brokers</h2>
 
 <h3>Architecture Comparison</h3>
 <table>
@@ -332,7 +562,7 @@
     </tbody>
 </table>
 
-<h3>Performance & Scale</h3>
+<h3>Performance and Scale</h3>
 <table>
     <thead>
         <tr>
@@ -344,16 +574,151 @@
     </thead>
     <tbody>
         <tr>
-            <td><strong>Throughput (single node)</strong></td>
-            <td>100-1,000 msg/sec</td>
-            <td>100,000+ msg/sec</td>
-            <td>20,000+ msg/sec</td>
+            <td><strong>Primary Deployment Context</strong></td>
+            <td>B2B over Internet</td>
+            <td>Internal datacenter/LAN</td>
+            <td>Internal datacenter/LAN</td>
         </tr>
         <tr>
-            <td><strong>Recommended Daily Volume</strong></td>
-            <td>&lt; 1M messages</td>
-            <td>Billions</td>
-            <td>Millions</td>
+            <td><strong>Throughput - Internet</strong><br/>
+                <em>(100-500 Mbps typical)</em><br/>
+                <em>(&gt;1KB messages)</em>
+            </td>
+            <td>
+                ✅ <strong>Good</strong><br/>
+                Network-limited<br/>
+                Thousands-tens of thousands/day
+            </td>
+            <td>
+                ✅ <strong>Good</strong><br/>
+                Network-limited<br/>
+                Thousands-tens of thousands/day
+            </td>
+            <td>
+                ✅ <strong>Good</strong><br/>
+                Network-limited<br/>
+                Thousands-tens of thousands/day
+            </td>
+        </tr>
+        <tr>
+            <td><strong>Throughput - Internet</strong><br/>
+                <em>(100-500 Mbps typical)</em><br/>
+                <em>(&gt;100KB messages)</em>
+            </td>
+            <td>
+                ✅ <strong>Optimal</strong><br/>
+                <em>Designed for this</em><br/>
+                Thousands/day<br/>
+                Zero knowledge maintained
+            </td>
+            <td>
+                ⚠️ <strong>Limited</strong><br/>
+                Network bottleneck<br/>
+                Hundreds-low thousands/day
+            </td>
+            <td>
+                ⚠️ <strong>Limited</strong><br/>
+                Network bottleneck<br/>
+                Hundreds-low thousands/day
+            </td>
+        </tr>
+        <tr>
+            <td><strong>Throughput - Internet</strong><br/>
+                <em>(100-500 Mbps typical)</em><br/>
+                <em>(&gt;1MB messages)</em>
+            </td>
+            <td>
+                ✅ <strong>Handles Well</strong><br/>
+                Network-limited<br/>
+                Hundreds/day
+            </td>
+            <td>
+                ❌ <strong>Poor</strong><br/>
+                Network + config issues<br/>
+                Tens-hundreds/day
+            </td>
+            <td>
+                ❌ <strong>Poor</strong><br/>
+                Network + memory issues<br/>
+                Tens/day
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4" style="background-color: #f5f5f5; text-align: center; font-weight: bold;">
+                1 Gb LAN Performance (Internal Network)
+            </td>
+        </tr>
+        <tr>
+            <td><strong>Throughput - 1Gb LAN</strong><br/>
+                <em>(Single node)</em><br/>
+                <em>(&gt;1KB messages)</em>
+            </td>
+            <td>
+                ✅ <strong>Excellent</strong><br/>
+                Disk I/O limited<br/>
+                Tens of thousands/day<br/>
+                100-1,000 msg/sec
+            </td>
+            <td>
+                ✅ <strong>Optimal</strong><br/>
+                Peak performance<br/>
+                Millions/day<br/>
+                10,000-100,000+ msg/sec
+            </td>
+            <td>
+                ✅ <strong>Excellent</strong><br/>
+                Strong performance<br/>
+                Hundreds of thousands/day<br/>
+                5,000-20,000 msg/sec
+            </td>
+        </tr>
+        <tr>
+            <td><strong>Throughput - 1Gb LAN</strong><br/>
+                <em>(Single node)</em><br/>
+                <em>(&gt;100KB messages)</em>
+            </td>
+            <td>
+                ✅ <strong>Excellent</strong><br/>
+                <em>Still in designed range</em><br/>
+                Tens of thousands/day<br/>
+                Consistent performance
+            </td>
+            <td>
+                ⚠️ <strong>Good (needs tuning)</strong><br/>
+                Config changes needed<br/>
+                Tens of thousands/day<br/>
+                Efficiency drops
+            </td>
+            <td>
+                ⚠️ <strong>Degraded</strong><br/>
+                Memory pressure<br/>
+                Low thousands/day<br/>
+                Performance impact
+            </td>
+        </tr>
+        <tr>
+            <td><strong>Throughput - 1Gb LAN</strong><br/>
+                <em>(Single node)</em><br/>
+                <em>(&gt;1MB messages)</em>
+            </td>
+            <td>
+                ✅ <strong>Excellent</strong><br/>
+                File-based handles naturally<br/>
+                Thousands/day<br/>
+                No memory pressure
+            </td>
+            <td>
+                ❌ <strong>Poor</strong><br/>
+                Major config needed<br/>
+                Hundreds/day<br/>
+                Batching ineffective
+            </td>
+            <td>
+                ❌ <strong>Not Recommended</strong><br/>
+                Severe issues<br/>
+                Dozens/day<br/>
+                Can crash under load
+            </td>
         </tr>
         <tr>
             <td><strong>Horizontal Scaling</strong></td>
@@ -369,6 +734,10 @@
         </tr>
     </tbody>
 </table>
+
+<div style="background-color: #e3f2fd; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #2196f3;">
+    <strong>Note on Internet vs LAN Performance:</strong> All systems are network-limited over the internet. ZOSCII MQ's "thousands/day" reflects its primary B2B internet use case. On internal 1Gb LAN, ZOSCII MQ performs significantly faster (tens of thousands/day), though Kafka still leads for small message, high-volume internal workloads.
+</div>
 
 <h3>Security Comparison</h3>
 <table>
@@ -593,7 +962,7 @@ Company A (Sydney)     Company B (Tokyo)      Company C (London)
         </tr>
         <tr>
             <td><strong>High Availability</strong></td>
-            <td>rsync/filesystem backup</td>
+            <td>rsync/filesystem backup/replikate.php</td>
             <td>Complex cluster config</td>
             <td>Cluster + mirroring</td>
         </tr>
@@ -605,7 +974,7 @@ Company A (Sydney)     Company B (Tokyo)      Company C (London)
 	</div>
 	
 	<div class="footer">
-		<h3>License & Information</h3>
+		<h3>License and Information</h3>
 		<p><strong>MIT License</strong> - (c) 2025 Cyborg Unicorn Pty Ltd</p>
 		<p>
 			<a href="https://zoscii.com" target="_blank" style="color: #007bff;">zoscii.com</a> |

@@ -16,13 +16,14 @@
 
 // --- Global Configuration ---
 define('QUEUE_ROOT', './queues/');
+
 define('CLI_ONLY', 'FALSE'); 
+
+DEFINE('LOG_OUTPUT', 'TRUE');	// TRUE or FALSE
+DEFINE('FILE_ERRORLOG', './replikate.log'); // or '/var/log/replikate.log'
 
 define('STATE_FILE_TEMPLATE', './replikate_state_%IDENTIFIER%.txt');
 define('STATE_KEY_NAME', 'last_processed_id');
-
-DEFINE('FILE_ERRORLOG', './replikate.log'); // or '/var/log/replikate.log'
-DEFINE('LOG_OUTPUT', 'TRUE');	// TRUE or FALSE
 
 // --- Helper Functions ---
 function logDebug($str_a)

@@ -11,11 +11,13 @@
 
 // --- Global Configuration ---
 // 'g_' prefix for global constant (used as a global configuration value)
+define('NONCE_ROOT', './nonce/');
 define('QUEUE_ROOT', './queues/');
+
 define('ALLOW_GET', 'TRUE');
 
-DEFINE('FILE_ERRORLOG', './zosciimq.log'); // or '/var/log/zosciimq.log'
 DEFINE('LOG_OUTPUT', 'FALSE'); // TRUE or FALSE
+DEFINE('FILE_ERRORLOG', './zosciimq.log'); // or '/var/log/zosciimq.log'
 
 // --- Helper Functions ---
 function logError($str_a) 
@@ -26,11 +28,12 @@ function logError($str_a)
     }
 }
 
-function handlePublish($strQueueName_a, $intRetentionDays_a, $binMessage_a)
+function handlePublish($strQueueName_a, $strNonce_a, $intRetentionDays_a, $binMessage_a)
 {
 	$blnResult = true;
 	
 	$strQueueName = $strQueueName_a;
+	$strNonce = $strNonce_a;
 	$intRetentionDays = $intRetentionDays_a;
 	$binMessage = $binMessage_a;
 	
@@ -45,7 +48,7 @@ function handlePublish($strQueueName_a, $intRetentionDays_a, $binMessage_a)
 	else 
 	{
         $strQueuePath = QUEUE_ROOT . $strQueueName . '/';
-
+		
         if (!is_dir($strQueuePath)) 
 		{
             if (!mkdir($strQueuePath, 0777, true)) 
@@ -97,6 +100,21 @@ function handlePublish($strQueueName_a, $intRetentionDays_a, $binMessage_a)
 				{
 					logError("Error: Failed to write message file.");
 					$strResult = "Error: Failed to write message file.";
+					$blnResult = false;
+				}
+				
+				if ($blnResult && strlen($strNonce) > 0)
+				{
+					$strNonceFile = NONCE_ROOT . $strNonce;
+					if (touch($strNonceFile))
+					{
+						// nonce file is created
+					} 
+					else 
+					{
+						logError("Failed to touch file: " . $strNonceFile);
+						$blnResult = false;
+					}
 				}
 			}
 		}
@@ -231,6 +249,26 @@ if (strlen($strQueueName) == 0)
 	}
 }
 
+$strNonce = '';
+if (ALLOW_GET == 'TRUE')
+{
+	if (isset($_GET['n'])) 
+	{
+		// Strip non-alphanumeric characters for safety
+		$strNonce = $_GET['n'];
+		$strNonce = preg_replace('/[^a-zA-Z0-9_-]/', '', $strNonce);
+	}
+}
+
+if (strlen($strNonce) == 0)
+{
+	if (isset($_POST['n'])) 
+	{
+		$strNonce = $_POST['n'];
+		$strNonce = preg_replace('/[^a-zA-Z0-9_-]/', '', $strNonce);
+	}
+}
+
 $strRetentionDays = '';
 if (ALLOW_GET == 'TRUE')
 {
@@ -290,11 +328,32 @@ if (empty($strQueueName))
 	exit;
 } 
 
+if (!is_dir(NONCE_ROOT)) 
+{
+	if (!mkdir(NONCE_ROOT, 0777, true)) 
+	{
+		$blnResult = false;
+		logError("Error: Could not create nonce directory: " . NONCE_ROOT);
+		echo("Error: Could not create nonce directory: " . NONCE_ROOT);
+		exit;
+	} 
+}
+
+if (strlen($strNonce) > 0)
+{
+	$strNonceFile = NONCE_ROOT . $strNonce;
+	if (file_exists($strNonceFile)) 
+	{
+		echo("Success: Message already published.");
+		exit;
+	}
+}
+		
 // --- Action Router ---
 switch ($strAction) 
 {
     case 'publish':
-        $strResult = handlePublish($strQueueName, $intRetentionDays, $binMessage);
+        $strResult = handlePublish($strQueueName, $strNonce, $intRetentionDays, $binMessage);
         echo($strResult);
         break;
 		

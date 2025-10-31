@@ -10,13 +10,16 @@
 // Execution: php claireup.php
 
 // --- Global Configuration ---
+define('NONCE_ROOT', './nonce/');
 define('QUEUE_ROOT', './queues/'); 
-define('CLI_ONLY', 'TRUE'); 
 
+define('CLI_ONLY', 'TRUE'); 
 define('DEBUG', 'FALSE'); 
 
-DEFINE('FILE_ERRORLOG', './claireup.log'); // or '/var/log/claireup.log'
 DEFINE('LOG_OUTPUT', 'FALSE');	// TRUE or FALSE
+DEFINE('FILE_ERRORLOG', './claireup.log'); // or '/var/log/claireup.log'
+
+DEFINE('NONCE_TIMEFRAME', 5);	// minimum minutes to keep NONCE
 
 // --- Helper Functions ---
 function logDebug($str_a)
@@ -128,6 +131,48 @@ function handleClaireup()
 					}
 				}
 			}
+		}
+
+		if (NONCE_TIMEFRAME > 0)
+		{
+			// --- NONCE Cleanup Logic ---
+			echo("Processing NONCE marker files...\n");
+
+			// Calculate the cutoff time for deletion: Current Time - (NONCE_TIMEFRAME minutes * 60 seconds)
+			// NONCE_TIMEFRAME is defined as 5 minutes in claireup.php
+			$intCutoffTime = $intCurrentTimestamp - (NONCE_TIMEFRAME * 60);
+
+			// Find all files in the nonce directory
+			$arrNonceFiles = glob(NONCE_ROOT . '*');
+
+			if ($arrNonceFiles === false || empty($arrNonceFiles))
+			{
+				echo("INFO: No NONCE files found.\n");
+			}
+			else
+			{
+				foreach ($arrNonceFiles as $strFullPath)
+				{
+					// Get the last modification time of the file (when it was created by index.php)
+					$intFileModTime = filemtime($strFullPath);
+					
+					// If the modification time is older than the calculated cutoff time, delete it.
+					if ($intFileModTime !== false && $intFileModTime < $intCutoffTime)
+					{
+						if (unlink($strFullPath))
+						{
+							$intDeletedCount++;
+							echo("  DELETED NONCE: " . basename($strFullPath) . " (Aged out: " . date('Y-m-d H:i:s', $intFileModTime) . ")\n");
+						}
+						else
+						{
+							// Log permission errors if unlink fails
+							logError("ERROR: Could not delete NONCE file: " . basename($strFullPath) . " (Permission denied?)");
+						}
+					}
+				}
+			}
+			// End NONCE Cleanup
 		}
 		
 		// Updated the execution message
