@@ -28,6 +28,23 @@ function logError($str_a)
     }
 }
 
+function getGUID()
+{
+    // Generate 16 random bytes
+    $binData = random_bytes(16);
+    
+    // Set version (4) - bits 12-15 of time_hi_and_version field
+    $binData[6] = chr(ord($binData[6]) & 0x0f | 0x40);
+    
+    // Set variant (RFC 4122) - bits 6-7 of clock_seq_hi_and_reserved
+    $binData[8] = chr(ord($binData[8]) & 0x3f | 0x80);
+    
+    // Format as standard GUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    $strGUID = vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($binData), 4));
+    
+    return $strGUID;
+}
+
 function handlePublish($strQueueName_a, $strNonce_a, $intRetentionDays_a, $binMessage_a)
 {
 	$blnResult = true;
@@ -61,11 +78,12 @@ function handlePublish($strQueueName_a, $strNonce_a, $intRetentionDays_a, $binMe
 		
 		if ($blnResult)
 		{
-			// Generate Filename (message-YYYYMMDDHHNNSSCCCC-RRRR.bin)
+			// Generate Filename (YYYYMMDDHHNNSSCCCC-RRRR-GUID.bin)
 			$strBaseTime = date('YmdHis');
-			$intCollisionCounter = 0;
+			$intCollisionCounter = 0;	// almost zero chance withthe GUID
 			$strFilename = '';
 			$strFullPath = '';
+			$strGetGUID = getGUID();
 			
 			while ($intCollisionCounter < 9999) 
 			{
@@ -73,7 +91,7 @@ function handlePublish($strQueueName_a, $strNonce_a, $intRetentionDays_a, $binMe
 
 				// Collision Counter (CCCC format)
 				$strCollisionCounter = sprintf('%04d', $intCollisionCounter);
-				$strFilename = "message-" . $strBaseTime . $strCollisionCounter . "-" . $strRetentionDays . ".bin";
+				$strFilename = $strBaseTime . $strCollisionCounter . "-" . $strRetentionDays . "-" . $strGetGUID . ".bin";
 				$strFullPath = $strQueuePath . $strFilename;
 				if (!file_exists($strFullPath)) 
 				{
@@ -113,6 +131,8 @@ function handlePublish($strQueueName_a, $strNonce_a, $intRetentionDays_a, $binMe
 					else 
 					{
 						logError("Failed to touch file: " . $strNonceFile);
+						logError("Error: Failed to write message file.");
+						unlink($strFullPath);
 						$blnResult = false;
 					}
 				}
@@ -137,7 +157,7 @@ function handleFetch($strQueueName_a, $strAfterFilename_a)
 	else 
 	{
 		// Get all message files, sorted chronologically by name
-		$arrAllFiles = glob($strQueuePath . 'message-*.bin');
+		$arrAllFiles = glob($strQueuePath . '*.bin');
 		if ($arrAllFiles === false || empty($arrAllFiles)) 
 		{
 			$strResult = "Status: Queue is empty.";
