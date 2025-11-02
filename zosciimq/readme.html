@@ -29,6 +29,15 @@
 		<ul>
 			<li><a href="#overview">1. Overview and Advantage</a></li>
 			<li><a href="#integrator-usage">2. Usage for Integrators: Reading and Writing Messages</a></li>
+
+			<li><a href="#integrator-usage-a">&nbsp;&nbsp;A. Publishing Messages (Writing to a Queue)</a></li>
+			<li><a href="#integrator-usage-b">&nbsp;&nbsp;B. Fetching Messages (Reading from a Queue - API Pull)</a></li>
+			<li><a href="#integrator-usage-c">&nbsp;&nbsp;C. B2B Replication (Puller)</a></li>
+			<li><a href="#integrator-usage-d">&nbsp;&nbsp;D. Storing Messages (Writing to a Data Store)</a></li>
+			<li><a href="#integrator-usage-e">&nbsp;&nbsp;E. Retrieving Messages (Reading from a Data Store)</a></li>
+			<li><a href="#integrator-usage-f">&nbsp;&nbsp;F. Scanning Messages (Scan the Data Store for unidentified messages)</a></li>
+			<li><a href="#integrator-usage-f">&nbsp;&nbsp;G. Identify Messages</a></li>
+
 			<li><a href="#server-setup-and-maintenance">3. Server Setup and Maintenance (For Administrators)</a></li>
 			<li><a href="#deployment-strategies">4. Deployment Strategies</a></li>
 			<li><a href="#docker-deploys">5. Docker Deploys</a></li>
@@ -81,7 +90,7 @@
     <h2 id="integrator-usage">2. Usage for Integrators: Reading and Writing Messages</h2>
     <p>ZOSCII MQ uses a simple HTTP API (via <code>index.php</code>) for publishing and fetching messages, and a cron script (<code>replikate.php</code>) for B2B integration.</p>
 
-    <h3>A. Publishing Messages (Writing to a Queue)</h3>
+    <h3 id="integrator-usage-a">A. Publishing Messages (Writing to a Queue)</h3>
     <p>Messages are published using an HTTP <code>GET</code> request to the <code>index.php</code> endpoint.</p>
 
     <p><b>Endpoint:</b></p>
@@ -195,7 +204,7 @@
     <p><b>Filename Format:</b></p>
     <p>The message is saved as a file in the <code>queues/QUEUE_NAME/</code> directory with the format: <code>YYYYMMDDHHNNSSCCCC-RRRR-GUID.bin</code></p>
 
-    <h3>B. Fetching Messages (Reading from a Queue - API Pull)</h3>
+    <h3 id="integrator-usage-b">B. Fetching Messages (Reading from a Queue - API Pull)</h3>
     <p>Messages are fetched sequentially using the unique filename as a <strong>pointer</strong>. The consumer must track this pointer (the <code>after</code> parameter) to ensure guaranteed, chronological delivery.</p>
 
     <p><b>Endpoint:</b></p>
@@ -239,7 +248,7 @@
         <li><strong>The system performs no message acknowledgment (ACK).</strong> Delivery guarantee relies entirely on the consumer's proper use of the pointer (<code>after</code> parameter).</li>
     </ul>
 
-<h3>C. B2B Replication (Puller)</h3>
+<h3 id="integrator-usage-c">C. B2B Replication (Puller)</h3>
 <p>For external partners (e.g. ABC Ltd) to pull data from your (e.g. XYZ Ltd) queue, they should run a dedicated cron job on their server (e.g. ABC_LOCAL_SERVER).</p>
 <p><b>Script:</b></p>
 <pre><code>replikate.php</code></pre>
@@ -288,7 +297,7 @@
 <p>Example Command for Queue to Store replication (HTTP):</p>
 <pre><code>GET /replikate.php?url=https://SOURCESERVER/index.php&amp;sq=SOURCEQUEUE</code></pre>
 
-    <h3>D. Storing Messages (Writing to a Data Store)</h3>
+    <h3 id="integrator-usage-d">D. Storing Messages (Writing to a Data Store)</h3>
     <p>Messages are stored using an HTTP <code>GET</code> request to the <code>index.php</code> endpoint.</p>
 
     <p><b>Endpoint:</b></p>
@@ -348,7 +357,7 @@
 	<p>For later retrieval of the message, you must note the <code>response.result</code>.</p>
 
 
-    <h3>E. Retrieving Messages (Reading from a Data Store)</h3>
+    <h3 id="integrator-usage-e">E. Retrieving Messages (Reading from a Data Store)</h3>
     <p>Messages are retrieved from the data store by using the previously returned filename. The consumer must track this filename if fast retrieval is required.</p>
 
     <p><b>Endpoint:</b></p>
@@ -395,7 +404,7 @@
 }</code></pre>
 
 
-    <h3>F. Scanning Messages (Scan the Data Store for unidentified messages)</h3>
+    <h3 id="integrator-usage-f">F. Scanning Messages (Scan the Data Store for unidentified messages)</h3>
     <p>Messages are retrieved from the data store by using the previously returned filename. The consumer must track this filename if fast retrieval is required.</p>
 
     <p><b>Endpoint:</b></p>
@@ -418,7 +427,7 @@
         <li>Given the response array of unidentified files, you can now fetch them, identify them and flag them as identified.</li>
     </ul>
 
-    <h3>G. Identify Messages</h3>
+    <h3 id="integrator-usage-g">G. Identify Messages</h3>
     <p>Once messages have been scanned for, then identified, they can then be flagged as identified.</p>
 
     <p><b>Endpoint:</b></p>
@@ -485,7 +494,8 @@
 |   |   |-- *.bin
 |   |-- customer_b/       (Queue 2)
 |   |   |-- *.bin
-|-- replikate_state_*.txt (State Files for Replicators)
+|-- states/               (State Files are here for Replicators)
+|   |   |-- replikate_state_*.txt
 |-- store/                (Data Store Files are here)
 |-- statissa.php          (Statistics, it's better to place statissa elsewhere)
 </code></pre>
