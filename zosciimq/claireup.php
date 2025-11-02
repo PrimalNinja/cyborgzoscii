@@ -66,7 +66,7 @@ function handleClaireup()
 			echo("Processing queue: " . $strQueueName . "\n");
 
 			// 2. Find all message files in the queue
-			$arrAllFiles = glob($strQueuePath . '/message-*.bin');
+			$arrAllFiles = glob($strQueuePath . '/*.bin');
 			
 			if ($arrAllFiles === false || empty($arrAllFiles)) 
 			{
