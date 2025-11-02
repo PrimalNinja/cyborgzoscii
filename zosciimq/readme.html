@@ -38,8 +38,8 @@
 	<!-- END TABLE OF CONTENTS -->
 
     <h2 id="overview">1. Overview and Advantage</h2>
-	<p>The World's First Truly Quantum Proof Message Queue (MQ) when used in conjunction with ZOSCII.</p>
-    <p>ZOSCII MQ is a minimal, file-based Message Queue (MQ) designed for high-assurance, B2B asynchronous communication. It leverages the file system for durability and uses specific file naming conventions for chronological ordering and message retention.</p>
+	<p>The World's First Truly Quantum Proof Message Queue (MQ) and Data Store when used in conjunction with ZOSCII.</p>
+    <p>ZOSCII MQ is a minimal, file-based Message Queue (MQ) designed for high-assurance, B2B asynchronous communication. It leverages the file system for durability and uses specific file naming conventions for chronological ordering and message retention. It also can provide a robust message store service.</p>
 
     <h3>Why Use ZOSCII MQ?</h3>
     <p>The architecture offers key advantages over traditional message brokers (like RabbitMQ or Kafka) in specific freight and logistics scenarios:</p>
@@ -48,6 +48,7 @@
         <li><strong>Asynchronous B2B Integration:</strong> It excels at decoupling systems. The Puller (<code>replikate.php</code>) model allows external partners to control their consumption rate and timing, minimizing your exposure to their network failures.</li>
         <li><strong>Security Integration (ITS):</strong> The file-based nature is perfectly suited for integrating Information Theoretic Security (ITS) encoding, where the message payload is encoded before being written to disk, offering a higher level of data security than standard SSL/TLS alone. The server needs no knownedge of the message content.</li>
         <li><strong>Simplicity and Control:</strong> There is no complex daemon, database, or broker to manage. All state is controlled via files, making it easy to audit and debug.</li>
+		<li><strong>Zero Knowledge:</strong> When used with an ITS encoding such as ZOSCII, there is no information available at the server. No meta data besides the queue name, date/time of storage and retention.</li>
     </ul>
 
     <table>
@@ -83,9 +84,59 @@
     <h3>A. Publishing Messages (Writing to a Queue)</h3>
     <p>Messages are published using an HTTP <code>GET</code> request to the <code>index.php</code> endpoint.</p>
 
-    <p>Endpoint:</p>
-    <code>/index.php?action=publish</code>
+    <p><b>Endpoint:</b></p>
+    <pre><code>/index.php?action=publish</code></pre>
 
+	<p><b>JSON Responses:</b></p>
+	<p>The main ZOSCII MQ index.php gives back it's responses as either binary data with a filename as it's Content-Disposition *, or as JSON messages in the format shown here. If possible it is always good to check the system. The error if it has a value is important. If there is no value in the error, then the result is valid. A message may be provided regardless of errors or results.</p>
+	<pre><code>{
+	"system":"ZOSCII MQ",
+	"version":"1.0",
+	"error":"",
+	"message":"Message published.",
+	"result":[]
+}</code></pre>
+	<p>* Refer to the implementation of the fetchNextMessage function within replikate.php for an example of how to handle the binary and JSON responses.</p>
+
+	<table>
+		<thead>
+			<tr>
+				<th>Description</th>
+				<th>Do</th>
+				<th>Do Not</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>check the filename from the Content-Disposition</td>
+				<td>Do</td>
+				<td>-</td>
+			</tr>
+			<tr>
+				<td>checking the message is from ZOSCII MQ * <code>response.system === "ZOSCII MQ"</code></td>
+				<td>Do</td>
+				<td>-</td>
+			</tr>
+			<tr>
+				<td>checking that there are no errors <code>response.error.length === 0</code></td>
+				<td>Do</td>
+				<td>-</td>
+			</tr>
+			<tr>
+				<td>checking if a response message is provided <code>if (response.message.length > 0) { // display the message }</code></td>
+				<td>Do</td>
+				<td>-</td>
+			</tr>
+			<tr>
+				<td>placing logic on the response message <code>if (response.message === "Message Published") { // do someting }</code></td>
+				<td>-</td>
+				<td>Do Not</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<p>* Note: It is possible to confuse JSON messages stored in ZOSCII MQ vs those JSON messages from ZOSCII MQ itself. However it shouldn't hapen if you first check the filename from within the Content-Disposition. Checking if response.system is present and whether it is "ZOSCII MQ" will make this more robust.</p>
+    
     <table>
         <thead>
             <tr>
@@ -129,17 +180,26 @@
         </tbody>
     </table>
 
-    <p>Example Command (HTTP):</p>
+    <p><b>Example Command (HTTP):</b></p>
     <pre><code>GET /index.php?action=publish&amp;q=customer_b&amp;r=30&amp;msg=%7B%22sku%22%3A%20%22123%22%7D&amp;n=a1b2c3d4-e5f6-4000-8000-0123456789ab</code></pre>
+	
+	<p><b>JSON Response:</b></p>
+	<pre><code>{
+	"system":"ZOSCII MQ",
+	"version":"1.0",
+	"error":"",
+	"message":"Message published.",
+	"result":[]
+}</code></pre>
     
-    <p>Filename Format:</p>
+    <p><b>Filename Format:</b></p>
     <p>The message is saved as a file in the <code>queues/QUEUE_NAME/</code> directory with the format: <code>YYYYMMDDHHNNSSCCCC-RRRR-GUID.bin</code></p>
 
     <h3>B. Fetching Messages (Reading from a Queue - API Pull)</h3>
     <p>Messages are fetched sequentially using the unique filename as a <strong>pointer</strong>. The consumer must track this pointer (the <code>after</code> parameter) to ensure guaranteed, chronological delivery.</p>
 
-    <p>Endpoint:</p>
-    <code>/index.php?action=fetch</code>
+    <p><b>Endpoint:</b></p>
+    <pre><code>/index.php?action=fetch</code></pre>
 
     <table>
         <thead>
@@ -167,12 +227,12 @@
                 <td><code>after</code></td>
                 <td>Optional</td>
                 <td><strong>The Pointer.</strong> The filename of the LAST successfully processed message. Leave blank or omit for the very first message.</td>
-                <td><code>202510300900000001-0007-ed207f80-9fee-428d-8fad-0133255e1790.bin</code></td>
+                <td><code>202510300900000001-0000-ed207f80-9fee-428d-8fad-0133255e1790.bin</code></td>
             </tr>
         </tbody>
     </table>
 
-    <p>Consumer Responsibility (Guaranteed Delivery):</p>
+    <p><b>Success Response:</b></p>
     <ul>
         <li>The consumer must store the returned filename (<code>Content-Disposition</code> header) as its <strong>pointer</strong>.</li>
         <li>The consumer must only advance the pointer <strong>after</strong> successfully processing and acting on the message content.</li>
@@ -181,15 +241,15 @@
 
 <h3>C. B2B Replication (Puller)</h3>
 <p>For external partners (e.g. ABC Ltd) to pull data from your (e.g. XYZ Ltd) queue, they should run a dedicated cron job on their server (e.g. ABC_LOCAL_SERVER).</p>
-<p>Script:</p>
-<code>replikate.php</code>
-<p>Setup:</p>
+<p><b>Script:</b></p>
+<pre><code>replikate.php</code></pre>
+<p><b>Setup:</b></p>
 <ul>
     <li>The partner must install this script on their server.</li>
     <li>They should set up a scheduled task (cron job or Windows Scheduler) to run the script every few minutes.</li>
 </ul>
-<p>Endpoint:</p>
-<code>/replikate.php</code>
+<p><b>Endpoint:</b></p>
+<pre><code>/replikate.php</code></pre>
 <table>
     <thead>
         <tr>
@@ -214,15 +274,202 @@
         </tr>
         <tr>
             <td><code>tq</code></td>
-            <td>Yes</td>
+            <td>Optional</td>
             <td>The name of the target queue on the partner's server</td>
-            <td><code>ABC_LOCAL_QUEUE (e.g. my_orders)</code></td>
+            <td><code>ABC_LOCAL_QUEUE (e.g. my_orders)<br/><b>Note: when no tq is provided, messages will be stored in the data store as an unknown message.</b> This can be useful when you wish to move queue items into a data store for later identification or processing.</code></td>
         </tr>
     </tbody>
 </table>
-<p>Example Command (HTTP):</p>
+<p>Example Command for Queue to Queue replication (HTTP):</p>
 <pre><code>GET /replikate.php?url=https://SOURCESERVER/index.php&amp;sq=SOURCEQUEUE&amp;tq=TARGETQUEUE</code></pre>
-<p>The script manages the state/pointer file (<code>replikate_state_my_orders.txt</code>) automatically.</p>
+<p>The script manages the state/pointer file (<code>replikate_state_SOURCEQUEUE.txt</code>) automatically.</p>
+
+<br/>
+<p>Example Command for Queue to Store replication (HTTP):</p>
+<pre><code>GET /replikate.php?url=https://SOURCESERVER/index.php&amp;sq=SOURCEQUEUE</code></pre>
+
+    <h3>D. Storing Messages (Writing to a Data Store)</h3>
+    <p>Messages are stored using an HTTP <code>GET</code> request to the <code>index.php</code> endpoint.</p>
+
+    <p><b>Endpoint:</b></p>
+    <pre><code>/index.php?action=store</code></pre>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Parameter</th>
+                <th>Required</th>
+                <th>Description</th>
+                <th>Example Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>action</code></td>
+                <td>Yes</td>
+                <td>Must be <code>store</code>.</td>
+                <td><code>store</code></td>
+            </tr>
+            <tr>
+                <td><code>msg</code></td>
+                <td>Yes</td>
+                <td>The raw message payload (should be URL-encoded).</td>
+                <td><code>{"item":"A"}</code></td>
+            </tr>
+            <tr>
+                <td><code>n</code></td>
+                <td>Optional</td>
+                <td>An optional NONCE or GUID to prevent retries from duplicating messages in the data store.</td>
+                <td><code>a1b2c3d4-e5f6-4000-8000-0123456789ab</code></td>
+            </tr>
+            <tr>
+                <td><code>r</code></td>
+                <td>Optional</td>
+                <td><strong>Retention Days (RRRR)</strong>. 0000 = no expected retention (suitable for testing).</td>
+                <td><code>7</code></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p><b>Example Command (HTTP):</b></p>
+    <pre><code>GET /index.php?action=store&amp;r=30&amp;msg=%7B%22sku%22%3A%20%22123%22%7D&amp;n=a1b2c3d4-e5f6-4000-8000-0123456789ab</code></pre>
+    
+	<p><b>JSON Response:</b></p>
+	<pre><code>{
+	"system":"ZOSCII MQ",
+	"version":"1.0",
+	"error":"",
+	"message":"Message stored.",
+	"result":"202511021826110000-0030-9cc1980a-1719-440a-9650-6991c9cba11d.bin"
+}</code></pre>
+    
+    <p><b>Filename Format:</b></p>
+    <p>The message is saved as a file in the <code>store/x/y/z/</code> directory with the format: <code>YYYYMMDDHHNNSSCCCC-RRRR-GUID.bin</code>.  The file will be returned if the storing of the message is successful. You will need to note this filename for later fast retrieval.</p>
+	<p>For later retrieval of the message, you must note the <code>response.result</code>.</p>
+
+
+    <h3>E. Retrieving Messages (Reading from a Data Store)</h3>
+    <p>Messages are retrieved from the data store by using the previously returned filename. The consumer must track this filename if fast retrieval is required.</p>
+
+    <p><b>Endpoint:</b></p>
+    <pre><code>/index.php?action=retrieve</code></pre>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Parameter</th>
+                <th>Required</th>
+                <th>Description</th>
+                <th>Example Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>action</code></td>
+                <td>Yes</td>
+                <td>Must be <code>retrieve</code>.</td>
+                <td><code>retrieve</code></td>
+            </tr>
+            <tr>
+                <td><code>name</code></td>
+                <td>Yes</td>
+                <td><strong>The Name.</strong> The result of a past successful store action.</td>
+                <td><code>x202511021826110000-0030-9cc1980a-1719-440a-9650-6991c9cba11d.bin</code></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p><b>Success Response:</b></p>
+    <ul>
+        <li>The consumer must read the returned filename (<code>Content-Disposition</code> header) to determin if the file was fetched.</li>
+        <li>If the filename was not fetched, a JSON result may have been returned.</li>
+    </ul>
+	
+	<p><b>JSON Error Response:</b></p>
+	<pre><code>{
+	"system":"ZOSCII MQ",
+	"version":"1.0",
+	"error":"Invalid name 'x202511021826110000-0030-9cc1980a-1719-440a-9650-6991c9cba11d.bin'.",
+	"message":"",
+	"result":[]
+}</code></pre>
+
+
+    <h3>F. Scanning Messages (Scan the Data Store for unidentified messages)</h3>
+    <p>Messages are retrieved from the data store by using the previously returned filename. The consumer must track this filename if fast retrieval is required.</p>
+
+    <p><b>Endpoint:</b></p>
+    <pre><code>/index.php?action=scan</code></pre>
+
+    <p><b>Success Response:</b></p>
+	<pre><code>{
+	"system":"ZOSCII MQ",
+	"version":"1.0",
+	"error":"",
+	"message":"",
+	"result":[
+		"202511021259550001-0005-5192e106-7a99-4418-98eb-8d4cb4c6aa3a-u.bin",
+		"202511021259550001-0005-be2b00c1-9419-4661-8c1d-2219780c7980-u.bin"
+	]
+}</code></pre>
+
+    <ul>
+        <li>The -u within the message name indicates the message has not yet been identified.</li>
+        <li>Given the response array of unidentified files, you can now fetch them, identify them and flag them as identified.</li>
+    </ul>
+
+    <h3>G. Identify Messages</h3>
+    <p>Once messages have been scanned for, then identified, they can then be flagged as identified.</p>
+
+    <p><b>Endpoint:</b></p>
+    <pre><code>/index.php?action=identify</code></pre>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Parameter</th>
+                <th>Required</th>
+                <th>Description</th>
+                <th>Example Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>action</code></td>
+                <td>Yes</td>
+                <td>Must be <code>identify</code>.</td>
+                <td><code>identify</code></td>
+            </tr>
+            <tr>
+                <td><code>names</code></td>
+                <td>Yes</td>
+                <td>The raw message payload (should be URL-encoded).</td>
+                <td><code>[
+	"202511021259550001-0005-5192e106-7a99-4418-98eb-8d4cb4c6aa3a-u.bin",
+	"202511021259550001-0005-be2b00c1-9419-4661-x8c1d-2219780c7980-u.bin"
+]</code></td>
+            </tr>
+		</tbody>
+	</table>
+
+    <p><b>Example Command (HTTP):</b></p>
+    <pre><code>GET /index.php?action=identify&amp;names=["202511021259550001-0005-5192e106-7a99-4418-98eb-8d4cb4c6aa3a-u.bin","x202511021259550001-0005-be2b00c1-9419-4661-8c1d-2219780c7980-u.bin"]</code></pre>
+	
+    <p><b>Success Response:</b></p>
+	<pre><code>{
+	"system":"ZOSCII MQ",
+	"version":"1.0",
+	"error":"",
+	"message":"Returned messages identified.",
+	"result":[
+		"202511021259550001-0005-5192e106-7a99-4418-98eb-8d4cb4c6aa3a.bin"
+	]
+}</code></pre>
+
+    <ul>
+        <li>The messages successfully identified will be returned with the -u removed.</li>
+    </ul>
+
 
     <h2 id="server-setup-and-maintenance">3. Server Setup and Maintenance (For Administrators)</h2>
 
@@ -232,13 +479,14 @@
 |-- index.php             (HTTP API: Publish/Fetch)
 |-- replikate.php         (Cron: External Puller)
 |-- claireup.php          (Cron: Retention Cleanup)
-|-- nonce/				  (Optional nonce files go here)
+|-- nonce/                (Optional nonce files go here)
 |-- queues/
 |   |-- customer_a/       (Queue 1)
 |   |   |-- *.bin
 |   |-- customer_b/       (Queue 2)
 |   |   |-- *.bin
 |-- replikate_state_*.txt (State Files for Replicators)
+|-- store/                (Data Store Files are here)
 |-- statissa.php          (Statistics, it's better to place statissa elsewhere)
 </code></pre>
 
@@ -273,7 +521,7 @@
             </tr>
         </tbody>
     </table>
-    <p>Cron Example:</p>
+    <p><b>Cron Example:</b></p>
 	<p>Although it's possible to run claireup.php from a browser it is recommended to run it from cron if possible. To run it from the browser, you will first need to change the CLI_ONLY constant to FALSE from within the claireup.php file. If you do that, you are best ensure that it cannot be run by unauthorised parties if you don't want it to run.</p>
     <pre><code>0 0 * * * /usr/bin/php /path/to/claireup.php</code></pre>
 
