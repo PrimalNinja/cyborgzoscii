@@ -9,123 +9,12 @@
 // 
 // Execution: php index.php
 
-define('NONCE_ROOT', './nonce/');
-define('QUEUE_ROOT', './queues/');
-define('STORE_ROOT', './store/');
-
 define('ALLOW_GET', 'TRUE');
 
-define('LOG_OUTPUT', 'FALSE'); // TRUE or FALSE
 define('FILE_ERRORLOG', './zosciimq.log'); // or '/var/log/zosciimq.log'
-define('FOLDER_PERMISSIONS', 0755);
 
-// --- Helper Functions ---
-
-function sendJSONResponse($strSystemError_a, $strError_a, $strMessage_a, $arrResult_a)
-{
-    $arrJSON = ["system" => "ZOSCII MQ", "version" => "1.0", "error" => $strError_a, "message" => $strMessage_a, "result" => $arrResult_a];
-
-	if (strlen($strSystemError_a) > 0)
-	{
-		logError($strSystemError_a);
-	}
-
-    header('Content-Type: application/json');
-	$strJSON = json_encode($arrJSON);
-	echo($strJSON);
-	die();
-}
-
-function initFolders()
-{
-	// Ensure the root queue directory exists
-	if (!is_dir(QUEUE_ROOT)) 
-	{
-		if (!mkdir(QUEUE_ROOT, FOLDER_PERMISSIONS, true)) 
-		{
-			sendJSONResponse("Fatal Could not create root queue directory: " . QUEUE_ROOT, "System Error.", "", []);
-		}
-	}
-
-	// Ensure the root store directory exists
-	if (!is_dir(STORE_ROOT)) 
-	{
-		if (!mkdir(STORE_ROOT, FOLDER_PERMISSIONS, true)) 
-		{
-			sendJSONResponse("Fatal Could not create root store directory: " . STORE_ROOT, "System Error.", "", []);
-		}
-	}
-
-	// Ensure the nonce directory exists
-	if (!is_dir(NONCE_ROOT)) 
-	{
-		if (!mkdir(NONCE_ROOT, FOLDER_PERMISSIONS, true)) 
-		{
-			sendJSONResponse("Fatal Could not create nonce directory: " . NONCE_ROOT, "System Error.", "", []);
-		} 
-	}
-}
-
-function logError($str_a) 
-{
-    if (LOG_OUTPUT === 'TRUE') 
-	{
-        file_put_contents(FILE_ERRORLOG, date('Y-m-d H:i:s') . " - " . $str_a . "\n", FILE_APPEND);
-    }
-}
-
-function getGUID()
-{
-    // Generate 16 random bytes
-    $binData = random_bytes(16);
-    
-    // Set version (4) - bits 12-15 of time_hi_and_version field
-    $binData[6] = chr(ord($binData[6]) & 0x0f | 0x40);
-    
-    // Set variant (RFC 4122) - bits 6-7 of clock_seq_hi_and_reserved
-    $binData[8] = chr(ord($binData[8]) & 0x3f | 0x80);
-    
-    // Format as standard GUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-    $strGUID = vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($binData), 4));
-    
-    return $strGUID;
-}
-
-// Converts the name timestamp part (YYYYMMDDHHNNSSCCCC) to a reordered 
-// decimal number (SSNNHHDDMMYYYYCCCC) and encodes it in BASE36.
-// This conversion is used to create a non-chronological, distributed name 
-// for store directory hashing.
-// Returns: Base36 string (0-9 and a-z) or false on failure.
-function convertNameToBase36($strName_a)
-{
-	$varResult = false;
-	
-    // Extract the timestamp part from YYYYMMDDHHNNSSCCCC-RRRR-GUID.bin
-    $arrParts = explode('-', $strName_a);
-    
-    // We only care about the first part (timestamp)
-    $strTimestamp = $arrParts[0]; 
-    
-    if (strlen($strTimestamp) === 18) 
-	{
-		// Reorder the parts: SS NN HH DD MM YYYY CCCC
-		$SS = substr($strTimestamp, 12, 2);
-		$NN = substr($strTimestamp, 10, 2);
-		$HH = substr($strTimestamp, 8, 2);
-		$DD = substr($strTimestamp, 6, 2);
-		$MM = substr($strTimestamp, 4, 2);
-		$YYYY = substr($strTimestamp, 0, 4);
-		$CCCC = substr($strTimestamp, 14, 4); 
-
-		// Concatenate to form the large decimal number
-		$strReorderedDecimal = $SS . $NN . $HH . $DD . $MM . $YYYY . $CCCC;
-
-		// Convert to BASE36 (0-9 and a-z)
-		$varResult = base_convert($strReorderedDecimal, 10, 36);
-	}
-    
-    return $varResult;
-}
+require_once('inc-constants.php');
+require_once('inc-utils.php');
 
 // containing the '-u' suffix before the extension.
 function findUnidentifiedFilesRecursive($strPath_a)
@@ -291,49 +180,79 @@ function handlePublish($strQueueName_a, $strNonce_a, $intRetentionDays_a, $binMe
     $strRetentionDays = sprintf('%04d', $intRetentionDays_a);
 
     if (empty($strQueueName_a) || empty($binMessage_a)) 
-	{
-		sendJSONResponse("", "Missing 'q' (queue name) or 'msg' (message content).", "", []);
-	}
-	else
-	{
+    {
+        sendJSONResponse("", "Missing 'q' (queue name) or 'msg' (message content).", "", []);
+    }
+    else
+    {
         $strQueuePath = QUEUE_ROOT . $strQueueName_a . '/';
-		
+        
         if (!is_dir($strQueuePath)) 
-		{
+        {
             if (!mkdir($strQueuePath, FOLDER_PERMISSIONS, true)) 
-			{
-				sendJSONResponse("Could not create queue directory: " . $strQueuePath, "Could not create queue.", "", []);
+            {
+                sendJSONResponse("index.php: Could not create queue directory: " . $strQueuePath, "Could not create queue.", "", []);
             } 
-		}
-		
+        }
+        
 		// Generate Name (YYYYMMDDHHNNSSCCCC-RRRR-GUID.bin)
 		$strBaseTime = date('YmdHis');
 		$strName = '';
 		$strFullPath = '';
 		$strGetGUID = getGUID();
 		
-		$strName = $strBaseTime . "0000-" . $strRetentionDays . "-" . $strGetGUID . ".bin";
-		$strFullPath = $strQueuePath . $strName;
+		$strFullTempPath = QUEUE_ROOT . TEMP_QUEUE . $strGetGUID . ".bin";
+        $intBytesWritten = file_put_contents($strFullTempPath, $binMessage_a);
 
-		// Write the Message
-		$intBytesWritten = file_put_contents($strFullPath, $binMessage_a);
-		if ($intBytesWritten === false) 
+		$intCollisionCounter = 0;
+		while (true) 
 		{
-			sendJSONResponse("Failed to create message.", "Failed to create message.", "", []);
-		} 
-		
-		if (strlen($strNonce_a) > 0)
-		{
-			$strNonceFile = NONCE_ROOT . $strNonce_a;
-			if (!touch($strNonceFile))
+			$strCollisionID = sprintf('%04d', $intCollisionCounter);
+			$strName = $strBaseTime . $strCollisionID . "-" . $strRetentionDays . "-" . $strGetGUID . ".bin";
+			$strFullPath = $strQueuePath . $strName;
+
+			// Check for existence. If unique, break the loop.
+			if (!file_exists($strFullPath)) 
 			{
-				unlink($strFullPath);
-				sendJSONResponse("Failed to create nonce.", "Failed to create nonce.", "", []);
+				break; 
+			}
+
+			// If file exists, we had a collision. Try the next sequential number.
+			$intCollisionCounter++;
+			
+			// Safety break: Prevents an infinite loop.
+			if ($intCollisionCounter > 9999) 
+			{
+				sendJSONResponse("index.php: Queue exceeded 9,999 attempted messages in one second.", "Queue overload, try again.", "", []);
 			}
 		}
 
-		sendJSONResponse("", "", "Message published.", []);
-	}
+		if (rename($strFullTempPath, $strFullPath))
+		{
+			if ($intBytesWritten === false) 
+			{
+				@unlink($strFullTempPath);
+				sendJSONResponse("index.php: Failed to create message 1.", "Failed to create message.", "", []);
+			} 
+		}
+		else
+		{
+			@unlink($strFullTempPath);
+			sendJSONResponse("index.php: Failed to create message 2.", "Failed to create message.", "", []);
+		}
+        
+        if (strlen($strNonce_a) > 0)
+        {
+            $strNonceFile = NONCE_ROOT . $strNonce_a;
+            if (!touch($strNonceFile))
+            {
+                unlink($strFullPath);
+                sendJSONResponse("index.php: Failed to create nonce.", "Failed to create nonce.", "", []);
+            }
+        }
+
+        sendJSONResponse("", "", "Message published.", []);
+    }
 }
 
 function handleRetrieve($strName_a)
@@ -416,14 +335,14 @@ function handleStore($strNonce_a, $intRetentionDays_a, $binMessage_a)
 		{
 			if (!mkdir($strStorePath, FOLDER_PERMISSIONS, true)) 
 			{
-				sendJSONResponse("Could not create store directory: " . $strStorePath, "Could not create store.", "", []);
+				sendJSONResponse("index.php: Could not create store directory: " . $strStorePath, "Could not create store.", "", []);
 			} 
 		}
 
 		$intBytesWritten = file_put_contents($strFullPath, $binMessage_a);
 		if ($intBytesWritten === false) 
 		{
-			sendJSONResponse("Failed to create message.", "Failed to create message.", "", []);
+			sendJSONResponse("index.php: Failed to create message.", "Failed to create message.", "", []);
 		} 
 		
 		if (strlen($strNonce_a) > 0)
@@ -432,7 +351,7 @@ function handleStore($strNonce_a, $intRetentionDays_a, $binMessage_a)
 			if (!touch($strNonceFile))
 			{
 				unlink($strFullPath);
-				sendJSONResponse("Failed to create nonce.", "Failed to create nonce.", "", []);
+				sendJSONResponse("index.php: Failed to create nonce.", "Failed to create nonce.", "", []);
 			}
 		}
 

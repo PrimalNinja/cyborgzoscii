@@ -9,69 +9,12 @@
 //  
 // Execution: php claireup.php
 
-// --- Global Configuration ---
-define('NONCE_ROOT', './nonce/');
-define('QUEUE_ROOT', './queues/'); 
-define('STORE_ROOT', './store/'); 
+define('CLI_ONLY', 'TRUE'); 
 
-define('CLI_ONLY', 'FALSE'); 
-define('DEBUG', 'FALSE'); 
-
-define('LOG_OUTPUT', 'FALSE');	// TRUE or FALSE
 define('FILE_ERRORLOG', './claireup.log'); // or '/var/log/claireup.log'
-define('FOLDER_PERMISSIONS', 0755);
 
-define('NONCE_TIMEFRAME', 5);	// minimum minutes to keep NONCE
-
-// --- Helper Functions ---
-function logDebug($str_a)
-{
-	if (DEBUG === 'TRUE')
-	{
-		echo($str_a . "\n");
-	}
-}
-
-function logError($str_a)
-{
-	if (LOG_OUTPUT === 'TRUE')
-	{
-		file_put_contents(FILE_ERRORLOG, date('Y-m-d H:i:s') . " - " . $str_a . "\n", FILE_APPEND);
-	}
-}
-
-function initFolders()
-{
-	// Ensure the root queue directory exists
-	if (!is_dir(QUEUE_ROOT)) 
-	{
-		if (!mkdir(QUEUE_ROOT, FOLDER_PERMISSIONS, true)) 
-		{
-			logError("Fatal Could not create root queue directory: " . QUEUE_ROOT);
-			die();
-		}
-	}
-
-	// Ensure the root store directory exists
-	if (!is_dir(STORE_ROOT)) 
-	{
-		if (!mkdir(STORE_ROOT, FOLDER_PERMISSIONS, true)) 
-		{
-			logError("Fatal Could not create root store directory: " . STORE_ROOT);
-			die();
-		}
-	}
-
-	// Ensure the nonce directory exists
-	if (!is_dir(NONCE_ROOT)) 
-	{
-		if (!mkdir(NONCE_ROOT, FOLDER_PERMISSIONS, true)) 
-		{
-			logError("Fatal Could not create nonce directory: " . NONCE_ROOT);
-			die();
-		} 
-	}
-}
+require_once('inc-constants.php');
+require_once('inc-utils.php');
 
 function cleanUpNonces($intCurrentTimestamp_a)
 {

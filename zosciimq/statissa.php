@@ -13,16 +13,15 @@
 // 
 // Execution: Open in a web browser (e.g., http://your.host/statissa.php)
 
-// --- Global Configuration ---
-// Ensure this path matches the root directory used by index.php and claireup.php
+define('PAGE_TITLE', 'ZOSCII MQ Storage Statistics (Statissa)');
+
 define('QUEUE_ROOT', './queues/');
 define('STORE_ROOT', './store/');
 
-define('PAGE_TITLE', 'ZOSCII MQ Storage Statistics (Statissa)');
+define('TEMP_QUEUE', 'temp/');
 
 define('LOG_OUTPUT', 'TRUE');	// TRUE or FALSE
-define('FILE_ERRORLOG', './replikate.log'); // or '/var/log/replikate.log'
-define('FOLDER_PERMISSIONS', 0755);
+define('FILE_ERRORLOG', './statissa.log'); // or '/var/log/statissa.log'
 
 function logError($str_a)
 {
@@ -32,28 +31,29 @@ function logError($str_a)
 	}
 }
 
-function initFolders()
+function checkFolders()
 {
 	// Ensure the root queue directory exists
 	if (!is_dir(QUEUE_ROOT)) 
 	{
-		if (!mkdir(QUEUE_ROOT, FOLDER_PERMISSIONS, true)) 
-		{
-			logError("Fatal Error: Could not create root queue directory " . QUEUE_ROOT);
-			echo("Fatal Error: Could not create root queue directory " . QUEUE_ROOT);
-			die();
-		}
+		logError("Fatal Error: Could not find root queue directory " . QUEUE_ROOT);
+		echo("Fatal Error: Could not find root queue directory " . QUEUE_ROOT);
+		die();
+	}
+
+	if (!is_dir(QUEUE_ROOT . TEMP_QUEUE)) 
+	{
+		logError("Fatal Error: Could not find temp queue directory " . QUEUE_ROOT . TEMP_QUEUE);
+		echo("Fatal Error: Could not find temp queue directory " . QUEUE_ROOT . TEMP_QUEUE);
+		die();
 	}
 
 	// Ensure the root store directory exists
 	if (!is_dir(STORE_ROOT)) 
 	{
-		if (!mkdir(STORE_ROOT, FOLDER_PERMISSIONS, true)) 
-		{
-			logError("Fatal Error: Could not create root store directory " . STORE_ROOT);
-			echo("Fatal Error: Could not create root store directory " . STORE_ROOT);
-			die();
-		}
+		logError("Fatal Error: Could not find root store directory " . STORE_ROOT);
+		echo("Fatal Error: Could not find root store directory " . STORE_ROOT);
+		die();
 	}
 }
 
@@ -389,7 +389,7 @@ function formatBytes($intBytes_a, $intPrecision_a = 2)
 
 // entry
 
-initFolders();
+checkFolders();
 
 list($arrQueueStats, $intQueueTotalStorage) = getQueueStats();
 list($arrStoreStats, $intStoreTotalStorage) = getStoreStats();
