@@ -14,7 +14,7 @@
 // 
 // NOTE: This script requires the PHP cURL extension to be installed and enabled.
 
-define('CLI_ONLY', 'TRUE'); 
+define('CLI_ONLY', 'FALSE'); 
 
 DEFINE('FILE_ERRORLOG', './replikate.log'); // or '/var/log/replikate.log'
 

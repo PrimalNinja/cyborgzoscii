@@ -18,42 +18,58 @@ require_once('inc-utils.php');
 
 function cleanUpLocks($strLocksPath_a)
 {
-	$intResult = 0;	// number of locks
+	$intResult = 0;
 	
     $intCutoffTime = time() - LOCK_TIMEFRAME;
+    
+    //logError("cleanUpLocks: Checking path: " . $strLocksPath_a . "*.lock");
     
     // Find all .lock files
     $arrLockFiles = glob($strLocksPath_a . '*.lock');
     
-    if ($arrLockFiles && is_array($arrLockFiles) > 0) 
+    //logError("cleanUpLocks: glob returned " . var_export($arrLockFiles, true));
+    
+    if (is_array($arrLockFiles)) 
 	{
+		logError("cleanUpLocks: Found " . count($arrLockFiles) . " lock files");
+		
 		foreach ($arrLockFiles as $strLockFile)
 		{
-			// Get the last modification time of the file
 			$intFileMTime = @filemtime($strLockFile);
-
-			// Check if filemtime succeeded AND the file is older than the 5-second cutoff
+			
+			//logError("cleanUpLocks: Checking lock file: " . $strLockFile . " (mtime: " . $intFileMTime . ", cutoff: " . $intCutoffTime . ")");
+			
 			if ($intFileMTime !== false && $intFileMTime < $intCutoffTime)
 			{
 				if (@unlink($strLockFile))
 				{
-					// do nothing
+					//logError("cleanUpLocks: DELETED stale lock: " . $strLockFile);
 				}
 				else
 				{
-					// logError is available via inc-utils.php
 					logError("Failed to delete stale lock file: " . $strLockFile);
 				}
 			}
+			else
+			{
+				//logError("cleanUpLocks: Lock file is fresh, keeping: " . $strLockFile);
+			}
 		}
     }
+	else
+	{
+		logError("cleanUpLocks: glob did NOT return an array!");
+	}
 	
+	// Re-scan
 	$arrLockFiles = glob($strLocksPath_a . '*.lock');
-    if ($arrLockFiles && is_array($arrLockFiles) > 0) 
+    if (is_array($arrLockFiles)) 
 	{
 		$intResult = count($arrLockFiles);
 	}
-
+	
+	//logError("cleanUpLocks: Returning lock count: " . $intResult);
+	
     return $intResult;
 }
 
@@ -277,6 +293,7 @@ function handlePublish($strQueueName_a, $strNonce_a, $intRetentionDays_a, $binMe
 				// Safety break: Prevents an infinite loop.
 				if ($intCollisionCounter > 9999) 
 				{
+					@unlink($strLockPath . $strLockFile);
 					sendJSONResponse("index.php: Queue exceeded 9,999 attempted messages in one second.", "Queue overload, try again.", "", []);
 				}
 			}
@@ -286,12 +303,14 @@ function handlePublish($strQueueName_a, $strNonce_a, $intRetentionDays_a, $binMe
 				if ($intBytesWritten === false) 
 				{
 					@unlink($strFullTempPath);
+					@unlink($strLockPath . $strLockFile);
 					sendJSONResponse("index.php: Failed to create message 1.", "Failed to create message.", "", []);
 				} 
 			}
 			else
 			{
 				@unlink($strFullTempPath);
+				@unlink($strLockPath . $strLockFile);
 				sendJSONResponse("index.php: Failed to create message 2.", "Failed to create message.", "", []);
 			}
 			
@@ -300,11 +319,13 @@ function handlePublish($strQueueName_a, $strNonce_a, $intRetentionDays_a, $binMe
 				$strNonceFile = NONCE_ROOT . $strNonce_a;
 				if (!touch($strNonceFile))
 				{
-					unlink($strFullPath);
+					@unlink($strFullPath);
+					@unlink($strLockPath . $strLockFile);
 					sendJSONResponse("index.php: Failed to create nonce.", "Failed to create nonce.", "", []);
 				}
 			}
 
+			@unlink($strLockPath . $strLockFile);
 			sendJSONResponse("", "", "Message published.", []);
 		}
 		finally
@@ -409,7 +430,7 @@ function handleStore($strNonce_a, $intRetentionDays_a, $binMessage_a)
 			$strNonceFile = NONCE_ROOT . $strNonce_a;
 			if (!touch($strNonceFile))
 			{
-				unlink($strFullPath);
+				@unlink($strFullPath);
 				sendJSONResponse("index.php: Failed to create nonce.", "Failed to create nonce.", "", []);
 			}
 		}

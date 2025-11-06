@@ -72,6 +72,19 @@ CyborgZOSCII is an alternative to ASCII/PETSCII that uses direct ROM addressing 
 - **Corporate communications** requiring server-side content protection
 - **Invite-only websites** with content invisible to hosting providers and unwanted users
 
+## Join the ZOSCII Community on Telegram
+
+We believe in radical transparency and open discussion. Join our official Telegram channels and groups to engage with developers, discuss security theory, and follow project updates.
+
+| Channel Name | Telegram Link | Primary Focus |
+| :--- | :--- | :--- |
+| **ZOSCII | Core & Philosophy** | [https://t.me/zoscii](https://t.me/zoscii) | Official announcements, Whitepaper updates, and core philosophy of Zero-Trust / ITS Encoding. |
+| **ZOSCII Community & Dev** | [https://t.me/zoscii\_discuss](https://t.me/zoscii\_discuss) | **The main hub for discussion!** Share code, ask technical questions, and debate security theory. |
+| **ZOSCII MQ | Zero-Knowledge B2B and Document Repository** | [https://t.me/zoscii\_mq](https://t.me/zoscii\_mq) | Implementation and architecture of the Zero-Knowledge Message Queue and Document Repository. |
+| **ZOSCII TB | TrumpetBlower** | [https://t.me/zoscii\_tb](https://t.me/zoscii\_tb) | Discussion and support for the maximum-anonymity whistleblower and journalism tool. |
+| **ZOSCII ZTB | Tamperproof Blockchain** | [https://t.me/zoscii\_ztb](https://t.me/zoscii\_ztb) | Focus on the Tamperproof Blockchain, it's commands, and quantum resistance (for architects/auditors). |
+| **ZOSCII COIN | Proof-of-Integrity** | [https://t.me/zoscii\_coin](https://t.me/zoscii\_coin) | News and updates on the ZOSCII utility token, and the **Snake Oil Challenge**. |
+
 - Julian
 
 
