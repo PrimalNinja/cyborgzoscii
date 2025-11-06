@@ -1,0 +1,13 @@
+= 部分 B - 赞誉与致谢 =
+
+'''特别感谢：'''
+
+*'''Claude, Grok, Gemini, WhatsApp''' – 感谢你们在格式方面的建议、偶尔的贡献，以及在某些情况下，意外引发的幽默冗长，这些都影响了本书的写作方式。
+
+*'''所有参与 ZOSCII Snake Oil Challenge 的人''' – 无论你是尝试破解它还是在线讨论，你们都帮助测试和推广了这个概念。
+
+*'''更广泛的开源与复古计算社区''' – 感谢你们让 8 位思维得以延续，并证明创新不需要太多计算能力。
+
+- - - -
+
+Bruce Schneier对 ZOSCII 有什么看法？"Honestly, sounds like snake-oil of the highest degree."

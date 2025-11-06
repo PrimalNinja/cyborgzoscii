@@ -12,5 +12,9 @@ define('STORE_ROOT', './store/');
 
 define('TEMP_QUEUE', 'temp/');
 
+define('LOCK_FOLDER', 'locks/');
+define('LOCK_WAIT', 10000);		// in milliseconds
+define('LOCK_TIMEFRAME', 5);	// in seconds to keep the lock
+
 define('NONCE_TIMEFRAME', 5);	// minimum minutes to keep NONCE
 

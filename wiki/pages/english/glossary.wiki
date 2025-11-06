@@ -13,7 +13,7 @@
 *'''Dr. Andrew Tunnelvision''' - Cryptographer dismissing ZOSCII as "snake oil"
 *'''Harold Flourworth''' - Baker arrested for encoding biscuit recipe as "nuclear codes"
 *'''Julian Cassin''' - ZOSCII inventor vindicated in court
-*'''Bruce Schneier''' - Real cryptographer who called ZOSCII "snake oil of the highest degree"
+*'''Bruce Schneier''' - Real cryptographer who called ZOSCII "Honestly, sounds like snake-oil of the highest degree."
 
 == Technical Terms ==
 *'''Address Sequences''' - Encoded ZOSCII messages as ROM memory addresses

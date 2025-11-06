@@ -1,0 +1,34 @@
+= 附录 A：官方资源 =
+
+'''官方项目网站：'''
+
+[https://zoscii.com|🔗 zoscii.com]
+
+'''蛇油挑战：'''
+
+[https://zosciicoin.com|🔗 zosciicoin.com]
+
+'''官方代码库（MIT 许可证）：'''
+
+[https://github.com/PrimalNinja/cyborgzoscii|🔗 github.com/PrimalNinja/cyborgzoscii]
+
+'''可用源代码：'''
+
+GitHub 代码库包含完整的实现，包括：
+
+*'''编码器和解码器''' - 完整的 ZOSCII 编码/解码工具
+*'''ZOSCIIBB''' - 完整的公告板系统，包含浏览器和服务器组件
+*'''书籍源代码''' - 本书中所有代码示例、实现和工具
+*'''多种编程语言：'''
+**JavaScript - 浏览器和 Node.js 实现（包括第 4 章中的 toZOSCII 函数）
+**PHP - 服务器端 Web 应用程序（包括第 5 章中的 ZOSCIIBB 服务器）
+**Python - 跨平台工具和分析工具
+**C - 用于嵌入式系统和复古计算的高性能实现（包括第 6 章中的所有 CP/M 和现代 C 源代码）
+*'''遗留系统支持''' - 针对复古 8 位计算机的 CP/M 实现（zencode, zdecode, zstrength）
+*'''现代实现''' - 适用于当代系统的跨平台 C 代码
+
+所有源代码均根据 MIT 许可证发布，以实现最大兼容性和易于集成。
+
+'''本书：'''
+
+本书的完整源代码以 CyborgWiki 格式也可在代码库中获得，允许读者研究格式、修改内容或贡献改进。

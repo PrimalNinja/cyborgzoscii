@@ -1,0 +1,72 @@
+= CyborgZOSCII - Zero Overhead Secure Code Information Interchange =
+
+== ZERO encryption ZERO ciphering 100% SECURE! ==
+
+= Table of Contents =
+
+== Front Matter ==
+*[[english/preface-back-cover|Preface]]
+*[[english/sourcecode|Source Code]]
+*[[english/glossary|Glossary]]
+
+== Chapter 1: The End of Encryption ==
+*[[english/chapter-1-1-Security-Expert-Dismisses-Non-Encryption-ZOSCII-System-While-Completely-Missing-the-Point|Security Expert Dismisses "Non-Encryption" ZOSCII System While Completely Missing the Point]]
+*[[english/chapter-1-2-The-End-of-Encryption|The End of Encryption]]
+*[[english/chapter-1-3-Reflection|Reflection]]
+
+== Chapter 2: How ZOSCII Works ==
+*[[english/chapter-2-1-Julian-Man-Grant-Tables-New-Law-to-Outright-Ban-the-Use-of-Tables|Julian Man Grant Tables New Law to Outright Ban the Use of Tables]]
+*[[english/chapter-2-2-How-ZOSCII-Works|How ZOSCII Works]]
+
+== Chapter 3: Getting Started - Your First ZOSCII Message ==
+*[[english/chapter-3-1-Man-Arrested-for-Nuclear-Launch-Codes-That-Were-Actually-Biscuit-Recipe|Man Arrested for "Nuclear Launch Codes" That Were Actually Biscuit Recipe]]
+*[[english/chapter-3-2-Getting-Started-Your-First-ZOSCII-Message|Getting Started - Your First ZOSCII Message]]
+*[[english/chapter-3-3-Defense-Department-Bans-8-Bit-Computers-After-Commodore-PET-Proves-More-Secure-Than-$50-Billion-Military-Systems|Defense Department Bans 8-Bit Computers After Commodore PET Proves More Secure Than $50 Billion Military Systems]]
+*[[english/chapter-3-4-Understanding-ROM-Files-and-Entropy|Understanding ROM Files and Entropy]]
+
+== Chapter 4: Modern Web Integration ==
+*[[english/chapter-4-1-Julian-Man-Grant-Flees-International-Security-Summit-After-ZOSCII-Declared-Weapon-of-Mass-Democracy|Julian Man Grant Flees International Security Summit After ZOSCII Declared "Weapon of Mass Democracy"]]
+*[[english/chapter-4-2-Modern-Web-Integration|Modern Web Integration]]
+*[[english/chapter-4-3-toZOSCII|toZOSCII JavaScript Implementation]]
+
+== Chapter 5: Server-Side Security ==
+*[[english/chapter-5-1-ZOSCII-Inventors-Case-Thrown-Out-After-Government-Discovers-Theyve-Been-Using-Dangerous-Technology-for-40-Years|ZOSCII Inventor's Case Thrown Out After Government Discovers They've Been Using "Dangerous" Technology for 40 Years]]
+*[[english/chapter-5-2-Server-Side-Security|Server-Side Security]]
+*[[english/chapter-5-3-zosciibb|ZOSCIIBB Browser Source]]
+*[[english/chapter-5-4-messages|ZOSCIIBB Server Source]]
+
+== Chapter 6: C Systems Programming ==
+*[[english/chapter-6-1-Retro-Computing-Ban-Proposed-After-Government-Surveillance-Systems-Defeated-by-Commodore-64|Retro Computing Ban Proposed After Government Surveillance Systems Defeated by Commodore 64]]
+*[[english/chapter-6-2-C-Systems-Programming|C Systems Programming]]
+*[[english/chapter-6-3-cpm-zencode|CPM zencode Source]]
+*[[english/chapter-6-4-cpm-zstrength|CPM zstrength Source]]
+*[[english/chapter-6-5-cpm-zdecode|CPM zdecode Source]]
+*[[english/chapter-6-6-modernc-zencode|Modern C zencode Source]]
+*[[english/chapter-6-7-modernc-zstrength|Modern C zstrength Source]]
+*[[english/chapter-6-8-modernc-zdecode|Modern C zdecode Source]]
+
+== Chapter 7: More on Combinatorics and Probability ==
+*[[english/chapter-7-1-Government-Officials-Declare-ZOSCII-Less-Secure-Than-Shouting-Passwords-Inadvertently-Create-Perfect-Privacy-Protection-System|Government Officials Declare ZOSCII "Less Secure Than Shouting Passwords," Inadvertently Create Perfect Privacy Protection System]]
+*[[english/chapter-7-2-More-on-Combinatorics-and-Probability|Mathematical Foundations of Information-Theoretic Security]]
+
+== Chapter 8: Breaking ZOSCII - The Snake Oil Challenge ==
+*[[english/chapter-8-1-Crypto-API-Operators-Strike-Gold-as-ZOSCII-Challenge-Searchers-Pay-More-Than-Actual-Trading|Crypto API Operators Strike Gold as ZOSCII Challenge Searchers Pay More Than Actual Trading]]
+*[[english/chapter-8-2-Breaking-ZOSCII-The-Snake-Oil-Challenge|Breaking ZOSCII - The Snake Oil Challenge]]
+
+== Chapter 9: There Is Still A Place For Cryptographic Solutions ==
+*[[english/chapter-9-1-Cryptographers-Demand-Challenge-Cancellation-After-ZOSCII-Prize-Proves-Only-As-Secure-As-AES-256|Cryptographers Demand Challenge Cancellation After ZOSCII Prize Proves "Only" As Secure As AES-256]]
+*[[english/chapter-9-2-There-is-Still-A-Place-For-Crypographic-Solutions|There Is Still A Place For Cryptographic Solutions]]
+
+== Chapter 10: Whitepaper ==
+*[[english/chapter-10-1-BREAKING-Frustrated-Developer-Discovers-Cure-for-AI-Verbosity|BREAKING: Frustrated Developer Discovers Cure for AI Verbosity]]
+*[[english/chapter-10-2-whitepaper|The Whitepaper]]
+*[[english/chapter-10-3-whitepaper|Further Analysis of ZOSCII]]
+*[[english/chapter-10-4-whitepaper|ZOSCII Real-World Use Cases]]
+
+== Chapter 11: Appendices ==
+*[[english/chapter-11-1-Official-Resources|Official Resources]]
+*[[english/chapter-11-2-Credits-Acknowledgements|Credits & Acknowledgements]]
+*[[english/chapter-11-3-MIT-License|MIT License]]
+
+- - - -
+Powered by %APPNAME%

@@ -1,0 +1,62 @@
+== 部分 D – 理解 ROM 文件和熵 ==
+
+当我们研究 ROM 质量时，Harold 的案例变得更加有趣。调查人员假设高质量的“核代码”需要复杂的编码密钥。实际上，Harold 使用了他祖母的 JPEG 照片作为他的 ROM——这为将他的食谱编码为二进制数据提供了天文般的安全性。
+
+=== ROM 熵基础 ===
+
+一个好的 ZOSCII ROM 应该包含多样的字节值（0-255），并且每个要编码的值应该有多个出现。Harold 的祖母照片（64KB JPEG）包含：
+
+* 字节值 65（ASCII 中的 'A'）：在不同位置出现了 847 次
+* 字节值 32（空格）：出现了 1,200+ 次
+* 字节值 255：出现了 234 次
+* 字节值 0：出现了 445 次
+* 所有 256 种可能的字节值都有表示
+
+这种多样性使得 Harold 的饼干食谱（转换为二进制）大约有 10^156 种可能的编码——这使其比军用级别的加密系统更安全。
+
+=== 测试 ROM 质量 ===
+
+您可以使用以下综合测试来评估任何文件作为 ZOSCII ROM 的适用性：
+
+<code>
+function testROM(romData) {
+    let counts = new Array(256).fill(0);
+    for(let i = 0; i < romData.length; i++) {
+        counts[romData[i]]++;
+    }
+    
+    // 检查所有可能字节值的覆盖情况
+    let coveredBytes = 0;
+    let totalOccurrences = 0;
+    let minCount = Infinity;
+    let maxCount = 0;
+    
+    for(let i = 0; i < 256; i++) {
+        if(counts[i] > 0) {
+            coveredBytes++;
+            totalOccurrences += counts[i];
+            minCount = Math.min(minCount, counts[i]);
+            maxCount = Math.max(maxCount, counts[i]);
+        }
+    }
+    
+    api.print(`ROM 覆盖了 ${coveredBytes}/256 个可能的字节值`);
+    api.print(`每个字节值的平均出现次数：${Math.round(totalOccurrences/coveredBytes)}`);
+    api.print(`范围：每个字节 ${minCount} 到 ${maxCount} 次出现`);
+}
+</code>
+
+Harold 的祖母照片在字节覆盖上得分为 256/256，平均每个字节值出现 256 次——这解释了为什么他的二进制编码饼干食谱达到了核级安全评级。
+
+=== 二进制数据编码 ===
+
+ZOSCII 可以编码任何类型的数据：
+
+* 文本文件（转换为 UTF-8 字节）
+* 图像（原始像素数据）
+* 音频文件（声波数据）
+* 可执行文件（机器代码）
+* 文档（PDF、Word 等）
+* 任何二进制文件格式
+
+Harold 可以将他的食谱编码为 Word 文档、手写食谱的图像，甚至是音频录音——所有这些都具有相同的天文安全级别。

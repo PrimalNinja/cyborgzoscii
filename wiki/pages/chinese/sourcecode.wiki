@@ -1,0 +1,10 @@
+== 源代码（MIT许可证） ==
+
+从官方代码库获取本书中使用的源代码。
+
+[https://github.com/PrimalNinja/cyborgzoscii|🔗 github.com/PrimalNinja/cyborgzoscii]
+
+'''备份/镜像站点：'''
+
+如果主库无法访问，请检查：
+*[https://zoscii.com|zoscii.com] 以获取当前的库位置

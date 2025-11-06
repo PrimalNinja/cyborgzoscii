@@ -1,0 +1,72 @@
+= CyborgZOSCII - 零开销安全代码信息交换 =
+
+== 零加密零加密算法100%安全！ ==
+
+= 目录 =
+
+== 前言 ==
+*[[chinese/preface-back-cover|前言]]
+*[[chinese/sourcecode|源代码]]
+*[[chinese/glossary|术语表]]
+
+== 第1章：加密的终结 ==
+*[[chinese/chapter-1-1-Security-Expert-Dismisses-Non-Encryption-ZOSCII-System-While-Completely-Missing-the-Point|安全专家驳斥“非加密”ZOSCII系统，完全未能抓住要点]]
+*[[chinese/chapter-1-2-The-End-of-Encryption|加密的终结]]
+*[[chinese/chapter-1-3-Reflection|反思]]
+
+== 第2章：ZOSCII的工作原理 ==
+*[[chinese/chapter-2-1-Julian-Man-Grant-Tables-New-Law-to-Outright-Ban-the-Use-of-Tables|Julian Man Grant提出新法律，彻底禁止使用表格]]
+*[[chinese/chapter-2-2-How-ZOSCII-Works|ZOSCII的工作原理]]
+
+== 第3章：入门 - 您的第一个ZOSCII消息 ==
+*[[chinese/chapter-3-1-Man-Arrested-for-Nuclear-Launch-Codes-That-Were-Actually-Biscuit-Recipe|男子因“核发射密码”被捕，实际是饼干食谱]]
+*[[chinese/chapter-3-2-Getting-Started-Your-First-ZOSCII-Message|入门 - 您的第一个ZOSCII消息]]
+*[[chinese/chapter-3-3-Defense-Department-Bans-8-Bit-Computers-After-Commodore-PET-Proves-More-Secure-Than-$50-Billion-Military-Systems|国防部禁止8位计算机，因为Commodore PET被证明比500亿美元的军事系统更安全]]
+*[[chinese/chapter-3-4-Understanding-ROM-Files-and-Entropy|理解ROM文件和熵]]
+
+== 第4章：现代网络集成 ==
+*[[chinese/chapter-4-1-Julian-Man-Grant-Flees-International-Security-Summit-After-ZOSCII-Declared-Weapon-of-Mass-Democracy|Julian Man Grant在ZOSCII被宣布为“民主武器”后逃离国际安全峰会]]
+*[[chinese/chapter-4-2-Modern-Web-Integration|现代网络集成]]
+*[[chinese/chapter-4-3-toZOSCII|toZOSCII JavaScript实现]]
+
+== 第5章：服务器端安全 ==
+*[[chinese/chapter-5-1-ZOSCII-Inventors-Case-Thrown-Out-After-Government-Discovers-Theyve-Been-Using-Dangerous-Technology-for-40-Years|ZOSCII发明者的案件被驳回，因政府发现他们使用了“危险”技术40年]]
+*[[chinese/chapter-5-2-Server-Side-Security|服务器端安全]]
+*[[chinese/chapter-5-3-zosciibb|ZOSCIIBB浏览器源代码]]
+*[[chinese/chapter-5-4-messages|ZOSCIIBB服务器源代码]]
+
+== 第6章：C系统编程 ==
+*[[chinese/chapter-6-1-Retro-Computing-Ban-Proposed-After-Government-Surveillance-Systems-Defeated-by-Commodore-64|在Commodore 64击败政府监控系统后，提出复古计算禁令]]
+*[[chinese/chapter-6-2-C-Systems-Programming|C系统编程]]
+*[[chinese/chapter-6-3-cpm-zencode|CPM zencode源代码]]
+*[[chinese/chapter-6-4-cpm-zstrength|CPM zstrength源代码]]
+*[[chinese/chapter-6-5-cpm-zdecode|CPM zdecode源代码]]
+*[[chinese/chapter-6-6-modernc-zencode|现代C zencode源代码]]
+*[[chinese/chapter-6-7-modernc-zstrength|现代C zstrength源代码]]
+*[[chinese/chapter-6-8-modernc-zdecode|现代C zdecode源代码]]
+
+== 第7章：组合数学与概率的更多内容 ==
+*[[chinese/chapter-7-1-Government-Officials-Declare-ZOSCII-Less-Secure-Than-Shouting-Passwords-Inadvertently-Create-Perfect-Privacy-Protection-System|政府官员宣称ZOSCII“比大喊密码更不安全”，无意中创造了完美的隐私保护系统]]
+*[[chinese/chapter-7-2-More-on-Combinatorics-and-Probability|信息理论安全的数学基础]]
+
+== 第8章：破解ZOSCII - 蛇油挑战 ==
+*[[chinese/chapter-8-1-Crypto-API-Operators-Strike-Gold-as-ZOSCII-Challenge-Searchers-Pay-More-Than-Actual-Trading|加密API运营商在ZOSCII挑战者支付的费用超过实际交易时发现金矿]]
+*[[chinese/chapter-8-2-Breaking-ZOSCII-The-Snake-Oil-Challenge|破解ZOSCII - 蛇油挑战]]
+
+== 第9章：密码解决方案仍然有其位置 ==
+*[[chinese/chapter-9-1-Cryptographers-Demand-Challenge-Cancellation-After-ZOSCII-Prize-Proves-Only-As-Secure-As-AES-256|密码学家要求取消挑战，因为ZOSCII奖项证明“仅”与AES-256同样安全]]
+*[[chinese/chapter-9-2-There-is-Still-A-Place-For-Crypographic-Solutions|密码解决方案仍然有其位置]]
+
+== 第10章：白皮书 ==
+*[[chinese/chapter-10-1-BREAKING-Frustrated-Developer-Discovers-Cure-for-AI-Verbosity|突发新闻：沮丧的开发者发现了解决AI冗长的方法]]
+*[[chinese/chapter-10-2-whitepaper|白皮书]]
+*[[chinese/chapter-10-3-whitepaper|ZOSCII的进一步分析]]
+*[[chinese/chapter-10-4-whitepaper|ZOSCII的实际应用案例]]
+
+== 第11章：附录 ==
+*[[chinese/chapter-11-1-Official-Resources|官方资源]]
+*[[chinese/chapter-11-2-Credits-Acknowledgements|致谢与鸣谢]]
+*[[chinese/chapter-11-3-MIT-License|MIT许可证]]
+
+- - - -
+由%APPNAME%提供支持

@@ -1,0 +1,208 @@
+== 部分 B – Getting Started - Your First ZOSCII Message ==
+
+哈罗德·弗劳尔沃斯因持有“机密核发射代码”被捕，完美地说明了ZOSCII为何如此革命性，以及传统权威为何完全误解了要点。当调查人员最终解码哈罗德的ZOSCII文件（经过数周的机密分析）时，他们发现的是他祖母的巧克力曲奇饼干秘密食谱。令国家安全专家恐惧的“发射序列”实际上是：“将烤箱预热至180°C。将黄油和糖打发至蓬松……”
+
+这个美味的误解案例展示了ZOSCII的核心天才：没有ROM密钥，任何地址序列都可能包含从国家机密到烘焙指令的任何内容。哈罗德的饼干食谱看起来与核代码完全相同，因为在数学上，它们是相同的——只是没有上下文的无意义数字。
+
+让我们重现哈罗德的“危险”编码过程，看看创建自己的“美味武器”有多简单。
+
+=== 6行JavaScript实现 ===
+
+ZOSCII的美在于其简单性。虽然加密库需要数千行复杂代码，但整个ZOSCII系统只需六行JavaScript即可实现：
+
+<code>
+// CyborgZOSCII v20250817 - 完整系统
+rom = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890: ,.ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890: ,.ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890: ,.";
+encode = (r,m) => [...m].map(c => [...r].map((b,i)=>b==c?i:[]).flat().sort(()=>Math.random()-.5)[0]);
+decode = (r,a) => a.map(a => r[a]).join('');
+e = encode(rom, "HELLO");
+api.print(e);
+api.print(decode(rom,e));
+</code>
+
+就这样。六行。没有加密库，没有复杂的数学运算，没有密钥派生函数。只有简单的查找和地址生成。
+
+让我们逐行分析每行的功能：
+
+*'''第1行：''' 创建我们的ROM（在这种情况下，是一个简单的重复字母表，不要在生产环境中使用这个简化的示例）
+*'''第2行：''' encode函数 - 查找每个字符在ROM中出现的所有位置，然后随机选择一个
+*'''第3行：''' decode函数 - 查找每个地址存储的字符
+*'''第4-6行：''' 示例用法 - 编码“HELLO”，打印地址，解码并打印结果
+
+encode函数执行了ZOSCII的核心魔法：
+*<code>[...m]</code> 将消息拆分为单个字符
+*<code>[...r].map((b,i)=>b==c?i:[])</code> 查找包含每个字符的所有ROM位置
+*<code>.flat()</code> 将结果合并为一个可能地址的单一数组
+*<code>.sort(()=>Math.random()-.5)[0]</code> 随机选择一个地址
+
+如果这个非常小的JavaScript程序显得过于复杂，请不要担心，稍后会列出更简单的版本——但这只是为了展示算法在JavaScript中的简洁优雅。
+
+这种随机选择使得哈罗德的饼干食谱具备了与核发射代码相同的统计特性——每个字符都可以使用多个可用地址中的任何一个进行编码。
+
+=== 在CyborgShell.com上运行示例 ===
+
+要立即查看ZOSCII的实际应用，请访问[https://cyborgshell.com|cyborgshell.com]，并将六行实现直接粘贴到命令行中：
+
+<code>run</code>
+
+你会看到类似于以下的输出：
+
+<code>
+[7, 43, 28, 28, 41]
+HELLO
+</code>
+
+第一行显示地址序列——五个数字表示“HELLO”的每个字母在ROM中的位置。第二行显示解码结果。
+
+再次运行相同的代码：
+
+<code>run</code>
+
+<code>
+[15, 8, 54, 2, 67]
+HELLO
+</code>
+
+注意地址完全不同，但解码消息是相同的。这种非确定性的编码使得哈罗德的饼干食谱看起来像机密材料——同样的食谱每次编码都会生成不同的地址模式。
+
+尝试编码不同的消息：
+
+<code>
+e = encode(rom, "CLASSIFIED");
+api.print(e);
+api.print(decode(rom,e));
+</code>
+
+或者哈罗德著名的开场白：
+
+<code>
+e = encode(rom, "PREHEAT OVEN TO 180C");
+api.print(e);
+api.print(decode(rom,e));
+</code>
+
+每次运行时，你都会得到不同的地址，但相同的解码文本。这就是让调查人员如此困惑的原因——哈罗德的“核代码”在统计上与实际的机密通信无法区分。
+
+=== 理解ROM文件和熵 ===
+
+当我们检查ROM质量时，哈罗德的案例变得更加有趣。调查人员认为高质量的“核代码”需要复杂的编码密钥。实际上，哈罗德使用的是他祖母的一张JPEG照片作为ROM——而这提供了天文级别的安全性。
+
+'''ROM熵基础：'''
+
+一个好的ZOSCII ROM应包含多样的字节值，并且每个要编码的字符应该多次出现。哈罗德的祖母照片（64KB JPEG）包含：
+
+*字母'A'：847次出现在不同位置
+*字母'B'：923次
+*字母'C'：756次
+*空格字符：1200+次
+*数字0-9：每个400+次
+
+这种多样性使得哈罗德的饼干食谱大约有10^156种可能的编码方式——使其比调查人员认为必须使用的军事级加密系统更安全。
+
+'''测试ROM质量：'''
+
+你可以使用这个简单的测试来评估任何文件作为ZOSCII ROM的适用性：
+
+<code>
+function testROM(romData) {
+    let counts = new Array(256).fill(0);
+    for(let i = 0; i < romData.length; i++) {
+        counts[romData[i]]++;
+    }
+    
+    // 检查常见ASCII字符的覆盖情况
+    let goodChars = 0;
+    for(let i = 32; i <= 126; i++) { // 可打印的ASCII
+        if(counts[i] > 0) goodChars++;
+    }
+    
+    api.print(`ROM覆盖了${goodChars}/95个可打印字符`);
+    api.print(`每个字符的平均出现次数：${romData.length/95}`);
+}
+</code>
+
+哈罗德的祖母照片得分94/95个字符覆盖，平均每个字符680次出现——这解释了为何他的饼干食谱达到了核级安全评级。
+
+=== 你的第一次编码/解码循环 ===
+
+让我们一步一步重现哈罗德的过程，使用更现实的ROM和消息：
+
+'''第1步：选择你的ROM'''
+在这个例子中，我们将使用一个简单的文本字符串作为我们的ROM（实际上，你会使用一个二进制文件）：
+
+<code>
+rom = `THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG. PACK MY BOX WITH FIVE DOZEN LIQUOR JUGS. AMAZINGLY FEW DISCOTHEQUES PROVIDE JUKEBOXES. HOW VEXINGLY QUICK DAFT ZEBRAS JUMP! JACKDAWS LOVE MY BIG SPHINX OF QUARTZ. THE FIVE BOXING WIZARDS JUMP QUICKLY.`;
+</code>
+
+'''第2步：编码你的消息'''
+
+<code>
+message = "GRANDMA BISCUIT RECIPE: CREAM BUTTER AND SUGAR";
+encoded = encode(rom, message);
+api.print("编码后的地址：");
+api.print(encoded);
+</code>
+
+'''第3步：解码以验证'''
+
+<code>
+decoded = decode(rom, encoded);
+api.print("解码后的消息：");
+api.print(decoded);
+</code>
+
+'''第4步：演示非确定性特性'''
+
+<code>
+// 多次编码相同的消息
+for(let i = 0; i < 3; i++) {
+    let addresses = encode(rom, message);
+    api.print(`编码${i+1}:`);
+    api.print(addresses);
+}
+</code>
+
+每次编码产生不同的地址，但解码结果相同——就像哈罗德的饼干食谱一样，调查人员无法将其与核协议区分开。
+
+'''理解安全性：'''
+
+安全性来自于相同消息可以编码的天文数量。使用我们示例中的ROM，其中每个字母有多个实例：
+
+*'G'：在不同位置出现8次
+*'R'：出现15次
+*'A'：出现12次
+*等等……
+
+哈罗德的45个字符的饼干食谱使用他祖母的照片ROM大约有10^89种可能的编码方式——比可观察宇宙中的原子数量还要多。
+
+=== 哈罗德·克伦佩特挑战 ===
+
+尝试自己进行这个实验：
+
+#创建两条消息：一条听起来“危险”，另一条完全无辜
+#使用相同的ROM对两者进行编码
+#比较结果地址序列
+
+<code>
+dangerous = "LAUNCH SEQUENCE ALPHA";
+innocent = "I REALLY LOVE CHOCOLATE CHIP BISCUITS";
+
+api.print("危险消息地址：");
+api.print(encode(rom, dangerous));
+api.print("无辜消息地址：");
+api.print(encode(rom, innocent));
+</code>
+
+你将发现哈罗德的调查人员艰难地学到的教训：这两条消息产生了统计上相同的地址序列。没有ROM，就无法确定哪条消息是哪个，甚至无法确定它们是否都是消息。
+
+这些地址也可以很容易解码为：
+*诗歌（“玫瑰是红色的，紫罗兰是蓝色的”）
+*购物清单（“牛奶 面包 鸡蛋 黄油 奶酪”）
+*歌曲歌词（“祝你生日快乐”）
+*完全无意义的内容（“XQZPRF GLRMPH BWKTNS”）
+
+这就是完美的否认行动——使哈罗德看起来像恐怖分子的同样技术也使得证明任何人的通信实际上包含什么变得不可能。
+
+哈罗德的案例完美地证明了ZOSCII为何代表了从加密到纯信息理论的范式转变。传统加密试图使数据难以解密。ZOSCII完全消除了解密的概念——没有ROM，数据在任何有意义的形式中根本不存在。
+
+调查人员的“烟枪”证据实际上是ZOSCII完美安全性的证明：他们可以让哈罗德的地址说出他们想让它们说的任何内容。

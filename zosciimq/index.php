@@ -16,6 +16,47 @@ define('FILE_ERRORLOG', './zosciimq.log'); // or '/var/log/zosciimq.log'
 require_once('inc-constants.php');
 require_once('inc-utils.php');
 
+function cleanUpLocks($strLocksPath_a)
+{
+	$intResult = 0;	// number of locks
+	
+    $intCutoffTime = time() - LOCK_TIMEFRAME;
+    
+    // Find all .lock files
+    $arrLockFiles = glob($strLocksPath_a . '*.lock');
+    
+    if ($arrLockFiles && is_array($arrLockFiles) > 0) 
+	{
+		foreach ($arrLockFiles as $strLockFile)
+		{
+			// Get the last modification time of the file
+			$intFileMTime = @filemtime($strLockFile);
+
+			// Check if filemtime succeeded AND the file is older than the 5-second cutoff
+			if ($intFileMTime !== false && $intFileMTime < $intCutoffTime)
+			{
+				if (@unlink($strLockFile))
+				{
+					// do nothing
+				}
+				else
+				{
+					// logError is available via inc-utils.php
+					logError("Failed to delete stale lock file: " . $strLockFile);
+				}
+			}
+		}
+    }
+	
+	$arrLockFiles = glob($strLocksPath_a . '*.lock');
+    if ($arrLockFiles && is_array($arrLockFiles) > 0) 
+	{
+		$intResult = count($arrLockFiles);
+	}
+
+    return $intResult;
+}
+
 // containing the '-u' suffix before the extension.
 function findUnidentifiedFilesRecursive($strPath_a)
 {
@@ -57,9 +98,16 @@ function findUnidentifiedFilesRecursive($strPath_a)
 function handleFetch($strQueueName_a, $strAfterName_a)
 {
 	$strQueuePath = QUEUE_ROOT . $strQueueName_a . '/';
+	$strLockPath = QUEUE_ROOT . $strQueueName_a . '/' . LOCK_FOLDER;
 
 	if (is_dir($strQueuePath)) 
 	{
+		// wait for lock to become free
+		while (cleanUpLocks($strLockPath) > 0) 
+		{
+			usleep(LOCK_WAIT);
+		}
+		
 		// Get all message files, sorted chronologically by name
 		$arrAllFiles = glob($strQueuePath . '*.bin');
 		if ($arrAllFiles === false || empty($arrAllFiles)) 
@@ -185,73 +233,84 @@ function handlePublish($strQueueName_a, $strNonce_a, $intRetentionDays_a, $binMe
     }
     else
     {
-        $strQueuePath = QUEUE_ROOT . $strQueueName_a . '/';
-        
-        if (!is_dir($strQueuePath)) 
-        {
-            if (!mkdir($strQueuePath, FOLDER_PERMISSIONS, true)) 
-            {
-                sendJSONResponse("index.php: Could not create queue directory: " . $strQueuePath, "Could not create queue.", "", []);
-            } 
-        }
-        
-		// Generate Name (YYYYMMDDHHNNSSCCCC-RRRR-GUID.bin)
-		$strBaseTime = date('YmdHis');
-		$strName = '';
-		$strFullPath = '';
-		$strGetGUID = getGUID();
+		$strQueuePath = QUEUE_ROOT . $strQueueName_a . '/';
+		$strLockPath = QUEUE_ROOT . $strQueueName_a . '/' . LOCK_FOLDER;
 		
-		$strFullTempPath = QUEUE_ROOT . TEMP_QUEUE . $strGetGUID . ".bin";
-        $intBytesWritten = file_put_contents($strFullTempPath, $binMessage_a);
-
-		$intCollisionCounter = 0;
-		while (true) 
+		// creates the lock folder and the queue folder at the same time
+		if (!is_dir($strLockPath)) 
 		{
-			$strCollisionID = sprintf('%04d', $intCollisionCounter);
-			$strName = $strBaseTime . $strCollisionID . "-" . $strRetentionDays . "-" . $strGetGUID . ".bin";
-			$strFullPath = $strQueuePath . $strName;
-
-			// Check for existence. If unique, break the loop.
-			if (!file_exists($strFullPath)) 
+			if (!mkdir($strLockPath, FOLDER_PERMISSIONS, true)) 
 			{
-				break; 
-			}
-
-			// If file exists, we had a collision. Try the next sequential number.
-			$intCollisionCounter++;
-			
-			// Safety break: Prevents an infinite loop.
-			if ($intCollisionCounter > 9999) 
-			{
-				sendJSONResponse("index.php: Queue exceeded 9,999 attempted messages in one second.", "Queue overload, try again.", "", []);
-			}
-		}
-
-		if (rename($strFullTempPath, $strFullPath))
-		{
-			if ($intBytesWritten === false) 
-			{
-				@unlink($strFullTempPath);
-				sendJSONResponse("index.php: Failed to create message 1.", "Failed to create message.", "", []);
+				sendJSONResponse("index.php: Could not create queue directory: " . $strLockPath, "Could not create queue.", "", []);
 			} 
 		}
-		else
+		
+		$strLockFile = getGUID() . ".lock";
+		touch($strLockPath . $strLockFile);
+		try
 		{
-			@unlink($strFullTempPath);
-			sendJSONResponse("index.php: Failed to create message 2.", "Failed to create message.", "", []);
-		}
-        
-        if (strlen($strNonce_a) > 0)
-        {
-            $strNonceFile = NONCE_ROOT . $strNonce_a;
-            if (!touch($strNonceFile))
-            {
-                unlink($strFullPath);
-                sendJSONResponse("index.php: Failed to create nonce.", "Failed to create nonce.", "", []);
-            }
-        }
+			// Generate Name (YYYYMMDDHHNNSSCCCC-RRRR-GUID.bin)
+			$strBaseTime = date('YmdHis');
+			$strName = '';
+			$strFullPath = '';
+			$strGetGUID = getGUID();
+			
+			$strFullTempPath = QUEUE_ROOT . TEMP_QUEUE . $strGetGUID . ".bin";
+			$intBytesWritten = file_put_contents($strFullTempPath, $binMessage_a);
 
-        sendJSONResponse("", "", "Message published.", []);
+			$intCollisionCounter = 0;
+			while (true) 
+			{
+				$strCollisionID = sprintf('%04d', $intCollisionCounter);
+				$strName = $strBaseTime . $strCollisionID . "-" . $strRetentionDays . "-" . $strGetGUID . ".bin";
+				$strFullPath = $strQueuePath . $strName;
+
+				// Check for existence. If unique, break the loop.
+				if (!file_exists($strFullPath)) 
+				{
+					break; 
+				}
+
+				// If file exists, we had a collision. Try the next sequential number.
+				$intCollisionCounter++;
+				
+				// Safety break: Prevents an infinite loop.
+				if ($intCollisionCounter > 9999) 
+				{
+					sendJSONResponse("index.php: Queue exceeded 9,999 attempted messages in one second.", "Queue overload, try again.", "", []);
+				}
+			}
+
+			if (rename($strFullTempPath, $strFullPath))
+			{
+				if ($intBytesWritten === false) 
+				{
+					@unlink($strFullTempPath);
+					sendJSONResponse("index.php: Failed to create message 1.", "Failed to create message.", "", []);
+				} 
+			}
+			else
+			{
+				@unlink($strFullTempPath);
+				sendJSONResponse("index.php: Failed to create message 2.", "Failed to create message.", "", []);
+			}
+			
+			if (strlen($strNonce_a) > 0)
+			{
+				$strNonceFile = NONCE_ROOT . $strNonce_a;
+				if (!touch($strNonceFile))
+				{
+					unlink($strFullPath);
+					sendJSONResponse("index.php: Failed to create nonce.", "Failed to create nonce.", "", []);
+				}
+			}
+
+			sendJSONResponse("", "", "Message published.", []);
+		}
+		finally
+		{
+			@unlink($strLockPath . $strLockFile);
+		}
     }
 }
 
