@@ -1,0 +1,34 @@
+= Apéndice A: Recursos Oficiales =
+
+'''Sitio Oficial del Proyecto:'''
+
+[https://zoscii.com|🔗 zoscii.com]
+
+'''El Desafío del Aceite de Serpiente:'''
+
+[https://zosciicoin.com|🔗 zosciicoin.com]
+
+'''Repositorio Oficial de Código (Licencia MIT):'''
+
+[https://github.com/PrimalNinja/cyborgzoscii|🔗 github.com/PrimalNinja/cyborgzoscii]
+
+'''Código Fuente Disponible:'''
+
+El repositorio de GitHub contiene implementaciones completas que incluyen:
+
+*'''Codificadores y Decodificadores''' - Utilidades completas de codificación/decodificación ZOSCII
+*'''ZOSCIIBB''' - Sistema de tablón de anuncios completo con componentes de navegador y servidor
+*'''Código Fuente del Libro''' - Todos los ejemplos de código, implementaciones y utilidades presentadas en este libro
+*'''Múltiples Lenguajes de Programación:'''
+**JavaScript - Implementaciones para navegador y Node.js (incluyendo funciones toZOSCII del Capítulo 4)
+**PHP - Aplicaciones web del lado del servidor (incluyendo el servidor ZOSCIIBB del Capítulo 5)
+**Python - Utilidades y herramientas de análisis multiplataforma
+**C - Implementaciones de alto rendimiento para sistemas embebidos y computación retro (incluyendo todas las fuentes de CP/M y C moderno del Capítulo 6)
+*'''Soporte para Sistemas Legados''' - Implementaciones de CP/M para computadoras vintage de 8 bits (zencode, zdecode, zstrength)
+*'''Implementaciones Modernas''' - Código C multiplataforma para sistemas contemporáneos
+
+Todo el código fuente se publica bajo la Licencia MIT para máxima compatibilidad y facilidad de integración.
+
+'''Este Libro:'''
+
+El código fuente completo de este libro en formato CyborgWiki también está disponible en el repositorio, permitiendo a los lectores estudiar el formato, modificar contenido o contribuir con mejoras.

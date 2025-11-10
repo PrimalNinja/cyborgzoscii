@@ -1,0 +1,48 @@
+== Parte B – El Fin de la Cifrado ==
+
+=== Por Qué la Criptografía Nos Ha Fallado ===
+
+La total negación del Dr. Tunnelvision en nuestra entrevista inicial revela una verdad incómoda: la comunidad criptográfica se ha metido en un callejón sin salida. Durante décadas, nos han dicho que la seguridad requiere una complejidad matemática cada vez mayor, claves más largas y algoritmos más sofisticados. Sin embargo, aquí estamos en 2025, con computadoras cuánticas aún en desarrollo hacia la capacidad de romper los estándares de cifrado actuales.
+
+El error fundamental no está en las matemáticas, sino en la premisa. La criptografía asume que la seguridad proviene de hacer que los datos sean difíciles de descifrar. Pero "difícil" es relativo. Lo que hoy es computacionalmente inviable se vuelve trivial mañana a medida que la potencia de procesamiento crece exponencialmente.
+
+Considera la progresión:
+
+*1970s: DES con claves de 56 bits  
+*1990s: DES crackeado  
+*2000s: se pasó a AES-128, luego AES-256 se convirtió en el estándar como precaución para la seguridad a largo plazo  
+*2020s: Las computadoras cuánticas amenazan todos los estándares actuales  
+
+El patrón es claro: siempre estamos corriendo de las computadoras de mañana con las matemáticas de ayer.
+
+=== La Carrera Armamentista Computacional ===
+
+Cada avance en cifrado desencadena un contraavance en la ruptura de códigos. Es una carrera armamentista donde los atacantes siempre tienen la ventaja del tiempo. Pueden esperar a que las computadoras se vuelvan más rápidas, a nuevos descubrimientos matemáticos, a que se descubran fallas en la implementación.
+
+El costo de esta carrera armamentista es enorme:
+
+*Sobrecarga de procesamiento: El cifrado moderno consume ciclos significativos de CPU  
+*Requisitos de memoria: Las bibliotecas criptográficas inflan el software  
+*Gestión de claves: Infraestructura compleja necesaria para la distribución segura de claves  
+*Errores de implementación: Cuanto más complejo es el sistema, más formas tiene de fallar  
+
+Mientras tanto, como demostró el Dr. Tunnelvision, los expertos en criptografía se involucran tanto en la complejidad matemática que no pueden reconocer cuando un enfoque completamente diferente elimina la necesidad de su campo por completo.
+
+=== Entra ZOSCII: Seguridad a Través de la Imposibilidad ===
+
+¿Qué pasaría si la seguridad no requiriera complejidad matemática en absoluto? ¿Y si en lugar de hacer que los datos fueran difíciles de descifrar, simplemente nunca los cifráramos en primer lugar?
+
+Esto no es un regreso al texto plano; es un salto hacia algo completamente diferente. ZOSCII logra una seguridad perfecta no a través de la imposibilidad matemática, sino a través de la imposibilidad informacional. Los datos simplemente no están ahí para ser descifrados.
+
+Considera la analogía de Melissa de nuestra entrevista inicial: si alguien te da una lista de números de página de un libro, esos números no te dicen nada sobre lo que está escrito en esas páginas a menos que tengas el mismo libro exacto. La seguridad no proviene de matemáticas complejas; proviene de la imposibilidad fundamental de derivar significado de direcciones sin contexto.
+
+Esta es la seguridad a través de la imposibilidad, no de la complejidad:
+
+*Sin algoritmos para romper: No hay transformación matemática que revertir  
+*Sin claves para robar: Los archivos ROM no contienen algoritmos secretos ni funciones de derivación  
+*Sin supuestos computacionales: La seguridad no depende de los límites computacionales actuales  
+*Sin fallas de implementación: El sistema es demasiado simple para implementarse incorrectamente  
+
+Como reveló nuestra entrevista, este enfoque es tan ajeno al pensamiento tradicional que incluso expertos como el Dr. Tunnelvision literalmente no pueden comprenderlo. Siguen aplicando estándares criptográficos a un sistema que deliberadamente opera fuera de los principios criptográficos por completo.
+
+El fin del cifrado no es el fin de la seguridad; es el comienzo de algo mucho más poderoso.

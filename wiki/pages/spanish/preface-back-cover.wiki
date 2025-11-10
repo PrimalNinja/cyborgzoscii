@@ -1,0 +1,19 @@
+= Prefacio =
+
+"Desde el principio, esa es tu primera señal de alerta. Cualquier sistema que llame a un archivo aleatorio una 'clave' está malinterpretando fundamentalmente los principios criptográficos."
+
+Cuando la veterana reportera de tecnología Melissa NoseBetter entrevistó al destacado experto en ciberseguridad Dr. Andrew Tunnelvision sobre el controvertido sistema de codificación ZOSCII, esperaba un desmantelamiento rutinario de las afirmaciones de seguridad de "aceite de serpiente".
+
+En cambio, descubrió algo mucho más interesante: un experto en criptografía que estaba completamente perdiendo el punto mientras probaba inadvertidamente la misma seguridad que intentaba desestimar.
+
+ZOSCII no cifra datos—los elimina. Al almacenar solo direcciones de memoria que apuntan a caracteres dentro de archivos ROM secretos, el sistema logra una negación perfecta: la misma secuencia de direcciones puede decodificarse en cartas de amor, listas de compras o secretos de estado, dependiendo de qué ROM se utilice.
+
+"¡Eso no es seguridad, eso es solo ofuscación!" insiste el Dr. Tunnelvision. "Cualquier estudiante de criptografía de primer año sabe que necesitas algoritmos de cifrado adecuados, no solo... apuntar a cosas."
+
+Pero a medida que los gobiernos de todo el mundo descubren que no pueden romper lo que desestimaron con confianza, y mientras un desafío de criptomoneda de 10 mil millones de tokens sigue sin resolverse a pesar de los intentos globales, surge una pregunta:
+
+¿Qué pasa cuando el avance de seguridad más revolucionario se ve exactamente como aceite de serpiente para los expertos que deberían entenderlo mejor?
+
+Desde el pánico gubernamental satírico hasta un análisis técnico profundo, este libro narra el ascenso de una tecnología que logra una seguridad perfecta al evitar completamente la criptografía—y la lucha del establecimiento por comprender que a veces la mejor manera de ocultar algo es apuntar a otro lugar.
+
+'''CyborgZOSCII: Cero cifrado. Cero codificación. 100% seguro.'''

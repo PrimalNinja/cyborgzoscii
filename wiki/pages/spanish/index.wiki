@@ -1,0 +1,72 @@
+= CyborgZOSCII - Intercambio de Información de Código Seguro Sin Sobrecarga =
+
+== ¡CERO encriptación CERO cifrado 100% SEGURO! ==
+
+= Tabla de Contenidos =
+
+== Materia Preliminar ==
+*[[spanish/preface-back-cover|Prefacio]]
+*[[spanish/sourcecode|Código Fuente]]
+*[[spanish/glossary|Glosario]]
+
+== Capítulo 1: El Fin de la Encriptación ==
+*[[spanish/chapter-1-1-Security-Expert-Dismisses-Non-Encryption-ZOSCII-System-While-Completely-Missing-the-Point|El Experto en Seguridad Desestima el Sistema ZOSCII "Sin Encriptación" Mientras Se Pierde el Punto]]
+*[[spanish/chapter-1-2-The-End-of-Encryption|El Fin de la Encriptación]]
+*[[spanish/chapter-1-3-Reflection|Reflexión]]
+
+== Capítulo 2: Cómo Funciona ZOSCII ==
+*[[spanish/chapter-2-1-Julian-Man-Grant-Tables-New-Law-to-Outright-Ban-the-Use-of-Tables|Julian Man Grant Presenta Nueva Ley para Prohibir Completamente el Uso de Tablas]]
+*[[spanish/chapter-2-2-How-ZOSCII-Works|Cómo Funciona ZOSCII]]
+
+== Capítulo 3: Introducción - Tu Primer Mensaje ZOSCII ==
+*[[spanish/chapter-3-1-Man-Arrested-for-Nuclear-Launch-Codes-That-Were-Actually-Biscuit-Recipe|Hombre Arrestado por "Códigos de Lanzamiento Nuclear" que en Realidad Eran una Receta de Galletas]]
+*[[spanish/chapter-3-2-Getting-Started-Your-First-ZOSCII-Message|Introducción - Tu Primer Mensaje ZOSCII]]
+*[[spanish/chapter-3-3-Defense-Department-Bans-8-Bit-Computers-After-Commodore-PET-Proves-More-Secure-Than-$50-Billion-Military-Systems|El Departamento de Defensa Prohíbe Computadoras de 8 Bits Después de que Commodore PET Prueba ser Más Seguro que Sistemas Militares de $50 Mil Millones]]
+*[[spanish/chapter-3-4-Understanding-ROM-Files-and-Entropy|Entendiendo Archivos ROM y Entropía]]
+
+== Capítulo 4: Integración Web Moderna ==
+*[[spanish/chapter-4-1-Julian-Man-Grant-Flees-International-Security-Summit-After-ZOSCII-Declared-Weapon-of-Mass-Democracy|Julian Man Grant Huye de la Cumbre Internacional de Seguridad Después de que ZOSCII es Declarado "Arma de la Democracia Masiva"]]
+*[[spanish/chapter-4-2-Modern-Web-Integration|Integración Web Moderna]]
+*[[spanish/chapter-4-3-toZOSCII|Implementación de toZOSCII en JavaScript]]
+
+== Capítulo 5: Seguridad del Lado del Servidor ==
+*[[spanish/chapter-5-1-ZOSCII-Inventors-Case-Thrown-Out-After-Government-Discovers-Theyve-Been-Using-Dangerous-Technology-for-40-Years|Caso de los Inventores de ZOSCII Desestimado Después de que el Gobierno Descubre que Han Estado Usando Tecnología "Peligrosa" Durante 40 Años]]
+*[[spanish/chapter-5-2-Server-Side-Security|Seguridad del Lado del Servidor]]
+*[[spanish/chapter-5-3-zosciibb|Código Fuente del Navegador ZOSCIIBB]]
+*[[spanish/chapter-5-4-messages|Código Fuente del Servidor ZOSCIIBB]]
+
+== Capítulo 6: Programación en Sistemas C ==
+*[[spanish/chapter-6-1-Retro-Computing-Ban-Proposed-After-Government-Surveillance-Systems-Defeated-by-Commodore-64|Propuesta de Prohibición de Retro Computación Después de que Sistemas de Vigilancia del Gobierno Son Derrotados por Commodore 64]]
+*[[spanish/chapter-6-2-C-Systems-Programming|Programación en Sistemas C]]
+*[[spanish/chapter-6-3-cpm-zencode|Código Fuente CPM zencode]]
+*[[spanish/chapter-6-4-cpm-zstrength|Código Fuente CPM zstrength]]
+*[[spanish/chapter-6-5-cpm-zdecode|Código Fuente CPM zdecode]]
+*[[spanish/chapter-6-6-modernc-zencode|Código Fuente Modern C zencode]]
+*[[spanish/chapter-6-7-modernc-zstrength|Código Fuente Modern C zstrength]]
+*[[spanish/chapter-6-8-modernc-zdecode|Código Fuente Modern C zdecode]]
+
+== Capítulo 7: Más sobre Combinatoria y Probabilidad ==
+*[[spanish/chapter-7-1-Government-Officials-Declare-ZOSCII-Less-Secure-Than-Shouting-Passwords-Inadvertently-Create-Perfect-Privacy-Protection-System|Funcionarios del Gobierno Declaran que ZOSCII es "Menos Seguro que Gritar Contraseñas," Creando Inadvertidamente un Sistema Perfecto de Protección de Privacidad]]
+*[[spanish/chapter-7-2-More-on-Combinatorics-and-Probability|Fundamentos Matemáticos de la Seguridad Teórica de la Información]]
+
+== Capítulo 8: Rompiendo ZOSCII - El Desafío del Aceite de Serpiente ==
+*[[spanish/chapter-8-1-Crypto-API-Operators-Strike-Gold-as-ZOSCII-Challenge-Searchers-Pay-More-Than-Actual-Trading|Operadores de API Cripto Encuentran Oro Mientras Buscadores de Desafíos ZOSCII Pagan Más que el Comercio Real]]
+*[[spanish/chapter-8-2-Breaking-ZOSCII-The-Snake-Oil-Challenge|Rompiendo ZOSCII - El Desafío del Aceite de Serpiente]]
+
+== Capítulo 9: Aún Hay un Lugar para Soluciones Criptográficas ==
+*[[spanish/chapter-9-1-Cryptographers-Demand-Challenge-Cancellation-After-ZOSCII-Prize-Proves-Only-As-Secure-As-AES-256|Criptógrafos Exigen la Cancelación del Desafío Después de que el Premio ZOSCII Demuestra ser "Solo" Tan Seguro como AES-256]]
+*[[spanish/chapter-9-2-There-is-Still-A-Place-For-Crypographic-Solutions|Aún Hay un Lugar para Soluciones Criptográficas]]
+
+== Capítulo 10: Documento Técnico ==
+*[[spanish/chapter-10-1-BREAKING-Frustrated-Developer-Discovers-Cure-for-AI-Verbosity|ÚLTIMA HORA: Desarrollador Frustrado Descubre Cura para la Verbosidad de la IA]]
+*[[spanish/chapter-10-2-whitepaper|El Documento Técnico]]
+*[[spanish/chapter-10-3-whitepaper|Análisis Adicional de ZOSCII]]
+*[[spanish/chapter-10-4-whitepaper|Casos de Uso de ZOSCII en el Mundo Real]]
+
+== Capítulo 11: Apéndices ==
+*[[spanish/chapter-11-1-Official-Resources|Recursos Oficiales]]
+*[[spanish/chapter-11-2-Credits-Acknowledgements|Créditos y Reconocimientos]]
+*[[spanish/chapter-11-3-MIT-License|Licencia MIT]]
+
+- - - -
+Desarrollado por %APPNAME%

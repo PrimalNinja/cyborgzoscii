@@ -1,0 +1,13 @@
+= Apéndice B: Créditos y Agradecimientos =
+
+'''Agradecimientos Especiales A:'''
+
+*'''Claude, Grok, Gemini, WhatsApp''' – por los empujones de formato, contribuciones ocasionales y, en algunos casos, una verbosidad hilarante e involuntaria que moldeó cómo se escribió este libro.
+
+*'''Todos los que participaron en el ZOSCII Snake Oil Challenge''' – ya sea que intentaste romperlo o simplemente discutiste sobre ello en línea, has ayudado a probar y promover el concepto.
+
+*'''Las comunidades más amplias de código abierto y retrocomputación''' – por mantener viva la mentalidad de 8 bits y demostrar que no necesitas teraflops para innovar.
+
+- - - -
+
+¿Qué dijo Bruce Schneier sobre ZOSCII? "Honestly, sounds like snake-oil of the highest degree."

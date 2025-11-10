@@ -8,12 +8,13 @@
 
 *[[chinese/index|中文]]
 *[[russian/index|русский]]
+*[[spanish/index|español]]
 
 - - - -
 Powered by %APPNAME%
 
 translations coming soon:
 
-arabic, czech, dutch, french, german, greek, hebrew, hindi, italian, japanese, javanese, klingon, korean, persian, polish, portuguese, romanian, spanish, swahili, swedish, tagalog, thai, turkish, vietnamese
+arabic, czech, dutch, french, german, greek, hebrew, hindi, italian, japanese, javanese, klingon, korean, persian, polish, portuguese, romanian, swahili, swedish, tagalog, thai, turkish, vietnamese
 
-"العربية, čeština, Nederlands, français, Deutsch, ελληνικά, עברית, हिंदी, italiano, 日本語, Jawa, tlhIngan, 한국어, فارسی, polski, português, română, español, kiswahili, svenska, Tagalog, ไทย, Türkçe, tiếng Việt"
+"العربية, čeština, Nederlands, français, Deutsch, ελληνικά, עברית, हिंदी, italiano, 日本語, Jawa, tlhIngan, 한국어, فارسی, polski, português, română, kiswahili, svenska, Tagalog, ไทย, Türkçe, tiếng Việt"

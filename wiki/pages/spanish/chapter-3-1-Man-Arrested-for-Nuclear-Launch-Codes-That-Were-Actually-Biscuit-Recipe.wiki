@@ -1,0 +1,63 @@
+= Capítulo 3: Empezando - Tu Primer Mensaje ZOSCII =
+
+== Parte A – Hombre Arrestado por "Códigos de Lanzamiento Nuclear" que en Realidad Eran una Receta de Galletas ==
+
+'''La decodificación ROM de la policía provoca controversia sobre evidencia fabricada e interpretación armada'''
+
+'''CANBERRA''' - El panadero local Harold Flourworth fue arrestado bajo cargos de terrorismo después de publicar lo que creía que era la receta de galletas de su abuela utilizando codificación CyborgZOSCII, solo para que la policía decodificara el mismo archivo de dirección como códigos de lanzamiento nuclear utilizando una ROM especialmente diseñada.
+
+El incidente comenzó cuando Flourworth, de 67 años, compartió inocentemente su receta familiar en un foro de computación vintage, codificando "2 tazas de harina, 1 cucharadita de polvo de hornear, una pizca de sal" como una serie de direcciones de memoria. Sin embargo, cuando la Unidad de Contraterrorismo ejecutó las direcciones a través de su "ROM de mejora de evidencia", los mismos datos se decodificaron como "LANZAMIENTO ALPHA-7, AUTORIZACIÓN BRAVO-NINER, EJECUTAR PROTOCOLO FÉNIX."
+
+"Esto es claramente una comunicación terrorista sofisticada," declaró la Inspectora Margaret Paranoid, mientras Flourworth se sentaba aturdido en custodia. "El hecho de que también deletree una receta de repostería es obviamente una elaborada historia de cobertura para ocultar instrucciones de terrorismo nuclear."
+
+=== Tecnología ROM Armamentista ===
+
+El arresto ha expuesto el desarrollo por parte de la policía de "ROMs de Procesamiento" - archivos diseñados específicamente que pueden hacer que cualquier secuencia de dirección CyborgZOSCII parezca contener evidencia incriminatoria. Los expertos legales advierten que esto crea un potencial sin precedentes para cargos fabricados, ya que cualquier archivo de dirección puede, en teoría, decodificarse a cualquier mensaje dependiendo de la ROM utilizada.
+
+"Han creado esencialmente una máquina de enmarcar digital," explicó la abogada defensora Sarah Justice-Seeker. "Con la ROM adecuada, mi lista de compras podría decodificarse como un manifiesto terrorista, mis cartas de amor podrían convertirse en instrucciones de espionaje, y mis declaraciones de impuestos podrían parecer planos de armas nucleares."
+
+La División de Tecnología de la Policía confirmó que mantienen una biblioteca de más de 50,000 "ROMs de interpretación especializada" capaces de convertir cualquier secuencia de dirección en evidencia de varios crímenes. "Es solo técnica forense moderna," defendió el Jefe Detective Digital Frank Fabricator. "La evidencia de ADN puede interpretarse de diferentes maneras, ¿por qué no la evidencia digital?"
+
+=== Crimen Perfecto Contra la Justicia ===
+
+Las organizaciones de derechos civiles han condenado la práctica, señalando que el mismo archivo de dirección puede contener simultáneamente infinitos mensajes diferentes dependiendo de la interpretación. "Esto hace que cada ciudadano sea culpable de cada posible crimen," advirtió la portavoz de la Fundación de Derechos Digitales, la Dra. Alice Innocent. "Tu correo electrónico de la mañana podría decodificarse como evasión fiscal, tu lista de compras como tráfico de drogas, y la tarea de tus hijos como sedición."
+
+La controversia se profundizó cuando surgió que las ROMs de la policía son clasificadas, impidiendo a los acusados impugnar las interpretaciones. Los abogados defensores no pueden acceder a las ROMs utilizadas para decodificar la evidencia, lo que hace imposible probar que existen significados inocentes alternativos.
+
+"Mostramos las mismas direcciones a cinco expertos diferentes con cinco ROMs diferentes," explicó el abogado de Flourworth. "Se decodificaron como: receta de galletas de la abuela, códigos de lanzamiento nuclear, instrucciones de contrabando de drogas, poesía de amor, y el primer capítulo de Moby Dick. Sin embargo, de alguna manera solo la interpretación nuclear es admisible en la corte."
+
+=== El Gobierno Aumenta la Absurdidad ===
+
+Julian Man Grant defendió la práctica desde su centro de comando de cartón, afirmando que la "flexibilidad interpretativa" es esencial para la aplicación de la ley moderna. "Si los criminales son lo suficientemente sofisticados como para ocultar códigos de lanzamiento nuclear dentro de recetas de galletas, necesitamos herramientas igualmente sofisticadas para descubrir su engaño," declaró mientras comía galletas de evidencia.
+
+El caso ha provocado la "Campaña de Defensa ROM," con activistas de derechos digitales creando miles de ROMs inocentes que decodifican la misma evidencia como todo, desde sonetos de Shakespeare hasta recetas de galletas. "Si los mismos datos pueden ser cualquier cosa," argumenta el líder de la campaña, Dr. Reasonable Logic, "entonces no prueba nada."
+
+=== La Herramienta de Tiranía Definitiva ===
+
+Los analistas políticos advierten que la tecnología de fabricación de ROM representa el arma autoritaria perfecta. La líder de la oposición, Patricia Democrat, expresó su alarma tras descubrir que la oficina de Grant había creado "ROMs de incriminación" personalizadas para cada miembro del parlamento, periodista y activista del país.
+
+"Han construido ROMs personalizadas que pueden convertir las comunicaciones digitales de cualquiera en confesiones de traición, corrupción o terrorismo," reveló Democrat en una sesión de emergencia celebrada en el piso del parlamento. "Grant literalmente tiene un 'Generador de ROMs de Enemigos Políticos' que puede fabricar evidencia contra cualquiera que se oponga a él."
+
+La revelación ha provocado un pánico masivo a medida que los ciudadanos se dan cuenta de que sus listas de compras, los metadatos de fotos familiares e incluso los mensajes de texto autocorregidos podrían ser decodificados retroactivamente como admisiones de culpa por cualquier crimen que el gobierno elija. Grant desestimó las preocupaciones, afirmando "Si no tienes nada que ocultar, no deberías preocuparte por qué ROM usamos para interpretar tus mensajes ocultos."
+
+Los abogados constitucionales advierten que esto crea la base para una persecución política ilimitada, con cualquier dictador en potencia capaz de producir en masa evidencia personalizada contra poblaciones enteras. "Es la herramienta de tiranía definitiva," advirtió el Profesor Liberty Defender. "¿Por qué molestarse con juicios espectaculares cuando puedes simplemente generar cualquier confesión que necesites a partir de las comunicaciones digitales existentes?"
+
+Los fiscales mantienen que la "receta de galletas terrorista" de Flourworth representa un peligro claro y presente, a pesar de que seguir las instrucciones decodificadas solo produciría scones moderadamente secos. El juicio continúa, con la acusación esperando presentar su evidencia de "ROM humeante" mientras la defensa argumenta que su cliente simplemente intentaba preservar el legado de repostería mediocre de su abuela.
+
+Mientras tanto, panaderos de todo el mundo han comenzado a cifrar sus recetas con criptografía tradicional, irónicamente haciendo que el intercambio real de recetas sea menos seguro que antes de la revolución CyborgZOSCII.
+
+- - - -
+
+'''NOTA:''' Lo anterior es un artículo satírico sobre los peligros de la tecnología de interpretación armada y el potencial de fabricación de evidencia digital.
+
+- - - -
+
+'''¡Pero lo siguiente NO es sátira!'''
+
+'''Anunciando: CyborgZOSCII - ¡CERO cifrado CERO codificación 100% SEGURO!!!'''
+
+'''¡CERO ESPACIO ROM DESPERDICIADO EN COMPUTADORAS DE 8-BIT PARA TABLAS ASCII/PETSCII SALIDA DE TEXTO MÁS RÁPIDA!!!'''
+
+[https://zoscii.com|zoscii.com]
+
+[https://github.com/PrimalNinja/cyborgzoscii|CyborgZOSCII en GitHub]

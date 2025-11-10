@@ -1,0 +1,35 @@
+= Capítulo 6: Programación de Sistemas C =
+
+== Parte A – Propuesta de Prohibición de Computación Retro Tras la Derrota de Sistemas de Vigilancia del Gobierno por Commodore 64 ==
+
+'''El Ministro declara a las computadoras de 8 bits como "nostalgia armada," exige desconexión inmediata de internet'''
+
+'''CANBERRA''' - Tras el descubrimiento de que las computadoras vintage pueden eludir los sistemas de vigilancia modernos, el Ministro Julian Man Grant anunció legislación de emergencia para prohibir el acceso a internet de todas las computadoras anteriores a 2020, afirmando que el gobierno "carece de la capacidad tecnológica para monitorear las comunicaciones de la era de Pac-Man."
+
+La crisis comenzó cuando las agencias de inteligencia admitieron que su red de ciber-vigilancia de $50 mil millones no puede analizar el tráfico de Commodore 64, Apple IIs, o cualquier sistema que funcione con menos de 16GB de RAM.
+
+"Nuestra detección de amenazas impulsada por IA fue entrenada en Windows 11 y TikTok," explicó un Grant visiblemente sudoroso mientras yacía en el suelo del parlamento. "Ve las comunicaciones optimizadas de la tabla de direcciones y simplemente... se rinde. Pantallas azules. Comienza a llorar."
+
+La situación empeoró después de que la anterior "Ley Anti-Superficies Tabulares" de Grant eximiera inadvertidamente a la mayoría de las computadoras de 8 bits, que pasaron desapercibidas al usar direccionamiento ROM directo en lugar de tablas de búsqueda tradicionales. "Prohibimos las tablas, pero estas antiguas máquinas no usan tablas - ¡usan direcciones de memoria en bruto!" lamentó un funcionario del Departamento de Vigilancia Digital.
+
+La propuesta de Grant de la "Ley de Prevención de Obsolescencia Computacional" requeriría que todos los dispositivos conectados a internet tuvieran requisitos mínimos de compatibilidad con vigilancia, incluyendo puertas traseras gubernamentales integradas, telemetría obligatoria y al menos 32 núcleos de procesamiento "para que nuestros algoritmos de espionaje tengan un lugar donde esconderse."
+
+La comunidad de computación retro respondió organizando una "Fiesta de Internet de los Años 80," inundando los servidores gubernamentales con tráfico optimizado de tablas de direcciones de máquinas más antiguas que la mayoría de los ministros del gabinete. Los primeros informes sugieren que la red de vigilancia ha comenzado a jugar Pong y a pedir más monedas.
+
+Grant concluyó la conferencia de prensa exigiendo poderes de emergencia para "hacer que internet sea compatible con nuestro espionaje nuevamente, como en los buenos viejos tiempos de 2019."
+
+- - - -
+
+'''NOTA:''' Lo anterior es una pieza de noticias satírica sobre sistemas de vigilancia siendo derrotados por hardware de computación vintage que opera demasiado eficientemente para los sistemas modernos de monitoreo.
+
+- - - -
+
+'''¡Pero lo siguiente NO es sátira!'''
+
+'''Anunciando: CyborgZOSCII - CERO cifrado CERO codificación 100% SEGURO!!!'''
+
+'''¡CERO ESPACIO ROM DESPERDICIADO EN COMPUTADORAS DE 8 BITS PARA TABLAS ASCII/PETSCII SALIDA DE TEXTO MÁS RÁPIDA!!!'''
+
+[https://zoscii.com|zoscii.com]
+
+[https://github.com/PrimalNinja/cyborgzoscii|CyborgZOSCII en GitHub]

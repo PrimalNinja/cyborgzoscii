@@ -1,0 +1,49 @@
+= Capítulo 2: Cómo Funciona ZOSCII =
+
+== Parte A – Julian Man Grant Presenta Nueva Ley para Prohibir Completamente el Uso de Tablas ==
+
+'''El ministro del gobierno sufre un colapso total tras un avance revolucionario en seguridad de datos, escribe apresuradamente legislación en una servilleta'''
+
+'''CANBERRA''' - En lo que los expertos llaman "la reacción más impulsiva desde que alguien inventó la rodilla", el Ministro Julian Man Grant anunció hoy una prohibición generalizada de todas las tablas tras informes de que los científicos de datos han desarrollado métodos de seguridad infalibles utilizando formatos tabulares simples.
+
+La técnica revolucionaria, denominada "TableCrypt", supuestamente hace que los datos sean 100% seguros sin ninguna encriptación o cifrado al organizar ingeniosamente la información en filas y columnas. Al escuchar esta noticia durante su informe matutino, testigos reportan que Grant comenzó a hiperventilar y murmurar "no las tablas, cualquier cosa menos las tablas" antes de redactar frenéticamente legislación de emergencia sobre cualquier superficie plana que pudo encontrar - irónicamente, su escritorio.
+
+"Si las tablas pueden hacer que los datos sean completamente seguros, entonces las tablas son claramente demasiado poderosas para el uso civil," declaró Grant en una conferencia de prensa convocada apresuradamente, de pie torpemente detrás de un podio al que le habían cortado las patas. "Debemos actuar rápidamente antes de que estos peligrosos arreglos rectangulares desestabilicen todo nuestro aparato de inteligencia."
+
+=== La Nación Lucha por Adaptarse a una Realidad Sin Tablas ===
+
+La implementación inmediata de la "Ley de Superficies Anti-Tabulares" ha sumido al país en el caos. Familias de toda la nación ahora se ven obligadas a cenar acurrucadas alrededor de cuencos colocados directamente en el suelo, lo que ha llevado a lo que los sociólogos llaman "la gran epidemia de dolor de espalda de 2025."
+
+"El pequeño Timmy sigue preguntando por qué ya no podemos usar la mesa del comedor," sollozó la madre local Sarah Henderson, señalando los muebles confiscados que ahora acumulan polvo en su garaje. "Intenté explicar que el gobierno piensa que podría encriptar accidentalmente su tarea, pero él solo comenzó a llorar sobre su espagueti en el suelo."
+
+Los lugares de trabajo también se han visto igualmente interrumpidos. Los trabajadores de oficina ahora están llevando a cabo reuniones sentados con las piernas cruzadas en círculos, equilibrando laptops precariamente sobre sus rodillas. La productividad ha caído un 847%, aunque la oficina de Grant insiste en que esto es "un pequeño precio a pagar por la seguridad de los datos."
+
+La División de Cumplimiento de Tablas, una unidad policial formada apresuradamente equipada con martillos y cintas métricas, ha estado llevando a cabo redadas agresivas en lugares sospechosos de albergar tablas. "Hemos recibido informes de torneos de ping-pong clandestinos y reuniones ilegales de mesas de café," anunció la Inspectora Jefe Margaret Flatbottom. "Estos amantes de las tablas enfrentarán todo el peso de la ley basada en el suelo."
+
+=== Sector Tecnológico en Completo Colapso ===
+
+Quizás lo más catastrófico, el lenguaje amplio de la legislación ha prohibido efectivamente todo software de computadora, ya que prácticamente cada programa utiliza alguna forma de estructura de datos tabular. La industria tecnológica observó con horror cómo los oficiales de cumplimiento comenzaron a confiscar servidores, alegando que las tablas HTML, las tablas de bases de datos e incluso las tablas de caracteres ASCII violaban la nueva ley.
+
+"¡Se llevaron nuestros mainframes!" lamentó el CEO de TechCorp, David Pixelworth, quien observó impotente cómo los oficiales arrastraban millones de dólares en equipos. "Intenté explicar que las tablas ASCII son solo la forma en que las computadoras entienden las letras, pero dijeron 'una tabla es una tabla' y comenzaron a leerme mis derechos."
+
+El propio sitio web del gobierno se colapsó a las pocas horas de la implementación de la ley, ya que los protocolos de cumplimiento aparentemente se aplicaron a sus propios sistemas. La oficina de Grant se ha visto obligada a comunicarse exclusivamente a través de danza interpretativa y señales de humo, aunque los críticos argumentan que esto podría ser en realidad una mejora.
+
+Las acciones de Microsoft cayeron un 99.7% cuando los comerciantes se dieron cuenta de que Excel - esencialmente una gran tabla - necesitaría ser reformateado en algún tipo de disposición circular. Apple anunció apresuradamente "iFloor", un nuevo producto revolucionario que es básicamente un iPad pegado al suelo.
+
+La oficina de Grant emitió un comunicado (a través de paloma mensajera) defendiendo la legislación: "Mantenemos firme nuestro compromiso de eliminar la amenaza de las tablas. Si algunos inconvenientes menores como el colapso de la civilización moderna son el precio que pagamos por derrotar a estos monstruos encriptadores de datos de cuatro patas, que así sea."
+
+La oposición ha pedido la renuncia de Grant, aunque se han visto obligados a hacer esta demanda mientras yacen planos en el suelo del parlamento, reduciendo drásticamente el impacto visual de su indignación.
+
+- - - -
+
+'''NOTA:''' Lo anterior es un artículo satírico sobre las absurdas consecuencias de una prohibición impulsada por el pánico sobre las tablas. La escalada de la absurdidad, desde la inconveniencia personal hasta el colapso total de la sociedad, es una estructura satírica clásica.
+
+- - - -
+
+'''¡Pero lo siguiente NO es sátira!'''
+
+'''Anunciando: CyborgZOSCII - CERO encriptación CERO cifrado 100% SEGURO!!!'''
+
+[https://zoscii.com|zoscii.com]
+
+[https://github.com/PrimalNinja/cyborgzoscii|CyborgZOSCII en GitHub]

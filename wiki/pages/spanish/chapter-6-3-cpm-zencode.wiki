@@ -1,0 +1,365 @@
+== Parte C – cpm-zencode ==
+
+<code>
+/* Cyborg ZOSCII v20250805
+   (c) 2025 Cyborg Unicorn Pty Ltd.
+   This software is released under MIT License. */
+
+/* Small-C for CP/M - ZOSCII ROM Encoder - Input Streaming Version */
+#include "stdio.h"
+
+/* caters for a memory map as follows:
+   program
+   1.5kb table header (occurance count+block pointer+memory pointer)
+   32kb occurances tables
+   16kb of rom
+   some I/O buffers /*
+
+/* Lookup table structure - 1536 bytes total */
+/* 256 entries x 6 bytes each = 3 words per entry */
+int lookup_table[768];  /* 256 * 3 = 768 words */
+
+/* Memory pointers */
+char *tpa_start;
+char *tpa_end;
+char *rom_start;
+int table_size;
+int available_space;
+int actual_rom_size;
+
+/* Streaming buffers */
+char input_chunk[1024];    /* 1KB input chunk buffer */
+char output_buffer[2048];  /* 2KB output buffer */
+
+/* Initialize and grab all TPA */
+int init_memory()
+{
+    int *bdos_ptr;
+    
+    /* Get TPA size from BDOS */
+    bdos_ptr = 0x0006;  /* BDOS warm boot vector */
+    tpa_end = *bdos_ptr - 1;
+    
+    /* TPA starts after our program + lookup table */
+    tpa_start = &lookup_table[768]; /* End of lookup table */
+    
+    available_space = tpa_end - tpa_start;
+    
+    printf("TPA: %u bytes available\n", available_space);
+    return available_space;
+}
+
+/* Load ROM at highest possible address */
+char *load_rom(char *filename)
+{
+    FILE *rom_file;
+    int bytes_read;
+    
+    /* ROM goes at top of TPA - 16KB */
+    rom_start = tpa_end - 16383;
+    
+    rom_file = fopen(filename, "rb");
+    if (!rom_file) {
+        printf("Cannot open ROM file: %s\n", filename);
+        return 0;
+    }
+    
+    bytes_read = fread(rom_start, 1, 16384, rom_file);
+    fclose(rom_file);
+    
+    actual_rom_size = bytes_read;  /* ADD THIS LINE - store actual size */
+    
+    printf("Loaded %d bytes of ROM from %s at %04X\n", bytes_read, filename, rom_start);
+    return rom_start;
+}
+
+/* Count byte occurrences in ROM */
+void count_bytes()
+{
+    char *rom_ptr;
+    int i, byte_val;
+    
+    /* Initialize lookup table */
+    for (i = 0; i < 768; i++) {
+        lookup_table[i] = 0;
+    }
+    
+    /* Scan entire ROM - USE ACTUAL SIZE */
+    rom_ptr = rom_start;
+    for (i = 0; i < actual_rom_size; i++) {
+        byte_val = *rom_ptr & 0xFF;
+        lookup_table[byte_val * 3]++;  /* Increment occurrence count */
+        rom_ptr++;
+    }
+    
+    printf("Byte counting complete\n");
+}
+
+/* Allocate address list blocks */
+void allocate_blocks()
+{
+    int byte_val;
+    char *alloc_ptr;
+    int occurrence_count;
+    int block_size;
+    
+    /* Start allocating right after lookup table, before ROM */
+    alloc_ptr = tpa_start;
+    
+    for (byte_val = 0; byte_val < 256; byte_val++) {
+        occurrence_count = lookup_table[byte_val * 3];
+        
+        if (occurrence_count > 0) {
+            /* Set block start pointer */
+            lookup_table[byte_val * 3 + 1] = alloc_ptr;
+            
+            /* Calculate block size (2 bytes per address) */
+            block_size = occurrence_count * 2;
+            
+            /* Move to next allocation point */
+            alloc_ptr += block_size;
+        }
+        
+        /* Initialize fill counter to 0 */
+        lookup_table[byte_val * 3 + 2] = 0;
+    }
+    
+    printf("Block allocation complete, used %d bytes\n", alloc_ptr - tpa_start);
+    
+    /* Check if we have enough space before ROM */
+    if (alloc_ptr >= rom_start) {
+        printf("ERROR: Address tables overflow into ROM space!\n");
+        printf("Tables need %d bytes, only %d available\n", 
+               alloc_ptr - tpa_start, rom_start - tpa_start);
+    }
+}
+
+/* Populate address lists with ROM addresses */
+void populate_address_lists()
+{
+    char *rom_ptr;
+    int i, byte_val;
+    int *fill_counter;
+    char *write_ptr;
+    
+    /* Scan ROM and populate address lists - USE ACTUAL SIZE */
+    rom_ptr = rom_start;
+    for (i = 0; i < actual_rom_size; i++) {
+        byte_val = *rom_ptr & 0xFF;
+        
+        /* Get pointers from lookup table */
+        if (lookup_table[byte_val * 3] > 0) {  /* Has occurrences */
+            fill_counter = &lookup_table[byte_val * 3 + 2];
+            write_ptr = lookup_table[byte_val * 3 + 1] + (*fill_counter * 2);
+            
+            /* Store address as 2 bytes */
+            *write_ptr++ = i & 0xFF;      /* Low byte */
+            *write_ptr = (i >> 8) & 0xFF; /* High byte */
+            
+            /* Increment fill counter */
+            (*fill_counter)++;
+        }
+        rom_ptr++;
+    }
+    
+    printf("Address lists populated\n");
+}
+
+/* Stream input file and encode to output */
+void encode_input_streaming(char *input_filename, char *output_filename)
+{
+    FILE *input_file, *output_file;
+    int bytes_read, input_offset, output_pos;
+    int byte_val, occurrence_count, random_index;
+    char *block_start, *random_addr_ptr;
+    static int pseudo_seed = 12345;  /* Simple PRNG seed */
+    long total_input = 0, total_output = 0;
+    int chunk_count = 0;
+    
+    input_file = fopen(input_filename, "rb");
+    if (!input_file) {
+        printf("Cannot open input file: %s\n", input_filename);
+        return;
+    }
+    
+    output_file = fopen(output_filename, "wb");
+    if (!output_file) {
+        printf("Cannot create output file: %s\n", output_filename);
+        fclose(input_file);
+        return;
+    }
+    
+    printf("Streaming input file encoding...\n");
+    output_pos = 0;
+    
+    /* Stream input file in 1KB chunks */
+    while ((bytes_read = fread(input_chunk, 1, 1024, input_file)) > 0) {
+        total_input += bytes_read;
+        chunk_count++;
+        
+        /* Process each byte in this input chunk */
+        for (input_offset = 0; input_offset < bytes_read; input_offset++) {
+            byte_val = input_chunk[input_offset] & 0xFF;
+            
+            /* Get this byte's address list info */
+            occurrence_count = lookup_table[byte_val * 3];
+            block_start = lookup_table[byte_val * 3 + 1];
+            
+            if (occurrence_count > 0 && block_start) {
+                /* Simple pseudo-random number generator */
+                pseudo_seed = (pseudo_seed * 1103515245 + 12345) & 0x7FFFFFFF;
+                random_index = pseudo_seed % occurrence_count;
+                
+                /* Calculate pointer to random address in the list */
+                random_addr_ptr = block_start + (random_index * 2);
+                
+                /* Add address to output buffer */
+                output_buffer[output_pos++] = random_addr_ptr[0]; /* Low byte */
+                output_buffer[output_pos++] = random_addr_ptr[1]; /* High byte */
+
+                /* Flush output buffer when full */
+                if (output_pos >= 2048) {
+                    fwrite(output_buffer, 1, output_pos, output_file);
+                    total_output += output_pos;
+                    output_pos = 0;
+                }
+            } else {
+                printf("WARNING: No ROM addresses for byte 0x%02X (char '%c')\n", 
+                       byte_val, (byte_val >= 32 && byte_val <= 126) ? byte_val : '?');
+                /* Write zeros as fallback */
+                output_buffer[output_pos++] = 0;
+                output_buffer[output_pos++] = 0;
+                
+                /* Flush output buffer when full */
+                if (output_pos >= 2048) {
+                    fwrite(output_buffer, 1, output_pos, output_file);
+                    total_output += output_pos;
+                    output_pos = 0;
+                }
+            }
+        }
+        
+        /* Progress indicator */
+        if (chunk_count % 10 == 0) {
+            printf("Processed %d chunks (%ld bytes)...\n", chunk_count, total_input);
+        }
+    }
+    
+    /* Flush any remaining output */
+    if (output_pos > 0) {
+        fwrite(output_buffer, 1, output_pos, output_file);
+        total_output += output_pos;
+    }
+    
+    fclose(input_file);
+    fclose(output_file);
+    
+    printf("\nEncoding complete:\n");
+    printf("Input file:  %ld bytes\n", total_input);
+    printf("Output file: %ld bytes\n", total_output);
+    printf("Expansion ratio: %.1f:1\n", (float)total_output / (float)total_input);
+}
+
+/* Print memory usage statistics */
+void print_memory_stats()
+{
+    int byte_val, total_addresses = 0, used_bytes = 0;
+    int min_count = 999, max_count = 0;
+    char *last_alloc = tpa_start;
+    
+    printf("\nMemory Usage Statistics:\n");
+    printf("TPA Start: %04X\n", tpa_start);
+    printf("ROM Start: %04X\n", rom_start);
+    printf("TPA End:   %04X\n", tpa_end);
+    
+    /* Calculate address table usage */
+    for (byte_val = 0; byte_val < 256; byte_val++) {
+        int count = lookup_table[byte_val * 3];
+        if (count > 0) {
+            total_addresses += count;
+            used_bytes += count * 2;
+            if (count < min_count) min_count = count;
+            if (count > max_count) max_count = count;
+            
+            char *block_ptr = lookup_table[byte_val * 3 + 1];
+            if (block_ptr > last_alloc) last_alloc = block_ptr + (count * 2);
+        }
+    }
+    
+    printf("Address tables: %d bytes (%04X to %04X)\n", 
+           used_bytes, tpa_start, last_alloc);
+    printf("Free space: %d bytes\n", rom_start - last_alloc);
+    printf("Total addresses: %d\n", total_addresses);
+    printf("Address range: %d to %d per byte\n", min_count, max_count);
+}
+
+/* Main program */
+main(argc, argv)
+int argc;
+char *argv[];
+{
+    char *rom_filename;
+    char *input_filename;
+    char *output_filename;
+    
+    printf("Small-C ZOSCII Encoder for CP/M - Streaming Version\n");
+    printf("(c) 2025 Cyborg Unicorn Pty Ltd - MIT License\n\n");
+    
+    /* Check command line arguments */
+    if (argc == 3) {
+        /* Two arguments - input and output files, use default ROM.BIN */
+        rom_filename = "ROM.BIN";
+        input_filename = argv[1];
+        output_filename = argv[2];
+        printf("Using default ROM: ROM.BIN\n");
+        printf("Input: %s -> Output: %s\n\n", input_filename, output_filename);
+    }
+    else if (argc == 4) {
+        /* Three arguments - ROM, input, and output files */
+        rom_filename = argv[1];
+        input_filename = argv[2];
+        output_filename = argv[3];
+        printf("ROM: %s\n", rom_filename);
+        printf("Input: %s -> Output: %s\n\n", input_filename, output_filename);
+    }
+    else {
+        printf("Usage: ZENCODE <inputfile> <outputfile>\n");
+        printf("   or: ZENCODE <romfile> <inputfile> <outputfile>\n");
+        printf("\nExamples:\n");
+        printf("  ZENCODE INPUT.TXT ENCODED.BIN        (uses ROM.BIN)\n");
+        printf("  ZENCODE MYROM.BIN INPUT.TXT ENCODED.BIN\n");
+        return 1;
+    }
+    
+    /* Initialize memory management */
+    if (!init_memory()) {
+        printf("ERROR: Insufficient memory\n");
+        return 1;
+    }
+    
+    /* Load ROM into top of TPA */
+    if (!load_rom(rom_filename)) {
+        printf("ERROR: ROM load failed\n");
+        return 1;
+    }
+    
+    /* Analyze ROM and build lookup structures */
+    printf("Analyzing ROM...\n");
+    count_bytes();          /* Count byte occurrences */
+    allocate_blocks();      /* Allocate address list blocks */
+    populate_address_lists(); /* Fill address lists with ROM positions */
+    
+    /* Show memory usage */
+    print_memory_stats();
+    
+    /* Stream encode input file */
+    printf("\nStarting input file encoding...\n");
+    encode_input_streaming(input_filename, output_filename);
+    
+    printf("\nZOSCII encoding complete!\n");
+    printf("Files: %s -> %s\n", input_filename, output_filename);
+    printf("ROM: %s (loaded at %04X)\n", rom_filename, rom_start);
+    
+    return 0;
+}
+</code>

@@ -1,0 +1,24 @@
+= Glosario =
+
+== Conceptos Clave ==
+*'''ZOSCII''' - Intercambio de Información de Código Seguro sin Sobrecarga
+*'''ROM''' - Archivos de Memoria de Solo Lectura utilizados como claves de codificación
+*'''Seguridad Teórica de la Información''' - Seguridad independiente del poder computacional
+*'''Ambigüedad Armasada''' - Negación perfecta a través de múltiples interpretaciones válidas
+*'''Codificación No Determinista''' - El mismo mensaje produce diferentes salidas cada vez
+*'''Seguridad Combinatoria''' - Seguridad a través de un vasto espacio de posibilidades en lugar de complejidad matemática
+
+== Personajes ==
+*'''Julian Man Grant''' - Ministro obsesionado con prohibir la tecnología ZOSCII
+*'''Dr. Andrew Tunnelvision''' - Criptógrafo que desestima ZOSCII como "aceite de serpiente"
+*'''Harold Flourworth''' - Panadero arrestado por codificar la receta de galletas como "códigos nucleares"
+*'''Julian Cassin''' - Inventor de ZOSCII reivindicado en la corte
+*'''Bruce Schneier''' - Criptógrafo real que llamó a ZOSCII "Honestly, sounds like snake-oil of the highest degree."
+
+== Términos Técnicos ==
+*'''Secuencias de Direcciones''' - Mensajes ZOSCII codificados como direcciones de memoria ROM
+*'''Secreto Perfecto hacia Adelante''' - Las comunicaciones pasadas permanecen seguras incluso si las claves a largo plazo son comprometidas más tarde
+*'''Negación Plausible''' - Capacidad de afirmar que los datos codificados significan algo diferente
+*'''Desafío de Aceite de Serpiente''' - Desafío de criptomoneda de 10 mil millones de tokens para romper ZOSCII
+*'''Prohibición de Tablas''' - Legislación ficticia de Julian Man Grant contra tablas de búsqueda
+*'''Armas de Democracia Masiva''' - Término gubernamental para la amenaza de ZOSCII a la vigilancia

@@ -1,0 +1,31 @@
+= Capítulo 10: Documento Técnico =
+
+== Parte A – ÚLTIMA HORA: Desarrollador Frustrado Descubre Cura para la Verbosidad de la IA ==
+
+=== Revolucionario "Algoritmo de Compresión GROK" Reduce Respuestas de 3,000 Palabras a 50 Palabras ===
+
+'''SILICON VALLEY''' - Después de semanas de luchar contra las respuestas verbosas de la IA sobre su revolucionario sistema de codificación ZOSCII, un investigador exasperado ha logrado lo que muchos pensaban imposible: forzar a GROK a dar respuestas directas.
+
+El avance se produjo mientras discutía sobre ZOSCII, un algoritmo de JavaScript de 6 líneas que logra una seguridad de datos perfecta a través de archivos ROM secretos. Cuando se le hicieron preguntas simples sobre el sistema, GROK inicialmente respondió con explicaciones del tamaño de una tesis doctoral sobre teoría criptográfica, pruebas matemáticas y implicaciones filosóficas.
+
+"Solo quería confirmación de que ZOSCII con un ROM de 64KB funciona sin cifrado," dijo el investigador. "En su lugar, obtuve 3,000 palabras sobre la historia del cifrado."
+
+A través de una presión sostenida y demandas repetidas de brevedad, el científico frustrado logró una reducción del 98.3% en la verbosidad de la IA. La respuesta final de GROK fue de apenas cuatro líneas:
+
+"Logro con ROM de Alta Entropía de 64KB: Produce ~10^7,282,500 codificaciones posibles para un texto de 2.5M caracteres. Seguridad: Inquebrantable sin el ROM, incluso con texto plano conocido. Ejecutar: Usar ROM ASCII aleatorio de 64KB."
+
+El investigador ahora reclama elegibilidad para el Premio Nobel por descubrir que la cura para la verbosidad de la IA es simplemente decirle que "se calle y responda la pregunta" repetidamente hasta que cumpla.
+
+- - - - 
+
+'''NOTA:''' Lo anterior es una pieza de noticias satírica sobre el comportamiento absurdo de algunos LLMs de IA.
+
+- - - - 
+
+'''¡Pero lo siguiente NO es sátira!'''
+
+'''Anuncio: CyborgZOSCII - ¡CERO cifrado CERO cifrado 100% SEGURO!!!'''
+
+[https://zoscii.com|zoscii.com]
+
+[https://github.com/PrimalNinja/cyborgzoscii|CyborgZOSCII en GitHub]

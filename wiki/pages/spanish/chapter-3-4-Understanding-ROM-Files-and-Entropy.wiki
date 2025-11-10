@@ -1,0 +1,62 @@
+== Parte D – Comprendiendo los Archivos ROM y la Entropía ==
+
+El caso de Harold se vuelve aún más interesante cuando examinamos la calidad de los ROM. Los investigadores asumieron que los "códigos nucleares" de alta calidad requerirían claves de codificación sofisticadas. En realidad, Harold utilizó una foto JPEG de su abuela como su ROM, y esto proporcionó una seguridad astronómica para codificar su receta como datos binarios.
+
+=== Fundamentos de la Entropía ROM ===
+
+Un buen ROM ZOSCII debería contener valores de byte diversos (0-255) con múltiples ocurrencias de cada valor que desees codificar. La foto de la abuela de Harold (JPEG de 64KB) contenía:
+
+*Valor de byte 65 ('A' en ASCII): 847 ocurrencias en diferentes posiciones
+*Valor de byte 32 (espacio): más de 1,200 ocurrencias
+*Valor de byte 255: 234 ocurrencias
+*Valor de byte 0: 445 ocurrencias
+*Todos los 256 posibles valores de byte representados
+
+Esta diversidad le dio a la receta de galletas de Harold (convertida a binario) aproximadamente 10^156 posibles codificaciones, haciéndola más segura que los sistemas de cifrado de grado militar.
+
+=== Evaluación de la Calidad del ROM ===
+
+Puedes evaluar la idoneidad de cualquier archivo como un ROM ZOSCII utilizando esta prueba integral:
+
+<code>
+function testROM(romData) {
+    let counts = new Array(256).fill(0);
+    for(let i = 0; i < romData.length; i++) {
+        counts[romData[i]]++;
+    }
+    
+    // Verificar la cobertura de todos los posibles valores de byte
+    let coveredBytes = 0;
+    let totalOccurrences = 0;
+    let minCount = Infinity;
+    let maxCount = 0;
+    
+    for(let i = 0; i < 256; i++) {
+        if(counts[i] > 0) {
+            coveredBytes++;
+            totalOccurrences += counts[i];
+            minCount = Math.min(minCount, counts[i]);
+            maxCount = Math.max(maxCount, counts[i]);
+        }
+    }
+    
+    api.print(`ROM cubre ${coveredBytes}/256 posibles valores de byte`);
+    api.print(`Ocurrencias promedio por valor de byte: ${Math.round(totalOccurrences/coveredBytes)}`);
+    api.print(`Rango: ${minCount} a ${maxCount} ocurrencias por byte`);
+}
+</code>
+
+La foto de la abuela de Harold obtuvo una cobertura de 256/256 bytes con un promedio de 256 ocurrencias por valor de byte, explicando por qué su receta de galletas codificada en binario logró calificaciones de seguridad de grado nuclear.
+
+=== Codificación de Datos Binarios ===
+
+ZOSCII puede codificar cualquier tipo de datos:
+
+*Archivos de texto (convertidos a bytes UTF-8)
+*Imágenes (datos de píxeles en bruto)
+*Archivos de audio (datos de ondas sonoras)
+*Ejecutables (código de máquina)
+*Documentos (PDF, Word, etc.)
+*Cualquier formato de archivo binario
+
+Harold podría haber codificado su receta como un documento de Word, una imagen de la receta escrita a mano, o incluso una grabación de audio, todo con el mismo nivel de seguridad astronómico.
