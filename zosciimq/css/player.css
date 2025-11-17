@@ -1,0 +1,476 @@
+/* ======================= */
+/*  Modern ZOSCII Player   */
+/*  Neon Blue Theme        */
+/* ======================= */
+
+.gsBody {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+}
+
+.gsZOSCIIPlayer {
+    background: linear-gradient(135deg, #0a0e27 0%, #1a1a2e 100%);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    color: #e0e0e0;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.gsCentified {
+	text-align: center;
+}
+
+.gsHidden {
+	display: none;
+}
+
+.gsTitle {
+	color: blue;
+}
+
+.gsOscilloscope {
+    display: none;
+    gap: 2px;
+    height: 80px;
+    width: 100%;
+    background: rgba(0, 0, 50, 0.3);
+	align-items: flex-end;
+	padding-top: 10px;
+}
+
+.gsOscBar {
+    flex: 1;
+    margin: 0 1px;
+    background-color: #00f0ff;
+    border-radius: 2px;
+    height: 10px;
+    transition: height 0.05s linear, background-color 0.1s linear;
+    box-shadow: 0 0 6px #00f0ff, 0 0 10px #00f0ff;
+}
+
+/* Header Section with Logo */
+.gsPlayerHeader {
+	background: linear-gradient(90deg, transparent, #00f0ff, transparent);
+    padding: 15px 0px 0px 0px;
+    text-align: center;
+    border-bottom: 3px solid #00f0ff;
+    position: relative;
+	width: 100%;
+}
+
+.gsPlayerHeader::after {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #00f0ff, transparent);
+    animation: shimmer 3s infinite;
+}
+
+.gsProgressBar {
+    display: none;
+    flex-wrap: nowrap;
+    gap: 2px;
+    height: 20px;
+    justify-content: center;
+    margin-top: 10px;
+    width: 100%;
+}
+
+.gsProgressSquare {
+    width: 20px;
+    height: 20px;
+    background: rgba(0, 255, 0, 0.2);
+    border-radius: 3px;
+    transition: background 0.2s;
+}
+
+.gsProgressSquare.active {
+    background: #00ff00;
+}
+
+@keyframes shimmer {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
+
+.gsLogo {
+	float: right;
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    margin: 0 auto 15px;
+    display: block;
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.1));
+}
+
+/* Content Sections */
+.gsPlayerContent {
+    padding: 30px 20px;
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.gsPlayer {
+	margin: 0 0 0 0;
+	width: 100%;
+}
+
+.gsConfigSection,
+.gsControlsSection,
+.gsCopyrightSection,
+.gsPlaybackSection,
+.gsMediaSection,
+.gsLogSection {
+    margin-bottom: 25px;
+    background: rgba(0, 240, 255, 0.03);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid rgba(0, 240, 255, 0.15);
+}
+
+.gsSectionTitle {
+    color: #00f0ff;
+    font-size: 1.1em;
+    font-weight: 600;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.gsSectionTitle::before {
+    content: '';
+    width: 4px;
+    height: 20px;
+    background: linear-gradient(180deg, #00f0ff, transparent);
+    border-radius: 2px;
+}
+
+/* Form Elements */
+.gsQueueUrl,
+.gsQueueNames,
+.gsBehavior,
+.gsROMFile {
+    width: 100%;
+    background: rgba(0, 10, 31, 0.6);
+    border: 2px solid rgba(0, 240, 255, 0.3);
+    border-radius: 8px;
+    color: #00f0ff;
+    font-size: 1em;
+    padding: 12px 15px;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+    font-family: 'Courier New', monospace;
+}
+
+.gsQueueUrl:focus,
+.gsQueueNames:focus,
+.gsBehavior:focus,
+.gsROMFile:focus {
+    outline: none;
+    border-color: #00f0ff;
+    background: rgba(0, 10, 31, 0.8);
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+}
+
+.gsQueueNames {
+    resize: vertical;
+    min-height: 100px;
+    line-height: 1.6;
+}
+
+.gsBehavior {
+    cursor: pointer;
+}
+
+/* File Input Styling */
+.gsROMFile {
+    padding: 10px;
+    cursor: pointer;
+}
+
+.gsROMFile::file-selector-button {
+    background: linear-gradient(135deg, #00f0ff 0%, #00a8cc 100%);
+    border: none;
+    border-radius: 6px;
+    color: #0a0a0a;
+    padding: 8px 16px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-right: 10px;
+    transition: all 0.3s ease;
+}
+
+.gsROMFile::file-selector-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 240, 255, 0.4);
+}
+
+/* Buttons */
+.gsControlsSection {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    padding: 25px 20px;
+}
+
+.gsStartButton,
+.gsStopButton,
+.gsToggleButton,
+.gsPreviousButton,
+.gsNextButton {
+    background: linear-gradient(135deg, #00f0ff 0%, #00a8cc 100%);
+    border: none;
+    border-radius: 10px;
+    color: #0a0a0a;
+    font-size: 1em;
+    font-weight: 700;
+    padding: 14px 28px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    min-width: 120px;
+}
+
+.gsStartButton::before,
+.gsStopButton::before,
+.gsToggleButton::before,
+.gsPreviousButton::before,
+.gsNextButton::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.gsStartButton:hover::before,
+.gsStopButton:hover::before,
+.gsToggleButton:hover::before,
+.gsPreviousButton:hover::before,
+.gsNextButton:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.gsStartButton:hover,
+.gsStopButton:hover,
+.gsToggleButton:hover,
+.gsPreviousButton:hover,
+.gsNextButton:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 240, 255, 0.5);
+}
+
+.gsStartButton:active,
+.gsStopButton:active,
+.gsToggleButton:active,
+.gsPreviousButton:active,
+.gsNextButton:active {
+    transform: translateY(-1px);
+}
+
+.gsStopButton {
+    background: linear-gradient(135deg, #ff4757 0%, #cc3644 100%);
+}
+
+/* Status and Now Playing */
+.gsStatus,
+.gsNowPlaying {
+    background: rgba(0, 240, 255, 0.05);
+    border-left: 4px solid #00f0ff;
+    border-radius: 8px;
+    padding: 12px 15px;
+    margin: 10px 0;
+    color: #00f0ff;
+    font-size: 0.95em;
+    font-weight: 500;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+}
+
+.gsNowPlaying {
+    border-left-color: #00ff88;
+    color: #00ff88;
+    font-weight: 600;
+}
+
+/* Audio Player */
+.gsPlayer {
+    width: 100%;
+    height: 60px;
+    background: rgba(0, 10, 31, 0.6);
+    border-radius: 10px;
+    border: 2px solid rgba(0, 240, 255, 0.3);
+}
+
+/* Media Display */
+.gsImage {
+    margin: 20px 0;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid rgba(0, 240, 255, 0.3);
+    box-shadow: 0 10px 30px rgba(0, 240, 255, 0.2);
+    width: 100%;
+    aspect-ratio: 1 / 1;
+}
+
+.gsImage img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.gsText {
+    background: rgba(0, 10, 31, 0.6);
+    border: 2px solid rgba(0, 240, 255, 0.3);
+    border-radius: 12px;
+    color: #00f0ff;
+    font-family: 'Courier New', monospace;
+    padding: 20px;
+    margin: 20px 0;
+    line-height: 1.6;
+    max-height: 400px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* Play Log */
+.gsPlayLog {
+    background: rgba(0, 10, 31, 0.6);
+    border: 2px solid rgba(0, 240, 255, 0.3);
+    border-radius: 12px;
+    color: #00d4e6;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+    padding: 15px;
+    max-height: 400px;
+    overflow-y: auto;
+    line-height: 1.8;
+}
+
+.gsPlayLog::-webkit-scrollbar,
+.gsText::-webkit-scrollbar {
+    width: 8px;
+}
+
+.gsPlayLog::-webkit-scrollbar-track,
+.gsText::-webkit-scrollbar-track {
+    background: rgba(0, 10, 31, 0.4);
+    border-radius: 4px;
+}
+
+.gsPlayLog::-webkit-scrollbar-thumb,
+.gsText::-webkit-scrollbar-thumb {
+    background: rgba(0, 240, 255, 0.4);
+    border-radius: 4px;
+}
+
+.gsPlayLog::-webkit-scrollbar-thumb:hover,
+.gsText::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 240, 255, 0.6);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .gsLogo {
+        width: 60px;
+        height: 60px;
+    }
+
+    .gsPlayerHeader {
+        padding: 15px 0px 0px 0px;
+    }
+
+    .gsPlayerContent {
+        padding: 20px 15px;
+    }
+
+    .gsStopButton {
+        flex-basis: calc(50% - 6px);
+    }
+
+    .gsToggleButton {
+        flex-basis: calc(50% - 6px);
+    }
+
+    .gsPreviousButton {
+        flex-basis: calc(50% - 6px);
+    }
+    .gsNextButton {
+        flex-basis: calc(50% - 6px);
+    }
+
+    .gsConfigSection,
+    .gsControlsSection,
+	.gsCopyrightSection,
+    .gsPlaybackSection,
+    .gsMediaSection,
+    .gsLogSection {
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+
+    .gsStartButton,
+    .gsStopButton,
+	.gsToggleButton,
+    .gsPreviousButton,
+    .gsNextButton {
+        font-size: 0.9em;
+        padding: 12px 20px;
+        min-width: 100px;
+    }
+
+    .gsSectionTitle {
+        font-size: 1em;
+    }
+}
+
+@media (max-width: 480px) {
+    .gsControlsSection {
+        gap: 8px;
+    }
+
+    .gsStartButton,
+    .gsStopButton,
+	.gsToggleButton,
+    .gsPreviousButton,
+    .gsNextButton {
+        font-size: 0.85em;
+        padding: 10px 16px;
+        min-width: 90px;
+    }
+
+    .gsQueueUrl,
+    .gsQueueNames,
+    .gsBehavior,
+    .gsROMFile {
+        font-size: 0.9em;
+        padding: 10px 12px;
+    }
+}

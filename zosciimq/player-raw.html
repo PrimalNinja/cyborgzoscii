@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>ZOSCII Radio Player</title>
+<script src="3p/jquery-3.7.1.min.js"></script>
+<link rel="stylesheet" type="text/css" href="css/player.css">
+</head>
+<body>
+
+<h1>ZOSCII Radio Player</h1>
+
+<div id="geZOSCIIMQPlayer" class="gsPlayer">
+    <label>Queue URL: <input class="geQueueUrl" type="text" value="index.php" size="50"></label><br>
+    <label>Queue Names (one per line):<br>
+    <textarea class="geQueueNames" rows="5" cols="50">test_radio
+test_radio2</textarea></label><br>
+    <label>Behavior: 
+    <select class="geBehavior">
+      <option value="repeatQueue">Repeat Queue</option>
+      <option value="repeatAllQueues">Repeat All Queues</option>
+      <option value="nextQueue">Next Queue</option>
+      <option value="waitAtEnd">Wait at End</option>
+      <option value="stopAtEnd">Stop at End</option>
+      <option value="randomQueue">Random Queue</option>
+    </select>
+    </label><br>
+    <label>ROM File (optional): <input class="geROMFile" type="file"></label><br>
+
+	<hr>
+    <button class="geStartButton">Start</button>
+    <button class="geStopButton">Stop</button>
+    <button class="gePreviousButton">Previous</button>
+    <button class="geNextButton">Next</button>
+
+    <div class="geStatus"></div>
+    <div class="geNowPlaying"></div>
+
+	<hr>
+    <audio class="gePlayer" controls></audio>
+
+	<hr>
+    <div class="geImage"></div>
+    <div class="geText"></div>
+
+	<hr>
+    <h3>Play Log:</h3>
+    <div class="gePlayLog" style="font-family: monospace; white-space: pre-wrap; max-height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 10px;"></div>
+</div>
+
+<script src="js/zosciiradioplayer.js"></script>
+<script>
+$(document).ready(function() 
+{
+    var objRadioPlayer = new ZOSCIIRadioPlayer('geZOSCIIMQPlayer', { imageDelay: 10 });
+});
+</script>
+
+</body>
+</html>

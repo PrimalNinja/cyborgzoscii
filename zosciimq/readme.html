@@ -42,6 +42,7 @@
 			<li><a href="#deployment-strategies">4. Deployment Strategies</a></li>
 			<li><a href="#docker-deploys">5. Docker Deploys</a></li>
 			<li><a href="#comparison">6. Comparison with Traditional Message Brokers</a></li>
+			<li><a href="#web-radio">7. ZOSCII MQ Web Radio</a></li>
 		</ul>
 	</div>
 	<!-- END TABLE OF CONTENTS -->
@@ -1250,6 +1251,798 @@ volumes:
         <li>Have dedicated DevOps team</li>
         <li>Need built-in partitioning/sharding</li>
         <li>Require transaction support</li>
+    </ul>
+</div>
+
+<h2 id="web-radio">7. ZOSCII MQ Web Radio</h2>
+
+<p>ZOSCII MQ Web Radio is a JavaScript-based web radio player that consumes media from ZOSCII MQ queues. It provides a complete, embeddable radio station interface for websites, supporting multi-channel playback, queue management, and ZOSCII-encoded content.</p>
+
+<h3>Overview</h3>
+<p>The Web Radio system consists of two main components:</p>
+<ul>
+    <li><strong>ZOSCIIRadioPlayer</strong> - The player component that fetches and plays content from queues</li>
+    <li><strong>ZOSCIIMQPublisher</strong> - A publishing tool for uploading content to queues</li>
+</ul>
+
+<h3>Key Features</h3>
+<ul>
+    <li>✅ Multi-channel/queue support with configurable playback behaviors</li>
+    <li>✅ ZOSCII-encoded content decoding (requires ROM file)</li>
+    <li>✅ Multi-format support: MP3 audio, JPEG images, UTF-8 text (including multilingual lyrics)</li>
+    <li>✅ Visual oscilloscope and progress indicators</li>
+    <li>✅ Play history navigation (Previous/Next track)</li>
+    <li>✅ ES5-compatible JavaScript (works in older browsers)</li>
+    <li>✅ Fully customizable styling and layout</li>
+    <li>✅ Zero external dependencies (except jQuery)</li>
+</ul>
+
+<h3>A. Player Implementation</h3>
+
+<h4>Basic HTML Structure</h4>
+<p>The player requires specific HTML elements with designated class names for the JavaScript to bind to:</p>
+
+<pre><code>&lt;div id="geZOSCIIMQPlayer" class="gsZOSCIIPlayer"&gt;
+    &lt;!-- Configuration Section --&gt;
+    &lt;div class="geConfigSection"&gt;
+        &lt;input class="geQueueUrl" type="text" value="index.php"&gt;
+        &lt;select class="geQueueNames" multiple&gt;&lt;/select&gt;
+        &lt;input class="geROMFile" type="file"&gt;
+        &lt;select class="geBehavior"&gt;
+            &lt;option value="repeatQueue"&gt;Repeat Channel&lt;/option&gt;
+            &lt;option value="repeatAllQueues"&gt;Repeat All Channels&lt;/option&gt;
+            &lt;option value="nextQueue"&gt;Next Channel&lt;/option&gt;
+            &lt;option value="waitAtEnd"&gt;Wait at End&lt;/option&gt;
+            &lt;option value="stopAtEnd"&gt;Stop at End&lt;/option&gt;
+            &lt;option value="randomQueue"&gt;Random Channel&lt;/option&gt;
+        &lt;/select&gt;
+    &lt;/div&gt;
+
+    &lt;!-- Control Buttons --&gt;
+    &lt;button class="geStartButton"&gt;Connect to Channel&lt;/button&gt;
+    &lt;button class="geStopButton"&gt;Stop&lt;/button&gt;
+    &lt;button class="geToggleButton"&gt;Pause&lt;/button&gt;
+    &lt;button class="gePreviousButton"&gt;Previous&lt;/button&gt;
+    &lt;button class="geNextButton"&gt;Next&lt;/button&gt;
+
+    &lt;!-- Status Display --&gt;
+    &lt;div class="geStatus"&gt;&lt;/div&gt;
+    &lt;div class="geNowPlaying"&gt;&lt;/div&gt;
+
+    &lt;!-- Progress Visualization --&gt;
+    &lt;div class="geProgressBar"&gt;&lt;/div&gt;
+    &lt;div class="geOscilloscope"&gt;&lt;/div&gt;
+
+    &lt;!-- Media Display --&gt;
+    &lt;audio class="gePlayer"&gt;&lt;/audio&gt;
+    &lt;div class="geImage"&gt;&lt;/div&gt;
+    &lt;div class="geText"&gt;&lt;/div&gt;
+&lt;/div&gt;
+</code></pre>
+
+<h4>JavaScript Initialization</h4>
+<pre><code>&lt;script src="js/zosciiradioplayer.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+$(document).ready(function() {
+    var m_strComponentID = 'geZOSCIIMQPlayer';
+    
+    function element(strScope, strClass) {
+        return $('.' + strClass, '#' + strScope);
+    }
+    
+    // Populate available channels
+    var arrQueueNames = ['Cyborg Unicorn', 'ZOSCII'];
+    var objQueueSelect = element(m_strComponentID, 'geQueueNames');
+    for (var i = 0; i &lt; arrQueueNames.length; i++) {
+        objQueueSelect.append('&lt;option selected value="' + 
+            arrQueueNames[i] + '"&gt;' + arrQueueNames[i] + '&lt;/option&gt;');
+    }
+    
+    // Define callbacks
+    function onStart() {
+        // Hide config, show controls
+        element(m_strComponentID, 'geConfigSection').hide();
+        element(m_strComponentID, 'geStartButton').hide();
+        element(m_strComponentID, 'geStopButton').show();
+        element(m_strComponentID, 'geToggleButton').show();
+        
+        // Return selected queues to player
+        return element(m_strComponentID, 'geQueueNames').val() || [];
+    }
+    
+    function onStop() {
+        // Show config, hide controls
+        element(m_strComponentID, 'geConfigSection').show();
+        element(m_strComponentID, 'geStartButton').show();
+        element(m_strComponentID, 'geStopButton').hide();
+    }
+    
+    // Initialize player
+    var objRadioPlayer = new ZOSCIIRadioPlayer(m_strComponentID, { 
+        clearImageAfterSong: true,
+        clearTextAfterImage: true,
+        clearTextAfterSong: true,
+        imageDelay: 10,
+        onStart: onStart,
+        onStop: onStop
+    });
+});
+&lt;/script&gt;
+</code></pre>
+
+<h4>Player Options</h4>
+<table>
+    <thead>
+        <tr>
+            <th>Option</th>
+            <th>Type</th>
+            <th>Default</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><code>clearImageAfterSong</code></td>
+            <td>Boolean</td>
+            <td><code>false</code></td>
+            <td>Clear displayed images when MP3 finishes playing</td>
+        </tr>
+        <tr>
+            <td><code>clearTextAfterImage</code></td>
+            <td>Boolean</td>
+            <td><code>false</code></td>
+            <td>Clear displayed text when new image is shown</td>
+        </tr>
+        <tr>
+            <td><code>clearTextAfterSong</code></td>
+            <td>Boolean</td>
+            <td><code>false</code></td>
+            <td>Clear displayed text when MP3 finishes playing</td>
+        </tr>
+        <tr>
+            <td><code>imageDelay</code></td>
+            <td>Number</td>
+            <td><code>10</code></td>
+            <td>Seconds to display image before moving to next item</td>
+        </tr>
+        <tr>
+            <td><code>maxTextLength</code></td>
+            <td>Number</td>
+            <td><code>16384</code></td>
+            <td>Maximum text file size to display (in bytes)</td>
+        </tr>
+        <tr>
+            <td><code>onStart</code></td>
+            <td>Function</td>
+            <td><code>null</code></td>
+            <td>Callback when player starts. Must return array of queue names</td>
+        </tr>
+        <tr>
+            <td><code>onStop</code></td>
+            <td>Function</td>
+            <td><code>null</code></td>
+            <td>Callback when player stops</td>
+        </tr>
+        <tr>
+            <td><code>onPrevious</code></td>
+            <td>Function</td>
+            <td><code>null</code></td>
+            <td>Callback when previous track button clicked</td>
+        </tr>
+        <tr>
+            <td><code>onNext</code></td>
+            <td>Function</td>
+            <td><code>null</code></td>
+            <td>Callback when next track button clicked</td>
+        </tr>
+        <tr>
+            <td><code>onToggle</code></td>
+            <td>Function</td>
+            <td><code>null</code></td>
+            <td>Callback when pause/play toggled. Receives boolean parameter</td>
+        </tr>
+    </tbody>
+</table>
+
+<h4>Playback Behaviors</h4>
+<table>
+    <thead>
+        <tr>
+            <th>Behavior</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><code>repeatQueue</code></td>
+            <td>Repeat current channel indefinitely</td>
+        </tr>
+        <tr>
+            <td><code>repeatAllQueues</code></td>
+            <td>Cycle through all selected channels, repeating</td>
+        </tr>
+        <tr>
+            <td><code>nextQueue</code></td>
+            <td>Move to next channel when current ends (no repeat)</td>
+        </tr>
+        <tr>
+            <td><code>waitAtEnd</code></td>
+            <td>Wait 30 seconds at end of channel for new content</td>
+        </tr>
+        <tr>
+            <td><code>stopAtEnd</code></td>
+            <td>Stop playback when channel ends</td>
+        </tr>
+        <tr>
+            <td><code>randomQueue</code></td>
+            <td>Switch to random channel when current ends</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>B. Advanced Streaming Features</h3>
+
+<h4>Chunked Fetch with Offset/Length</h4>
+<p>The <code>fetch</code> action now supports optional <code>offset</code> and <code>length</code> parameters for partial file retrieval, enabling true streaming and progressive download capabilities:</p>
+
+<pre><code>POST /index.php
+Content-Type: application/x-www-form-urlencoded
+
+action=fetch&amp;q=music_channel&amp;after=20251117120000.bin&amp;offset=0&amp;length=65536
+</code></pre>
+
+<table>
+    <thead>
+        <tr>
+            <th>Parameter</th>
+            <th>Required</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><code>offset</code></td>
+            <td>Optional</td>
+            <td>Byte offset to start reading from (0-based)</td>
+        </tr>
+        <tr>
+            <td><code>length</code></td>
+            <td>Optional</td>
+            <td>Number of bytes to read from offset position</td>
+        </tr>
+    </tbody>
+</table>
+
+<p><strong>Response Headers:</strong></p>
+<pre><code>Content-Type: application/octet-stream
+Content-Disposition: attachment; filename="20251117120100.bin"
+Content-Length: 65536
+X-ZOSCII-Offset: 0
+X-ZOSCII-Total-Length: 3145728
+</code></pre>
+
+<p><strong>Use Cases:</strong></p>
+<ul>
+    <li>Progressive loading of large audio files</li>
+    <li>Bandwidth-limited streaming</li>
+    <li>Mobile-friendly partial downloads</li>
+    <li>Resume interrupted downloads</li>
+</ul>
+
+<p><strong>Note:</strong> The current Web Radio player implementation fetches complete files. The streaming infrastructure is available for custom implementations.</p>
+
+<h3>C. Publisher Tool</h3>
+
+<p>The ZOSCII MQ Publisher provides a simple interface for uploading content to queues.</p>
+
+<h4>HTML Structure</h4>
+<pre><code>&lt;div id="geZOSCIIMQPublisher" class="gsZOSCIIPublisher"&gt;
+    &lt;input class="geQueueURL" type="text" value="index.php"&gt;
+    &lt;input class="geQueueName" type="text" value="test_radio"&gt;
+    &lt;input class="geRetention" type="number" value="7"&gt;
+    &lt;input class="geROMFile" type="file"&gt;
+    &lt;input class="gePublishFile" type="file"&gt;
+    &lt;button class="gePublishFileButton"&gt;Publish File&lt;/button&gt;
+    &lt;div class="geStatus"&gt;&lt;/div&gt;
+&lt;/div&gt;
+</code></pre>
+
+<h4>JavaScript Initialization</h4>
+<pre><code>&lt;script src="js/tozoscii.js"&gt;&lt;/script&gt;
+&lt;script src="js/zosciipublisher.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+$(document).ready(function() {
+    var objPublisher = new ZOSCIIMQPublisher('geZOSCIIMQPublisher', {});
+});
+&lt;/script&gt;
+</code></pre>
+
+<h4>Publishing Process</h4>
+<ol>
+    <li>User selects ROM file (for ZOSCII encoding)</li>
+    <li>User selects content file (MP3, JPEG, or text)</li>
+    <li>User configures queue name and retention days</li>
+    <li>Publisher encodes file using ZOSCII ROM</li>
+    <li>Encoded content uploaded to queue via <code>publish</code> action</li>
+</ol>
+
+<h3>D. Content Type Support and Sequencing</h3>
+
+<p>ZOSCII MQ Web Radio supports three file types that are automatically detected and displayed appropriately. The power comes from <strong>sequencing these types</strong> in the queue to create rich multimedia experiences.</p>
+
+<h4>Supported File Types</h4>
+
+<h5>1. MP3 Audio</h5>
+<ul>
+    <li>Automatically detected via file signature (FF FB, FF F3, or ID3 tag)</li>
+    <li>Displays ID3v1 metadata (Title, Artist, Album, Year)</li>
+    <li>Web Audio API oscilloscope visualization</li>
+    <li>Progress bar with seek functionality</li>
+</ul>
+
+<h5>2. JPEG Images</h5>
+<ul>
+    <li>Automatically detected via signature (FF D8 FF)</li>
+    <li>Displays for configurable duration (<code>imageDelay</code> option)</li>
+    <li>Can clear text when image appears</li>
+    <li>Automatically advances to next queue item</li>
+</ul>
+
+<h5>3. UTF-8 Text</h5>
+<ul>
+    <li>Full Unicode support (including emoji, CJK, Arabic, etc.)</li>
+    <li>Proper ES5-compatible UTF-8 decoding</li>
+    <li>HTML entity escaping for security</li>
+    <li>Scrollable display with auto-scroll to top</li>
+    <li>Size limit configurable via <code>maxTextLength</code></li>
+</ul>
+
+<h4>Content Sequencing Use Cases</h4>
+
+<p>The player processes queue items sequentially, allowing you to create different listening experiences by controlling the order you publish content:</p>
+
+<h5>Use Case 1: Music Only</h5>
+<p><strong>Publishing Pattern:</strong> MP3 → MP3 → MP3 → MP3</p>
+<p><strong>User Experience:</strong> Continuous music playback, classic radio station</p>
+<pre><code>Queue: "classic_rock"
+├─ 001-song1.mp3
+├─ 002-song2.mp3
+├─ 003-song3.mp3
+└─ 004-song4.mp3
+</code></pre>
+
+<h5>Use Case 2: Images with Music</h5>
+<p><strong>Publishing Pattern:</strong> JPEG → MP3 → JPEG → MP3 → JPEG → MP3</p>
+<p><strong>User Experience:</strong> Album art appears before each song, then music plays</p>
+<pre><code>Queue: "visual_music"
+├─ 001-album-art-1.jpg      (displays 10 seconds)
+├─ 002-song1.mp3            (plays until end)
+├─ 003-album-art-2.jpg      (displays 10 seconds)
+├─ 004-song2.mp3            (plays until end)
+├─ 005-band-photo.jpg       (displays 10 seconds)
+└─ 006-song3.mp3            (plays until end)
+</code></pre>
+<p><strong>Tip:</strong> Configure <code>clearImageAfterSong: true</code> to remove the image when music finishes.</p>
+
+<h5>Use Case 3: Rich Multimedia Experience</h5>
+<p><strong>Publishing Pattern:</strong> JPEG → TEXT → MP3 → JPEG → TEXT → MP3</p>
+<p><strong>User Experience:</strong> Album art, then lyrics/info, then music with lyrics visible</p>
+<pre><code>Queue: "lyric_radio"
+├─ 001-album-cover.jpg      (displays 10 seconds)
+├─ 002-lyrics.txt           (displays immediately after image)
+├─ 003-song.mp3             (plays with lyrics visible)
+├─ 004-next-album.jpg       (displays 10 seconds, optionally clears lyrics)
+├─ 005-next-lyrics.txt      (displays immediately)
+└─ 006-next-song.mp3        (plays with new lyrics visible)
+</code></pre>
+<p><strong>Configuration Options:</strong></p>
+<ul>
+    <li><code>clearTextAfterImage: true</code> - Lyrics disappear when new album art appears</li>
+    <li><code>clearTextAfterImage: false</code> - Lyrics stay visible until new text file loads</li>
+    <li><code>clearTextAfterSong: true</code> - Lyrics disappear when song ends</li>
+</ul>
+
+<p><strong>Example: Multilingual Lyrics Display</strong></p>
+<p>Text files can contain lyrics in 15+ languages simultaneously, all rendered correctly:</p>
+<pre><code>[Verse 1 - Pain &amp; Suffering]
+Why do we fight? (English)
+为什么我们战斗？(Chinese: Why do we fight?)
+¿Por qué hay dolor? (Spanish: Why is there pain?)
+हम क्यों रोते हैं? (Hindi: Why do we cry?)
+لماذا نعاني؟ (Arabic: Why do we suffer?)
+</code></pre>
+
+<h4>Future Content Types</h4>
+<p>The player's architecture supports adding new content types in the future:</p>
+<ul>
+    <li>Video files (MP4, WebM)</li>
+    <li>PDF documents</li>
+    <li>Animated GIFs</li>
+    <li>WebVTT subtitles</li>
+    <li>Interactive HTML content</li>
+</ul>
+<p>New types can be detected via file signatures and handled with appropriate display logic in the <code>identifyType()</code> and dispatch functions.</p>
+
+<h3>E. Customization Examples</h3>
+
+<h4>Example 1: Basic Embedded Player</h4>
+<p>Minimal player for a single radio channel (see <code>player-raw.html</code>):</p>
+<pre><code>&lt;!-- Unstyled, functional player --&gt;
+&lt;div id="player"&gt;
+    &lt;input class="geQueueUrl" value="https://radio.example.com/index.php"&gt;
+    &lt;textarea class="geQueueNames"&gt;my_channel&lt;/textarea&gt;
+    &lt;input class="geROMFile" type="file"&gt;
+    &lt;button class="geStartButton"&gt;Start&lt;/button&gt;
+    &lt;audio class="gePlayer" controls&gt;&lt;/audio&gt;
+&lt;/div&gt;
+</code></pre>
+
+<h4>Example 2: Fully Styled Station (player.html)</h4>
+<p>Complete radio station interface with:</p>
+<ul>
+    <li>Custom branding/logo</li>
+    <li>Hidden configuration fields (pre-configured)</li>
+    <li>Visual progress indicators</li>
+    <li>Drag-and-drop ROM file support</li>
+    <li>Responsive CSS layout</li>
+</ul>
+
+<h4>Example 3: Multi-Station Aggregator</h4>
+<pre><code>// Allow users to manage favorite stations
+var arrStations = [
+    { name: 'Station A', url: 'https://a.com/index.php', queues: ['music', 'talk'] },
+    { name: 'Station B', url: 'https://b.com/index.php', queues: ['jazz', 'news'] }
+];
+
+// Populate station selector
+// User selects station, queues auto-populate
+// Player connects to selected station's URL
+</code></pre>
+
+<h3>F. Security Considerations</h3>
+
+<h4>1. XSS Protection</h4>
+<p>All user-generated content is properly escaped:</p>
+<ul>
+    <li>Text content uses <code>htmlEncode()</code> function</li>
+    <li>ID3 tags sanitized before display</li>
+    <li>Filenames validated and escaped</li>
+</ul>
+
+<h4>2. CORS Configuration</h4>
+<p>For cross-origin radio players, configure the MQ server:</p>
+<pre><code># Apache .htaccess
+Header set Access-Control-Allow-Origin "https://yourradio.com"
+Header set Access-Control-Allow-Methods "POST, GET, OPTIONS"
+Header set Access-Control-Allow-Headers "Content-Type"
+</code></pre>
+
+<h4>3. ROM File Security</h4>
+<p>ROM files are processed client-side and never uploaded to the server, protecting the encryption key.</p>
+
+<h3>G. Deployment Scenarios</h3>
+
+<h4>Scenario 1: Personal Radio Station</h4>
+<ul>
+    <li>Single queue: "my_radio"</li>
+    <li>Publisher uploads MP3s with images/lyrics</li>
+    <li>Player embedded on personal website</li>
+    <li>Friends connect with shared ROM file</li>
+</ul>
+
+<h4>Scenario 2: Multi-Channel Web Radio</h4>
+<ul>
+    <li>Multiple queues: "Rock", "Jazz", "Talk Shows"</li>
+    <li>Users select channels from dropdown</li>
+    <li>Each channel has its own content stream</li>
+    <li>Behavior: <code>repeatAllQueues</code> for continuous playback</li>
+</ul>
+
+<h4>Scenario 3: Event Streaming</h4>
+<ul>
+    <li>Live event queue updated in real-time</li>
+    <li>Behavior: <code>waitAtEnd</code> (checks for new content every 30s)</li>
+    <li>Images show speaker slides</li>
+    <li>Text displays presentation notes</li>
+</ul>
+
+<h4>Scenario 4: Podcast Distribution</h4>
+<ul>
+    <li>Episode queue with sequential content</li>
+    <li>Behavior: <code>stopAtEnd</code> (user manually advances)</li>
+    <li>Previous/Next buttons for episode navigation</li>
+    <li>Episode metadata in ID3 tags</li>
+</ul>
+
+<h3>H. Integration with Existing Web Infrastructure</h3>
+
+<h4>WordPress Integration</h4>
+<pre><code>&lt;!-- In WordPress post/page --&gt;
+&lt;div id="radio"&gt;&lt;/div&gt;
+&lt;script src="/wp-content/themes/mytheme/js/zosciiradioplayer.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+// Initialize player with WordPress theme styling
+&lt;/script&gt;
+</code></pre>
+
+<h4>Static Site Generators</h4>
+<ul>
+    <li>Jekyll, Hugo, Next.js: Include player HTML in template</li>
+    <li>Configure queue URLs in site config</li>
+    <li>Style with site's existing CSS framework</li>
+</ul>
+
+<h3>I. Live Demo</h3>
+<p><strong>Cyborg Unicorn Radio:</strong> <a href="https://cyborgunicorn.com.au/radio" target="_blank">cyborgunicorn.com.au/radio</a></p>
+<p>Features:</p>
+<ul>
+    <li>Two channels: "Cyborg Unicorn" and "ZOSCII"</li>
+    <li>Multilingual content support</li>
+    <li>Album art display</li>
+    <li>Lyrics synchronized with music</li>
+    <li>Custom branding and styling</li>
+</ul>
+
+<h3>J. Browser Compatibility</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Browser</th>
+            <th>Minimum Version</th>
+            <th>Notes</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Chrome</td>
+            <td>49+</td>
+            <td>Full support</td>
+        </tr>
+        <tr>
+            <td>Firefox</td>
+            <td>52+</td>
+            <td>Full support</td>
+        </tr>
+        <tr>
+            <td>Safari</td>
+            <td>10+</td>
+            <td>Full support</td>
+        </tr>
+        <tr>
+            <td>Edge</td>
+            <td>14+</td>
+            <td>Full support</td>
+        </tr>
+        <tr>
+            <td>IE 11</td>
+            <td>11</td>
+            <td>Limited (no Web Audio oscilloscope)</td>
+        </tr>
+    </tbody>
+</table>
+
+<p><strong>Note:</strong> ES5 compatibility ensures the player works on older browsers. Web Audio API features (oscilloscope) gracefully degrade on unsupported browsers.</p>
+
+<h3>K. Replication and Distribution Strategies</h3>
+
+<h4>Web Radio Replication with replikate.php</h4>
+<p>ZOSCII MQ Web Radio supports the same federated replication model as standard ZOSCII MQ queues. Any radio station can replicate content from another station's queue using <code>replikate.php</code>:</p>
+
+<pre><code>// Station B replicates from Station A's radio queue
+GET /replikate.php?url=https://stationA.com/index.php&amp;sq=music_channel&amp;tq=replicated_music
+</code></pre>
+
+<p><strong>Architectural Principle:</strong> The system is intentionally designed so that <em>you cannot prevent replication without preventing playback</em>. If someone can listen to your station, they can replicate it. This fundamental design choice enables the democratized, federated network model while forcing content creators to use ROM-based access control rather than technical restrictions.</p>
+
+<p>This enables:</p>
+<ul>
+    <li>Regional mirrors of popular stations (reduce latency)</li>
+    <li>Backup/archive of radio content</li>
+    <li>Content aggregation (pull from multiple sources into one queue)</li>
+    <li>Load distribution across geographic locations</li>
+	<li>Content collection and hoarding</li>
+</ul>
+
+<h4>ROM-Based Access Control</h4>
+
+<p>The ROM file serves as both an encoding key and an access control mechanism for radio channels. This enables two distinct distribution models:</p>
+
+<h5>Private Channels (Controlled Distribution)</h5>
+<p><strong>Use Case:</strong> Monetization, subscriber-only content, or restricted distribution</p>
+
+<p><strong>Strategy:</strong></p>
+<ul>
+    <li>Publisher encodes content with a custom, private ROM file</li>
+    <li>Only users with the exact ROM file can decode and play the content</li>
+    <li>ROM distributed through controlled channels (payment, subscription, membership)</li>
+    <li>Even if queue is publicly replicated, content remains unplayable without ROM</li>
+</ul>
+
+<p><strong>Example Scenarios:</strong></p>
+<ul>
+    <li><strong>Subscription Radio:</strong> Monthly subscribers receive ROM file via email</li>
+    <li><strong>Premium Content:</strong> Paid albums encoded with unique ROMs per customer</li>
+    <li><strong>Corporate Radio:</strong> Internal company radio with ROM distributed only to employees</li>
+    <li><strong>Artist Direct Sales:</strong> Musicians sell ROM files for exclusive content access</li>
+</ul>
+
+<p><strong>Access Control:</strong> ZOSCII provides Information Theoretic Security (ITS) - the world's first practical implementation that is mathematically more secure than traditional encryption and dramatically faster to decode. The encoded content is mathematically unbreakable without the ROM. However, this doesn't prevent piracy - someone can share the ROM file just as easily as sharing the content itself. The protection comes from <em>controlling who has the ROM</em>, not from making the content uncrackable. For monetization, you must manage ROM distribution carefully (subscriptions, unique ROMs per customer, legal agreements, etc.).</p>
+
+<h5>Public Channels (Open Distribution)</h5>
+<p><strong>Use Case:</strong> Maximum reach, democratized radio, community content</p>
+
+<p><strong>Strategy:</strong></p>
+<ul>
+    <li>Publisher encodes content with the <strong>official Cyborg Unicorn Logo ROM</strong> (provided with the player)</li>
+    <li>Anyone with the player has the standard ROM and can decode/play content</li>
+    <li>Content freely replicable across the entire network</li>
+    <li>Creates a truly democratized, open radio network</li>
+</ul>
+
+<p><strong>Benefits:</strong></p>
+<ul>
+    <li><strong>Zero Barrier to Entry:</strong> Users download player once, access all public stations</li>
+    <li><strong>Network Effect:</strong> More stations = more value for all users</li>
+    <li><strong>Viral Distribution:</strong> Content spreads organically via replication</li>
+    <li><strong>Censorship Resistant:</strong> Decentralized mirrors make takedowns difficult</li>
+</ul>
+
+<p><strong>Recommendation:</strong> If you want your radio station to be part of a global, open network where anyone can listen and stations can freely replicate each other's content, use the official Cyborg Unicorn Logo ROM file included with the ZOSCII MQ Web Radio Player distribution.</p>
+
+<h5>Hybrid Strategy</h5>
+<p>Stations can operate both public and private channels simultaneously:</p>
+
+<pre><code>Station Configuration:
+├─ Public Queue: "free_music"          (Cyborg Unicorn ROM - open access)
+├─ Premium Queue: "exclusive_content"  (Custom ROM - paid subscribers)
+└─ Archive Queue: "classics"           (Cyborg Unicorn ROM - open access)
+</code></pre>
+
+<p>This allows monetization of premium content while building audience with free content.</p>
+
+<h4>Replication Network Example</h4>
+<pre><code>
+            Station A (Origin - Australia)
+                 Queue: "aussie_rock"
+              [Cyborg Unicorn ROM]
+                        │
+         ┌──────────────┼──────────────┐
+         │              │              │
+         ▼              ▼              ▼
+    Station B      Station C      Station D
+    (US Mirror)   (EU Mirror)   (Asia Mirror)
+    replikate     replikate     replikate
+         │              │              │
+         ▼              ▼              ▼
+   500 US users   300 EU users   200 Asia users
+</code></pre>
+
+<p><strong>Result:</strong> 1,000 users globally accessing content with regional low-latency, all using the same public ROM. Station A publishes once, content distributed worldwide automatically.</p>
+
+<h4>ROM Distribution Best Practices</h4>
+
+<table>
+    <thead>
+        <tr>
+            <th>Distribution Model</th>
+            <th>ROM Type</th>
+            <th>Distribution Method</th>
+            <th>Use Case</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Open Network</strong></td>
+            <td>Cyborg Unicorn Logo ROM</td>
+            <td>Bundled with player download</td>
+            <td>Public radio, community stations</td>
+        </tr>
+        <tr>
+            <td><strong>Paid Access</strong></td>
+            <td>Custom ROM</td>
+            <td>Email after payment</td>
+            <td>Subscription services, premium content</td>
+        </tr>
+        <tr>
+            <td><strong>Membership</strong></td>
+            <td>Custom ROM</td>
+            <td>Member portal download</td>
+            <td>Clubs, organizations, private groups</td>
+        </tr>
+        <tr>
+            <td><strong>One-Time Purchase</strong></td>
+            <td>Unique ROM per purchase</td>
+            <td>Download link after purchase</td>
+            <td>Album sales, artist direct distribution</td>
+        </tr>
+        <tr>
+            <td><strong>Corporate Internal</strong></td>
+            <td>Custom ROM</td>
+            <td>IT department, intranet</td>
+            <td>Company radio, training content</td>
+        </tr>
+    </tbody>
+</table>
+
+<div style="background-color: #e3f2fd; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2196f3;">
+    <h4>🌍 Building the Democratized Radio Network</h4>
+    <p><strong>Vision:</strong> A global network of independent radio stations, all using the Cyborg Unicorn Logo ROM, freely replicating each other's content and creating a censorship-resistant, truly open radio ecosystem.</p>
+    <ul>
+        <li><strong>No Central Authority:</strong> Each station operates independently</li>
+        <li><strong>No Licensing Fees:</strong> Content shared freely via replication</li>
+        <li><strong>No Geographic Barriers:</strong> Mirror content anywhere in the world</li>
+        <li><strong>No Technical Barriers:</strong> Standard ROM works everywhere</li>
+    </ul>
+    <p><strong>Join the Network:</strong> Use the official Cyborg Unicorn Logo ROM for your station and become part of the world's first truly open, federated web radio network.</p>
+</div>
+
+<div style="background-color: #fff3cd; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #ffc107;">
+    <strong>⚠️ Security Note:</strong> ROM files must be kept secure for private channels. Anyone with access to the ROM can decode all content encoded with it. For high-value content, consider:
+    <ul>
+        <li>Distributing unique ROM files per customer/subscriber</li>
+        <li>Rotating ROM files periodically</li>
+        <li>Legal agreements restricting ROM redistribution</li>
+        <li>Watermarking or fingerprinting ROM files to track leaks</li>
+    </ul>
+</div>
+
+<h3>L. Performance Characteristics</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Metric</th>
+            <th>Value</th>
+            <th>Notes</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>JavaScript Size</td>
+            <td>~25 KB</td>
+            <td>Unminified</td>
+        </tr>
+        <tr>
+            <td>Memory Footprint</td>
+            <td>5-15 MB</td>
+            <td>Varies with ROM size</td>
+        </tr>
+        <tr>
+            <td>Fetch Interval</td>
+            <td>~2 seconds</td>
+            <td>Between tracks</td>
+        </tr>
+        <tr>
+            <td>ZOSCII Decode Speed</td>
+            <td>~100 MB/s</td>
+            <td>Modern browsers</td>
+        </tr>
+        <tr>
+            <td>Max Concurrent Players</td>
+            <td>Unlimited</td>
+            <td>Client-side only</td>
+        </tr>
+    </tbody>
+</table>
+
+<div style="background-color: #e8f5e9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+    <h4>🎵 ZOSCII MQ Web Radio Advantages</h4>
+    <ul>
+        <li><strong>Zero Server Processing:</strong> All decoding happens client-side</li>
+        <li><strong>Perfect for ZOSCII:</strong> Server never sees unencoded content (zero knowledge gained)</li>
+        <li><strong>Simple Integration:</strong> Drop-in JavaScript component</li>
+        <li><strong>Bandwidth Efficient:</strong> Progressive fetch with pointer tracking</li>
+        <li><strong>Multi-Format:</strong> Audio, images, and multilingual text in one player</li>
+        <li><strong>No Dependencies:</strong> Works with any ZOSCII MQ server</li>
+    </ul>
+</div>
+
+<div style="background-color: #fff3cd; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #ffc107;">
+    <strong>⚠️ Current Limitations:</strong>
+    <ul>
+        <li>Publisher tool is basic - missing validation and error handling (development in progress)</li>
+        <li>Chunked streaming (offset/length) not yet implemented in player</li>
+        <li>No playlist export/import functionality</li>
+        <li>Limited mobile touch controls</li>
     </ul>
 </div>
 

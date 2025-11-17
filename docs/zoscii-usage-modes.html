@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZOSCII Modes of Use</title>
+<link rel="stylesheet" href="cu-styles.css">
+</head>
+<body>
+<div class="container">
+
+<h1>ZOSCII Modes of Use</h1>
+
+<h2>Mode 1: Deniability Mode</h2>
+<p><strong>Property:</strong> Data absence - addresses without ROM are meaningless</p>
+<p><strong>Security:</strong> Cannot prove which decoding is correct (epistemological)</p>
+<p><strong>Key Distribution:</strong> Genesis ROM NOT shared, kept secret</p>
+<ul>
+<li>Crypto key storage on seized devices ("That's my shopping list, not a key")</li>
+<li>Whistleblower communications (cannot prove content)</li>
+<li>Border crossing with encrypted data (plausible alternative meanings)</li>
+<li>Private document storage where content must remain deniable</li>
+</ul>
+
+<h2>Mode 2a: Noise Communication Mode</h2>
+<p><strong>Property:</strong> Messages appear as random data in transit</p>
+<p><strong>Security:</strong> Traffic analysis resistant, cannot prove communication occurred</p>
+<p><strong>Key Distribution:</strong> Shared Genesis ROM with communicating parties</p>
+<ul>
+<li>Covert channel communications (looks like network noise)</li>
+<li>Secure messaging between parties (A to B with noise)</li>
+<li>Command and control channels (operational security)</li>
+<li>Anti-surveillance communications (metadata protection)</li>
+</ul>
+
+<h2>Mode 2b: Zero-Config IoT Mode</h2>
+<p><strong>Property:</strong> Devices auto-discover and communicate without pairing</p>
+<p><strong>Security:</strong> Wrong devices see noise and ignore, no attack surface</p>
+<p><strong>Key Distribution:</strong> Shared Genesis ROM with communicating devices</p>
+<ul>
+<li>Smart home devices (automatic secure mesh)</li>
+<li>Car security systems (phone unlocks without Bluetooth pairing)</li>
+<li>Industrial sensors (self-organizing secure networks)</li>
+<li>Medical device networks (automatic HIPAA-compliant communication)</li>
+</ul>
+
+<h2>Mode 3: Automatic Key Rotation Mode</h2>
+<p><strong>Property:</strong> Rolling ROM generates unique "key" per message/block</p>
+<p><strong>Security:</strong> Self-generating one-time pad effect, no key reuse</p>
+<p><strong>Key Distribution:</strong> Genesis ROM NOT shared, generated keysets are</p>
+<ul>
+<li>Long-term secure communications (automatic OTP-like behavior)</li>
+<li>Message chains (each message has different effective key)</li>
+<li>Session security (automatic rotation without manual intervention)</li>
+<li>Blockchain links (each block uses previous blocks in Rolling ROM)</li>
+</ul>
+
+<h2>Mode 4: Filtered Access Mode</h2>
+<p><strong>Property:</strong> Same Genesis ROM, different memory blocks decode different data</p>
+<p><strong>Security:</strong> Hierarchical/selective disclosure, partial ROM exposure doesn't compromise all</p>
+<p><strong>Key Distribution:</strong> Genesis ROM can be shared, but better for some cases to share a Filter ROM for safety</p>
+<ul>
+<li>API key management (different teams access different keys)</li>
+<li>Multi-tenant SaaS (each tenant decodes only their data)</li>
+<li>Corporate hierarchy (CEO sees all, managers see subset)</li>
+<li>Time-based access rotation (Q1 keys vs Q2 keys)</li>
+<li>Partial ROM compromise recovery (exposed subset doesn't lose everything)</li>
+</ul>
+
+<h2>Mode 5: Integrity Proof Mode (ZTB)</h2>
+<p><strong>Property:</strong> Tamperproof verification via pointer alignment</p>
+<p><strong>Security:</strong> 10^152900 combinations per block (combinatorially impossible to forge)</p>
+<p><strong>Key Distribution:</strong> Genesis ROM sharing does not affect tamperproof nature</p>
+<ul>
+<li>Legal document timestamping (prove unmodified since creation)</li>
+<li>Academic credential verification (diploma authenticity)</li>
+<li>Supply chain provenance (product history integrity)</li>
+<li>Medical records (prove data unchanged)</li>
+<li>Financial audit trails (tamper-evident transaction logs)</li>
+</ul>
+
+<h2>Personal (Single-User) Mode</h2>
+<p><strong>Property:</strong> Local-only encoding of personal storage (e.g., a hard drive)</p>
+<p><strong>Security:</strong> No external key sharing required; secrecy depends on local key storage and device security</p>
+<p><strong>Key Distribution:</strong> Key material (encodings / Rolling ROM variants) is generated and kept locally — the Genesis ROM can remain static and public if desired</p>
+<ul>
+<li>Encrypting your personal hard drive where only you need access (no sharing of keys)</li>
+<li>Key never needs to be shared — you can derive encodings locally from the Genesis ROM + local seed/entropy</li>
+<li>Backup & recovery: securely back up your derived key material or recovery seed (loss of key = loss of data)</li>
+<li>Secure storage: store keys in a hardware secure enclave, TPM, or offline backup</li>
+<li>Deniability: optional — may apply deniability layering (Mode 1) even for personal use</li>
+<li>Non-shared Genesis ROM: can remain static/public because active key material is local and never shared</li>
+</ul>
+
+<h2>Combined Modes</h2>
+<ul>
+<li><strong>Secure Blockchain with Private Payloads:</strong> Mode 5 (Integrity Proof) for blockchain structure, Mode 1 or 2a (Deniability) for ZOSCII-encoded payloads within blocks; public can verify integrity, only ROM holders read content</li>
+<li><strong>Enterprise IoT with Hierarchical Access:</strong> Mode 2b (Zero-Config IoT) for device communication, Mode 3 (Automatic Rotation) for ongoing security, Mode 4 (Filtered Access) for different access levels</li>
+<li><strong>Whistleblower Document Drop:</strong> Mode 1 (Deniability) for document content, Mode 2a (Noise Communication) for transmission</li>
+</ul>
+
+<h2>Key Distinctions</h2>
+<ul>
+<li><strong>Deniability vs Integrity:</strong> Deniability (Mode 1): "Cannot prove what this is"; Integrity (Mode 5): "Can prove this hasn't changed"</li>
+<li><strong>Authentication vs Verification:</strong> Real-time authentication ❌ not suitable; Historical verification ✅ perfect (ZTB proves data unchanged since creation)</li>
+<li><strong>Quantum Resistance:</strong> All modes are quantum-resistant; ZOSCII files cannot reveal original data even with unlimited computing power; plausible deniability ensures observers cannot know content without key/encodings</li>
+</ul>
+
+<h2>Important Notes</h2>
+<ul>
+<li>With traditional encryption, your data remains in the encrypted file; losing the key makes recovery extremely unlikely, though theoretically possible with future breakthroughs</li>
+<li>With ZOSCII, your data is <strong>never stored</strong> in the encoded file; losing the Genesis ROM or local key material means data is irretrievably lost</li>
+<li>During transmission, ZOSCII sends the treasure map, not the treasure — without the Genesis ROM, the signal is indistinguishable from random noise</li>
+</ul>
+
+</div>
+</body>
+</html>

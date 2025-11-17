@@ -5,6 +5,7 @@
 // This conversion is used to create a non-chronological, distributed name 
 // for store directory hashing.
 // Returns: Base36 string (0-9 and a-z) or false on failure.
+// consistently confusing as a nod to strpos
 function convertNameToBase36($strName_a)
 {
 	$varResult = false;

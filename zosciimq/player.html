@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Cyborg Unicorn - ZOSCII MQ Web Radio</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="3p/jquery-3.7.1.min.js"></script>
+<link rel="stylesheet" type="text/css" href="3p/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="css/player.css">
+</head>
+<body class="gsBody">
+
+<div id="geZOSCIIMQPlayer" class="gsZOSCIIPlayer">
+    <!-- Header with Logo -->
+	<!-- <div class="gsPlayerHeader"> -->
+		<!-- <img src="logo.png" alt="Cyborg Unicorn Logo" class="gsLogo"> -->
+		<!-- <h1 class="gsTitle">Cyborg Unicorn Radio Player</h1> -->
+	<!-- </div> -->
+
+    <!-- Main Content -->
+    <div class="gsPlayerContent">
+        <!-- Configuration Section -->
+		<div class="geConfigSection gsConfigSection">
+			<img src="logo.png" alt="Cyborg Unicorn Logo" class="geLogo gsLogo">
+			<div class="gsSectionTitle">Cyborg Unicorn - ZOSCII MQ Web Radio - Configuration</div>
+			
+			<div class="mb-3 gsHidden">
+				<label class="form-label">Web Radio Station URL:</label>
+				<input class="geQueueUrl form-control" type="text" value="index.php">
+			</div>
+			
+			<div class="mb-3">
+				<label class="form-label">Chennel Names:</label>
+				<select class="geQueueNames form-select" multiple size="6">
+				</select>
+			</div>
+			
+			<div class="mb-3 gsHidden">
+				<label class="form-label">ROM File:</label>
+				<input class="geROMFile form-control" type="file">
+			</div>
+		</div>
+
+		<div class="geChannelSection">
+			<div class="mb-3">
+				<!-- <label class="form-label">Behavior:</label> -->
+				<select class="geBehavior form-select">
+					<option value="repeatQueue">Repeat Channel</option>
+					<option value="repeatAllQueues">Repeat Selected Channels</option>
+					<option value="nextQueue">Next Channel</option>
+					<option value="waitAtEnd">Wait at End</option>
+					<option value="stopAtEnd">Stop at End</option>
+					<option value="randomQueue">Random Channel</option>
+				</select>
+			</div>
+			
+			<!-- Status Section -->
+			<div class="gsPlaybackSection">
+				<div class="geStatus gsStatus">Ready to play...</div>
+				<div class="geNowPlaying gsNowPlaying">No track playing</div>
+			</div>
+
+			<!-- Controls Section -->
+			<div class="gsControlsSection">
+				<button class="geStartButton gsStartButton">Connect to Channel</button>
+				<button class="geStopButton gsStopButton gsHidden">Stop</button>
+				<button class="geToggleButton gsToggleButton gsHidden">Pause</button>
+				<button class="gePreviousButton gsPreviousButton gsHidden">Previous</button>
+				<button class="geNextButton gsNextButton gsHidden">Next</button>
+
+				<div class="geProgressBar gsProgressBar gsHidden"></div>
+				<div class="geOscilloscope gsOscilloscope gsHidden"></div>
+			</div>
+		</div>
+		
+		<!-- <div class="gsPadding">&nbsp;</div> -->
+
+		<div class="gePlayerSection gsHidden">
+			<!-- Audio Player -->
+			<div class="gsPlaybackSection gsHidden">
+				<div class="gsSectionTitle">Audio Player</div>
+				<audio class="gePlayer gsPlayer" xcontrols></audio>
+			</div>
+
+			<!-- Media Display Section -->
+			<div class="gsMediaSection">
+				<div class="geImage gsImage"></div>
+				<div class="geText gsText"></div>
+			</div>
+
+			<!-- Play Log Section -->
+			<div class="gsLogSection gsHidden">
+				<div class="gsSectionTitle">Play Log</div>
+				<div class="gsPlayLog"></div>
+			</div>
+		</div>
+
+		<!-- Copyright Section -->
+		<div class="gsCopyrightSection gsCentified">
+			<p>ZOSCII MQ Web Radio</p>
+			<div>
+				<a href="https://github.com/PrimalNinja/cyborgzoscii/blob/master/LICENSE" target="_blank">MIT License</a>
+			</div>
+			
+			<br/>
+			<p>© 2025 Cyborg Unicorn Pty Ltd. Open source under MIT License. Commercial License options available. We are not using any Cookies!</p>
+			<div>
+				<a href="https://cyborgunicorn.com.au" target="_blank">cyborgunicorn.com.au</a>
+			</div>
+			
+			<br/>
+			<p>Revolutionizing digital security through mathematical impossibility</p>
+		</div>
+    </div>
+</div>
+
+<script src="js/zosciiradioplayer.js"></script>
+<script>
+$(document).ready(function() 
+{
+	function geZOSCIIMQPlayerInstance()
+	{
+		m_strComponentID = 'geZOSCIIMQPlayer';
+		
+		var arrQueueNames = ['Cyborg Unicorn', 'ZOSCII'];
+		
+		function element(strScope_a, strClass_a)
+		{
+			return $('.' + strClass_a, '#' + strScope_a);
+		}
+		
+		// Populate queue listbox
+		var objQueueSelect = element(m_strComponentID, 'geQueueNames');
+		for (var intI = 0; intI < arrQueueNames.length; intI++)
+		{
+			objQueueSelect.append('<option selected="selected" value="' + arrQueueNames[intI] + '">' + arrQueueNames[intI] + '</option>');
+		}
+	
+		// default logo to be ROM
+		var objLogo = element(m_strComponentID, 'geLogo')
+		var strLogoSrc = objLogo.attr('src');
+		var objROMFile = element(m_strComponentID, 'geROMFile')[0];
+
+		// Use jQuery's $.ajax for the network request.
+		$.ajax({
+			url: strLogoSrc,
+			type: 'GET',
+			// Use the xhr option to manually set the responseType to 'blob'.
+			// This is necessary for downloading binary data (like an image) in a cross-browser,
+			// ES5-compatible way with jQuery.
+			xhr: function() 
+			{
+				var objXHR = $.ajaxSettings.xhr();
+				objXHR.responseType = 'blob'; 
+				return objXHR;
+			},
+			
+			// Callback function for a successful request
+			success: function(objBlob_a) 
+			{
+				// objBlob_a is the binary data (Blob object) from the image.
+				
+				// Programmatically create a File object from the Blob.
+				var objFile = new File([objBlob_a], 'logo.png', { type: 'image/png' });
+				var objDataTransfer = new DataTransfer();
+				objDataTransfer.items.add(objFile);
+				
+				// Assign the new FileList to the input element.
+				objROMFile.files = objDataTransfer.files;
+			}
+		});
+
+		// Drag and drop ROM file
+		var objConfigSection = element(m_strComponentID, 'geConfigSection');
+		var objBody = $('body');
+
+		objBody.on('dragover', function(objEvent) 
+		{
+			if (objConfigSection.is(':visible')) 
+			{
+				objEvent.preventDefault();
+				objConfigSection.css('background', 'rgba(0, 240, 255, 0.1)');
+			}
+		});
+
+		objBody.on('dragleave', function(objEvent) 
+		{
+			objConfigSection.css('background', 'rgba(0, 240, 255, 0.03)');
+		});
+
+		objBody.on('drop', function(objEvent) 
+		{
+			if (objConfigSection.is(':visible')) 
+			{
+				objEvent.preventDefault();
+				objConfigSection.css('background', 'rgba(0, 240, 255, 0.03)');
+				
+				var arrFiles = objEvent.originalEvent.dataTransfer.files;
+				if (arrFiles.length > 0) 
+				{
+					var objFileInput = element(m_strComponentID, 'geROMFile')[0];
+					objFileInput.files = arrFiles;
+				}
+			}
+		});
+
+		function onStart()
+		{
+			element(m_strComponentID, 'geConfigSection').hide();
+			element(m_strComponentID, 'geStartButton').hide();
+			element(m_strComponentID, 'geStopButton').show();
+			element(m_strComponentID, 'geToggleButton').show();
+			element(m_strComponentID, 'gePreviousButton').show();
+			element(m_strComponentID, 'geNextButton').show();
+			
+			//element(m_strComponentID, 'geProgressBar').show();
+			element(m_strComponentID, 'geProgressBar').css('display', 'flex'); // show
+			element(m_strComponentID, 'geOscilloscope').css('display', 'flex'); // show
+			
+			element(m_strComponentID, 'gePlayerSection').show();
+			
+			// return selected queues
+			var arrQueues = element(m_strComponentID, 'geQueueNames').val() || [];
+			console.log(arrQueues);
+			return arrQueues;
+		}
+		
+		function onStop()
+		{
+			element(m_strComponentID, 'geImage').html('');
+			element(m_strComponentID, 'geText').html('');
+			element(m_strComponentID, 'geStopButton').hide();
+			element(m_strComponentID, 'geToggleButton').hide();
+			element(m_strComponentID, 'gePreviousButton').hide();
+			element(m_strComponentID, 'geNextButton').hide();
+
+			//element(m_strComponentID, 'geProgressBar').hide();
+			element(m_strComponentID, 'geProgressBar').css('display', 'none'); // hide
+			element(m_strComponentID, 'geOscilloscope').css('display', 'none'); // hide
+			
+			element(m_strComponentID, 'geStartButton').show();
+			element(m_strComponentID, 'gePlayerSection').hide();
+			element(m_strComponentID, 'geConfigSection').show();
+		}
+
+		var objRadioPlayer = new ZOSCIIRadioPlayer(m_strComponentID, { 
+			clearImageAfterSong: true,
+			clearTextAfterImage: true,
+			clearTextAfterSong: true,
+			imageDelay: 10,
+			onStart: onStart,
+			onStop: onStop
+		});
+	}
+	
+	geZOSCIIMQPlayerInstance();
+});
+</script>
+
+</body>
+</html>

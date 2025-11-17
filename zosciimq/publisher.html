@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>ZOSCII MQ Publisher</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="3p/jquery-3.7.1.min.js"></script>
+<link rel="stylesheet" type="text/css" href="3p/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="css/publisher.css">
+</head>
+<body class="gsBody">
+
+<div id="geZOSCIIMQPublisher" class="gsZOSCIIPublisher">
+    <!-- Header with Logo -->
+    <div class="gsPublisherHeader">
+        <!-- <img src="logo.png" alt="Cyborg Unicorn Logo" class="gsLogo"> -->
+        <h1 class="gsTitle">ZOSCII MQ Publisher</h1>
+    </div>
+
+    <!-- Main Content -->
+    <div class="gsPublisherContent">
+        
+        <!-- Upload Section -->
+        <div class="gsUploadSection">
+            <div class="gsSectionTitle">Queue Configuration</div>
+            
+			<div class="mb-3">
+				<label class="form-label">Queue URL:</label>
+				<input class="geQueueURL form-control" type="text" value="index.php">
+			</div>
+            
+			<div class="mb-3">
+				<label class="form-label">Queue Name:</label>
+				<input class="geQueueName form-control" type="text" value="test_radio">
+			</div>
+            
+			<div class="mb-3">
+				<label class="form-label">Retention Days:</label>
+				<input class="geRetention form-control" type="number" value="7" min="1" max="365">
+			</div>
+        </div>
+
+        <!-- File Upload Section -->
+        <div class="gsUploadSection">
+            <div class="gsSectionTitle">File Upload</div>
+            
+			<div class="mb-3">
+				<label class="form-label">ROM File:</label>
+				<input class="geROMFile form-control" type="file">
+			</div>
+            
+			<div class="mb-3">
+				<label class="form-label">Publish File:</label>
+				<input class="gePublishFile form-control" type="file">
+			</div>
+            
+            <button class="gePublishFileButton gsPublishFileButton">Publish File</button>
+        </div>
+
+        <!-- Status Section -->
+        <div class="gsStatusSection">
+            <div class="gsSectionTitle">Status</div>
+            <div class="geStatus gsStatus">Select files and click Publish to begin...</div>
+        </div>
+
+        <!-- Info Box -->
+        <div class="gsInfoBox">
+            <strong>Instructions:</strong><br>
+            1. Select your ROM file for encoding<br>
+            2. Choose the file you want to publish<br>
+            3. Configure queue settings above<br>
+            4. Click "Publish File" to upload
+        </div>
+
+    </div>
+</div>
+
+<script src="js/tozoscii.js"></script>
+<script src="js/zosciipublisher.js"></script>
+<script>
+$(document).ready(function() 
+{
+    var objPublisher = new ZOSCIIMQPublisher('geZOSCIIMQPublisher', {});
+});
+</script>
+
+</body>
+</html>

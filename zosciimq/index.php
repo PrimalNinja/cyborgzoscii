@@ -9,7 +9,13 @@
 // 
 // Execution: php index.php
 
-define('ALLOW_GET', 'TRUE');
+define('ALLOW_FETCH', 'TRUE');
+define('ALLOW_GET', 'FALSE');
+define('ALLOW_IDENTIFY', 'FALSE');
+define('ALLOW_PUBLISH', 'FALSE');
+define('ALLOW_RETRIEVE', 'FALSE');
+define('ALLOW_SCAN', 'FALSE');
+define('ALLOW_STORE', 'FALSE');
 
 define('FILE_ERRORLOG', './zosciimq.log'); // or '/var/log/zosciimq.log'
 
@@ -111,8 +117,9 @@ function findUnidentifiedFilesRecursive($strPath_a)
     return $arrResult;
 }
 
-function handleFetch($strQueueName_a, $strAfterName_a)
+function handleFetch($strQueueName_a, $strAfterName_a, $intOffset_a, $intLength_a)
 {
+	$intLength = $intLength_a;
 	$strQueuePath = QUEUE_ROOT . $strQueueName_a . '/';
 	$strLockPath = QUEUE_ROOT . $strQueueName_a . '/' . LOCK_FOLDER;
 
@@ -165,10 +172,44 @@ function handleFetch($strQueueName_a, $strAfterName_a)
 			{
 				$strName = basename($strNextMessagePath);
 
+				if ($intOffset_a === 0 && $intOffset_a === 0) 
+				{
+					header('Content-Type: application/octet-stream');
+					header('Content-Disposition: attachment; filename="' . $strName . '"');
+
+					readfile($strNextMessagePath);
+					die();
+				}
+				
+				$intFileSize = filesize($strNextMessagePath);
+
+				if ($intOffset_a < 0 || $intOffset_a >= $intFileSize) 
+				{
+					sendJSONResponse("", "Invalid offset.", "", []);
+				}
+
+				if ($intLength <= 0 || ($intOffset_a + $intLength) > $intFileSize) 
+				{
+					$intLength = $intFileSize - $intOffset_a;
+				}
+
 				header('Content-Type: application/octet-stream');
 				header('Content-Disposition: attachment; filename="' . $strName . '"');
+				header('Content-Length: ' . $intLength);
+				header('X-ZOSCII-Offset: ' . $intOffset_a);
+				header('X-ZOSCII-Total-Length: ' . $intFileSize);
 
-				readfile($strNextMessagePath);
+				$objFile = fopen($strNextMessagePath, 'rb');
+				if ($objFile === false) 
+				{
+					sendJSONResponse("", "Failed to open file.", "", []);
+				}
+
+				fseek($objFile, $intOffset_a);
+				$binChunk = fread($objFile, $intLength);
+				fclose($objFile);
+
+				echo($binChunk);
 				die();
 			} 
 			else 
@@ -448,9 +489,11 @@ initFolders();
 $binMessage = '';
 $strAction = '';
 $strAfterName = '';
+$strLength = '';
 $strName = '';
 $strNames = '';
 $strNonce = '';
+$strOffset = '';
 $strQueueName = '';
 $strRetentionDays = '';
 
@@ -458,12 +501,19 @@ if (ALLOW_GET === 'TRUE')
 {
 	if (isset($_GET['action'])) 	{ $strAction = $_GET['action']; }
 	if (isset($_GET['after'])) 		{ $strAfterName = $_GET['after']; }
+	if (isset($_GET['length'])) 	{ $strLength = $_GET['length']; };
 	if (isset($_GET['name'])) 		{ $strName = $_GET['name']; }
 	if (isset($_GET['names']))		{ $strNames = $_GET['names']; }
 	if (isset($_GET['msg'])) 		{ $binMessage = $_GET['msg']; }
 	if (isset($_GET['n'])) 			{ $strNonce = $_GET['n']; }
+	if (isset($_GET['offset'])) 	{ $strOffset = $_GET['offset']; };
 	if (isset($_GET['q'])) 			{ $strQueueName = $_GET['q']; }
 	if (isset($_GET['r'])) 			{ $strRetentionDays = $_GET['r']; }
+}
+
+if (empty($binMessage) && isset($_FILES['msg']) && $_FILES['msg']['error'] === UPLOAD_ERR_OK) 
+{
+    $binMessage = file_get_contents($_FILES['msg']['tmp_name']);
 }
 
 if (strlen($strAction) === 0)		{ if (isset($_POST['action'])) 	{ $strAction = $_POST['action']; } }
@@ -476,9 +526,11 @@ if (empty($strAction))
 
 if (empty($binMessage))				{ if (isset($_POST['msg'])) 	{ $binMessage = $_POST['msg']; } }
 if (strlen($strAfterName) === 0)	{ if (isset($_POST['after'])) 	{ $strAfterName = $_POST['after']; } }
+if (strlen($strLength) === 0)		{ if (isset($_POST['length']))  { $strLength = $_POST['length']; } }
 if (strlen($strName) === 0)			{ if (isset($_POST['name'])) 	{ $strName = $_POST['name']; } }
 if (strlen($strNames) === 0)		{ if (isset($_POST['names'])) 	{ $strNames = $_POST['names']; } }
 if (strlen($strNonce) === 0)		{ if (isset($_POST['n'])) 		{ $strNonce = $_POST['n']; } }
+if (strlen($strOffset) === 0)		{ if (isset($_POST['offset']))  { $strOffset = $_POST['offset']; } }
 if (strlen($strQueueName) === 0)	{ if (isset($_POST['q'])) 		{ $strQueueName = $_POST['q']; } }
 if (strlen($strRetentionDays) === 0){ if (isset($_POST['r'])) 		{ $strRetentionDays = $_POST['r']; } }
 
@@ -492,7 +544,10 @@ $strAfterName = basename($strAfterName);
 $strName = basename($strName);
 $strNonce = preg_replace('/[^a-zA-Z0-9_-]/', '', $strNonce);
 $strQueueName = preg_replace('/[^a-zA-Z0-9_-]/', '', $strQueueName);
+$strQueueName = strtolower($strQueueName);
 $intRetentionDays = (int)$strRetentionDays;
+$intOffset = (int)$strOffset;
+$intLength = (int)$strLength;
 
 if (strlen($strNonce) > 0)
 {
@@ -504,27 +559,45 @@ if (strlen($strNonce) > 0)
 switch ($strAction) 
 {
 	case 'fetch':
-		handleFetch($strQueueName, $strAfterName);
+		if (ALLOW_FETCH === 'TRUE')
+		{
+			handleFetch($strQueueName, $strAfterName, $intOffset, $intLength);
+		}
 		break;
 		
 	case 'identify':
-		handleIdentify($arrNames); 
+		if (ALLOW_IDENTIFY === 'TRUE')
+		{
+			handleIdentify($arrNames); 
+		}
 		break;
 
 	case 'publish':
-		handlePublish($strQueueName, $strNonce, $intRetentionDays, $binMessage);
+		if (ALLOW_PUBLISH === 'TRUE')
+		{
+			handlePublish($strQueueName, $strNonce, $intRetentionDays, $binMessage);
+		}
 		break;
 		
 	case 'retrieve':
-		handleRetrieve($strName);
+		if (ALLOW_RETRIEVE === 'TRUE')
+		{
+			handleRetrieve($strName);
+		}
 		break;
 		
 	case 'scan':
-		handleScan();
+		if (ALLOW_SCAN === 'TRUE')
+		{
+			handleScan();
+		}
 		break;
 		
 	case 'store':
-		handleStore($strNonce, $intRetentionDays, $binMessage);
+		if (ALLOW_STORE === 'TRUE')
+		{
+			handleStore($strNonce, $intRetentionDays, $binMessage);
+		}
 		break;
 		
 	default:

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>ZOSCII Publisher</title>
+<script src="3p/jquery-3.7.1.min.js"></script>
+<link rel="stylesheet" type="text/css" href="css/publisher.css">
+</head>
+<body>
+
+<h1>ZOSCII Publisher</h1>
+
+<div id="geZOSCIIMQPublisher" class="gsPublisher">
+<label>Queue URL: <input class="geQueueURL" type="text" value="index.php" size="50"></label><br>
+<label>Queue Name: <input class="geQueueName" type="text" value="test_radio"></label><br>
+<label>Retention Days: <input class="geRetention" type="number" value="7"></label><br>
+<label>ROM File: <input class="geROMFile" type="file"></label><br>
+<label>Publish File: <input class="gePublishFile" type="file"></label><br>
+<button class="gePublishFileButton">Publish File</button>
+
+<div class="geStatus"></div>
+</div>
+
+<script src="js/tozoscii.js"></script>
+<script src="js/zosciipublisher.js"></script>
+<script>
+$(document).ready(function() 
+{
+    var objPublisher = new ZOSCIIMQPublisher('geZOSCIIMQPublisher', {});
+});
+</script>
+
+</body>
+</html>
