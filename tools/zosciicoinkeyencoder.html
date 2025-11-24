@@ -1297,7 +1297,7 @@ function toZOSCII(arrBinaryData_a, mixedInputData_a, arrMemoryBlocks_a, cbConver
     var blnIsString = false;
     
     if (typeof mixedInputData_a === 'string') 
-{
+	{
         // Handle string input - convert to UTF-8 bytes
         arrInputData_a = new TextEncoder().encode(mixedInputData_a);
         blnIsString = true;

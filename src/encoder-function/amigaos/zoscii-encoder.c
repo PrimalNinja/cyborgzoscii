@@ -1,30 +1,14 @@
-// Cyborg ZOSCII Converter v20250805
+// Cyborg ZOSCII v20250805
 // (c) 2025 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
 
-// Amiga Version
+// Amiga Version - Library Implementation
 
+#include "zoscii-encoder.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-
-// Structure to represent memory blocks
-typedef struct {
-    int start;
-    int size;
-} MemoryBlock;
-
-// Structure to represent the result
-typedef struct {
-    int* addresses;
-    int address_count;
-    int* input_counts;
-    int* rom_counts;
-} ZOSCIIResult;
-
-// Function pointer type for character conversion
-typedef int (*ConverterFunc)(int, int);
 
 // Function to convert string to ZOSCII address sequence
 ZOSCIIResult toZOSCII(unsigned char* arrBinaryData_a, const char* strInputString_a, 
@@ -313,56 +297,4 @@ void freeZOSCIIResult(ZOSCIIResult* result) {
     if (result->rom_counts) {
         free(result->rom_counts);
     }
-}
-
-// Example usage
-int main() {
-    // Initialize random seed
-    srand(time(NULL));
-    
-    // Example binary data (you would load your actual ROM data here)
-    unsigned char binaryData[1000] = {0}; // Initialize with actual data
-
-    // Example memory blocks
-    MemoryBlock blocks[] = {
-        {0, 500},
-        {500, 500}
-    };
-    
-    int blockCount = sizeof(blocks) / sizeof(blocks[0]);
-    
-    // Fill binary data with some example ASCII characters for testing
-    for (int i = 0; i < 1000; i++) {
-        binaryData[i] = 65 + (i % 26); // Fill with A-Z pattern
-    }
-    
-    // Test string
-    const char* testString = "HELLO WORLD";
-    
-    // Call the function with PETSCII converter
-    ZOSCIIResult result = toZOSCII(binaryData, testString, blocks, blockCount, 
-                                   petsciiToAscii, 42); // Using '*' (42) as unmappable char
-    
-    if (!result.addresses) {
-        printf("Error: Conversion failed\n");
-        return 1;
-    }
-    
-    printf("\nResult addresses:\n");
-    for (int i = 0; i < result.address_count; i++) {
-        printf("Address %d: %d\n", i, result.addresses[i]);
-    }
-    
-    printf("\nInput character counts:\n");
-    for (int i = 0; i < 256; i++) {
-        if (result.input_counts[i] > 0) {
-            printf("Character %d ('%c'): %d occurrences\n", i, 
-                   (i >= 32 && i <= 126) ? i : '?', result.input_counts[i]);
-        }
-    }
-    
-    // Clean up
-    freeZOSCIIResult(&result);
-    
-    return 0;
 }
