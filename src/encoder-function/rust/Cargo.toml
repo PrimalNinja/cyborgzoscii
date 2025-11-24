@@ -1,0 +1,15 @@
+[package]
+name = "zoscii-encoder"
+version = "0.1.0"
+edition = "2021"
+authors = ["Cyborg Unicorn Pty Ltd"]
+license = "MIT"
+description = "ZOSCII encoding library - quantum-proof security through address indirection"
+repository = "https://github.com/PrimalNinja/cyborgzoscii"
+
+[dependencies]
+rand = "0.8"
+
+[lib]
+name = "zoscii"
+path = "zoscii-encoder.rs"
