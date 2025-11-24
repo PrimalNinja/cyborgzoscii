@@ -1,86 +1,234 @@
-# ZOSCII Library Files
+# ZOSCII Encoder Libraries
 
-## Standard Library (Windows/Linux)
+Cross-platform ZOSCII encoding libraries for C, Go, Rust, Python, JavaScript, and PHP.
 
-**Files:**
-- `zoscii-encoder.h` - Header file with function declarations
-- `zoscii-encoder.c` - Implementation
+## Installation
 
-**Usage:**
-```c
-#include "zoscii-encoder.h"
-
-// Load your ROM data
-unsigned char romData[16384];
-// ... load ROM ...
-
-// Define memory blocks
-MemoryBlock blocks[] = {
-    {0, 16384}
-};
-
-// Initialize random seed
-srand(time(NULL));
-
-// Encode a message
-ZOSCIIResult result = toZOSCII(romData, "Hello World", blocks, 1, NULL, 42);
-
-// Use result.addresses...
-
-// Free when done
-freeZOSCIIResult(&result);
+### C
+```bash
+# Copy zoscii-encoder.h and zoscii-encoder.c to your project
+gcc -c zoscii-encoder.c -o zoscii-encoder.o
+gcc your_program.c zoscii-encoder.o -o your_program
 ```
 
-## Amiga Library
+### Go
+```bash
+# Copy zoscii-encoder.go to your project or use as a module
+go get github.com/yourusername/zoscii
+```
 
-**Files:**
-- `zoscii-amiga.h` - Amiga-specific header
-- `zoscii-amiga.c` - Implementation with enhanced memory checking
+### Rust
+```bash
+# Add to Cargo.toml:
+# [dependencies]
+# zoscii-encoder = "0.1"
 
-**Differences from standard:**
-- More robust error checking
-- Returns empty result on allocation failure
-- Better suited for memory-constrained Amiga systems
+# Or copy zoscii-encoder.rs and Cargo.toml to your project
+```
 
-**Usage:** Same as standard library
+### Python
+```bash
+# Copy zoscii-encoder.py to your project
+# No external dependencies required
+```
 
-## CP/M Version
+### JavaScript
+```javascript
+// Include zoscii-encode.js in your project
+```
 
-**Files:**
-- `cyborgzoscii-cpm.c` - Complete standalone program
+### PHP
+```php
+// Include zoscii-encode.php in your project
+```
 
-**Note:** The CP/M version is NOT structured as an includable library due to:
-- Severe memory constraints (64KB total TPA)
-- Hardcoded filenames for Small-C compatibility
-- Custom memory management for CP/M's TPA layout
-- Designed as a complete standalone tool
+## Usage Examples
 
-The CP/M version should be used as-is as a standalone encoding tool.
+### C
+```c
+#include "zoscii-encoder.h"
+#include <stdlib.h>
+
+int main() {
+    srand(time(NULL));
+    
+    unsigned char rom_data[1000];
+    // ... load ROM data ...
+    
+    MemoryBlock blocks[] = {{0, 1000}};
+    
+    ZOSCIIResult result = toZOSCII(
+        rom_data, 
+        "Hello World", 
+        blocks, 
+        1, 
+        NULL,  // No converter
+        42     // Unmappable char
+    );
+    
+    // Use result.addresses...
+    
+    freeZOSCIIResult(&result);
+    return 0;
+}
+```
+
+### Go
+```go
+package main
+
+import (
+    "https://github.com/PrimalNinja/cyborgzoscii"
+)
+
+func main() {
+    romData := make([]byte, 1000)
+    // ... load ROM data ...
+    
+    blocks := []zoscii.MemoryBlock{{Start: 0, Size: 1000}}
+    
+    result := zoscii.ToZOSCII(
+        romData,
+        "Hello World",
+        blocks,
+        nil,  // No converter
+        42,   // Unmappable char
+    )
+    
+    // Use result.Addresses...
+}
+```
+
+### Rust
+```rust
+use zoscii::{to_zoscii, MemoryBlock};
+
+fn main() {
+    let rom_data = vec![0u8; 1000];
+    // ... load ROM data ...
+    
+    let blocks = vec![MemoryBlock { start: 0, size: 1000 }];
+    
+    let result = to_zoscii(
+        &rom_data,
+        "Hello World",
+        &blocks,
+        None,  // No converter
+        42,    // Unmappable char
+    );
+    
+    // Use result.addresses...
+}
+```
+
+### Python
+```python
+from zoscii-encoder import to_zoscii, MemoryBlock
+
+rom_data = bytes([0] * 1000)
+# ... load ROM data ...
+
+blocks = [MemoryBlock(start=0, size=1000)]
+
+result = to_zoscii(
+    rom_data,
+    "Hello World",
+    blocks,
+    converter=None,  # No converter
+    unmappable_char=42
+)
+
+# Use result.addresses...
+```
+
+### JavaScript
+```javascript
+const rom = new Uint8Array(1000);
+// ... load ROM data ...
+
+const blocks = [{start: 0, size: 1000}];
+
+const result = toZOSCII(
+    rom,
+    "Hello World",
+    blocks,
+    null,  // No converter
+    42     // Unmappable char
+);
+
+// Use result.addresses...
+```
+
+### PHP
+```php
+<?php
+require_once('zoscii-encode.php');
+
+$romData = str_repeat("\x00", 1000);
+// ... load ROM data ...
+
+$blocks = [
+    ['start' => 0, 'size' => 1000]
+];
+
+$addresses = toZOSCII(
+    $romData,
+    "Hello World",
+    $blocks,
+    null,  // No converter
+    42     // Unmappable char
+);
+
+// Use $addresses...
+?>
+```
 
 ## Character Converters
 
-Both standard and Amiga libraries include:
-- `petsciiToAscii()` - Convert PETSCII to ASCII
-- `ebcdicToAscii()` - Convert EBCDIC to ASCII
+All libraries include PETSCII and EBCDIC to ASCII converters:
 
-Pass these as the `ConverterFunc` parameter, or `NULL` for no conversion.
+```c
+// C
+result = toZOSCII(data, str, blocks, 1, petsciiToAscii, 42);
+result = toZOSCII(data, str, blocks, 1, ebcdicToAscii, 42);
 
-## Compilation Examples
+// Go
+result := zoscii.ToZOSCII(data, str, blocks, zoscii.PetsciiToAscii, 42)
 
-**Standard:**
-```bash
-gcc -c zoscii.c -o zoscii.o
-gcc myprogram.c zoscii.o -o myprogram
+// Rust
+result = to_zoscii(&data, str, &blocks, Some(petscii_to_ascii), 42);
+
+// Python
+result = to_zoscii(data, str, blocks, petscii_to_ascii, 42)
 ```
 
-**Amiga:**
-```bash
-m68k-amigaos-gcc -c zoscii-amiga.c -o zoscii-amiga.o
-m68k-amigaos-gcc myprogram.c zoscii-amiga.o -o myprogram
-```
+## API Reference
 
-**CP/M:**
-```bash
-# Use Small-C compiler on CP/M system
-cc cyborgzoscii-cpm.c
-```
+### Data Structures
+
+**MemoryBlock** - Defines a valid region in ROM
+- `start`: Starting address
+- `size`: Size in bytes
+
+**Result/ZOSCIIResult** - Encoding results
+- `addresses`: Array of encoded addresses
+- `input_counts`: Frequency of each input character
+- `rom_counts`: Frequency of each byte in ROM
+
+### Functions
+
+**to_zoscii/ToZOSCII** - Main encoding function
+- Parameters:
+  - ROM/binary data
+  - Input string
+  - Memory blocks
+  - Optional converter function
+  - Unmappable character code
+- Returns: Result structure with addresses and statistics
+
+**petscii_to_ascii** - Convert PETSCII to ASCII
+**ebcdic_to_ascii** - Convert EBCDIC to ASCII
+
+## License
+
+MIT License - (c) 2025 Cyborg Unicorn Pty Ltd
