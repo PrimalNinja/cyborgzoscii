@@ -26,7 +26,7 @@ CyborgZOSCII is an alternative to ASCII/PETSCII that uses direct ROM addressing 
 
 ## Commandline Tools - ZOSCII Encoding
 
-Sourcecodes in: C, C#, GO, RUST, PYTHON
+Sourcecodes in: C, C#, GO, JS, RUST, PYTHON
 
 - zencode, ZOSCII encoder for AmigaOS, CP/M, Linux and Windows
 - zdecode, ZOSCII decoder for AmigaOS, CP/M, Linux and Windows
