@@ -11,6 +11,8 @@ function ZOSCIIRadioPlayer(strComponentID_a, objOptions_a)
 {
 	var m_objThis = this;
     var m_strComponentID = strComponentID_a;
+	
+	var m_MINTRACKSIZE = 1024000;
 
 	var m_arrOscBars = [];
 	var m_arrProgressSquares = [];
@@ -328,11 +330,14 @@ function ZOSCIIRadioPlayer(strComponentID_a, objOptions_a)
             m_blnFirstTrack = false;
         }
 
-        m_arrHistoryStack.push({
-            queue: m_arrQueues[m_intCurrentQueueIndex],
-			type: strType_a, 
-            pointer: m_strCurrentPointer
-        });
+		if (arrDecodedData_a.length > m_MINTRACKSIZE)
+		{
+			m_arrHistoryStack.push({
+				queue: m_arrQueues[m_intCurrentQueueIndex],
+				type: strType_a, 
+				pointer: m_strCurrentPointer
+			});
+		}
 
 		playTrack(strFilename_a, arrDecodedData_a, new Blob([arrDecodedData_a], {type:'audio/mpeg'}), true);
 	}
@@ -343,17 +348,17 @@ function ZOSCIIRadioPlayer(strComponentID_a, objOptions_a)
 		var objBlob = new Blob([arrDecodedData_a], {type: 'image/jpeg'});
 		var strImageURL = URL.createObjectURL(objBlob);
 		
-        if (m_blnFirstTrack) 
-		{
-            m_arrHistoryStack.push({ queue: m_arrQueues[m_intCurrentQueueIndex], type: '', pointer: '' });
-            m_blnFirstTrack = false;
-        }
+        // if (m_blnFirstTrack) 
+		// {
+            // m_arrHistoryStack.push({ queue: m_arrQueues[m_intCurrentQueueIndex], type: '', pointer: '' });
+            // m_blnFirstTrack = false;
+        // }
 
-        m_arrHistoryStack.push({
-            queue: m_arrQueues[m_intCurrentQueueIndex],
-			type: strType_a, 
-            pointer: m_strCurrentPointer
-        });
+        // m_arrHistoryStack.push({
+            // queue: m_arrQueues[m_intCurrentQueueIndex],
+			// type: strType_a, 
+            // pointer: m_strCurrentPointer
+        // });
 
 		if (m_objOptions.clearTextAfterImage) 
 		{
@@ -372,17 +377,17 @@ function ZOSCIIRadioPlayer(strComponentID_a, objOptions_a)
 	// Display text file
 	function showText(strType_a, strFilename_a, arrDecodedData_a) 
 	{
-		if (m_blnFirstTrack) 
-		{
-			m_arrHistoryStack.push({ queue: m_arrQueues[m_intCurrentQueueIndex], type: '', pointer: '' });
-			m_blnFirstTrack = false;
-		}
+		// if (m_blnFirstTrack) 
+		// {
+			// m_arrHistoryStack.push({ queue: m_arrQueues[m_intCurrentQueueIndex], type: '', pointer: '' });
+			// m_blnFirstTrack = false;
+		// }
 
-		m_arrHistoryStack.push({
-			queue: m_arrQueues[m_intCurrentQueueIndex],
-			type: strType_a, 
-			pointer: m_strCurrentPointer
-		});
+		// m_arrHistoryStack.push({
+			// queue: m_arrQueues[m_intCurrentQueueIndex],
+			// type: strType_a, 
+			// pointer: m_strCurrentPointer
+		// });
 
 		if (arrDecodedData_a.length > m_objOptions.maxTextLength)
 		{
@@ -635,7 +640,7 @@ function ZOSCIIRadioPlayer(strComponentID_a, objOptions_a)
 	// button events
     function NextTrack_onClick() 
 	{
-        if (m_blnPlaying) 
+        if (m_blnPlaying && !m_blnFetchNextRunning) 
 		{
 			if (isFunction(m_objOptions.onNext))
 			{
@@ -643,31 +648,48 @@ function ZOSCIIRadioPlayer(strComponentID_a, objOptions_a)
 			}
 
 			updateStatus('Skipping to next track...');
-			m_blnFetchNextRunning = false;
+			
 			fetchNext();
 		}
     }
 
     function PreviousTrack_onClick() 
 	{
-        if (m_arrHistoryStack.length) 
+        // Check if history exists AND no fetch is currently running
+        if (m_arrHistoryStack.length && !m_blnFetchNextRunning) 
 		{
 			if (isFunction(m_objOptions.onPrevious))
 			{
 				m_objOptions.onPrevious();
 			}
 
-			m_arrHistoryStack.pop();
-			m_arrHistoryStack.pop();
+			var objLast3 = null;
+			var objLast2 = null;
+			var objLast1 = null;
+			try
+			{
+				objLast3 = m_arrHistoryStack.pop();
+				objLast2 = m_arrHistoryStack.pop();
+				objLast1 = m_arrHistoryStack.pop();
+			}
+			catch(objError_a)
+			{
+				//m_arrHistoryStack.push({ queue: m_arrQueues[m_intCurrentQueueIndex], type: '', pointer: '' });
+			}
 			
-			var objLast = m_arrHistoryStack.pop();
-			m_arrHistoryStack.push(objLast);
-			console.log(m_arrHistoryStack);
-			
-			m_intCurrentQueueIndex = m_arrQueues.indexOf(objLast.queue);
-			m_strCurrentPointer = objLast.pointer;
+			var objLast = objLast1 || objLast2 || objLast3;
 
-			updateStatus('Playing previous track from channel: ' + objLast.queue);
+			if (objLast !== null)
+			{
+				m_arrHistoryStack.push(objLast);
+				console.log(m_arrHistoryStack);
+
+				m_intCurrentQueueIndex = m_arrQueues.indexOf(objLast.queue);
+				m_strCurrentPointer = objLast.pointer;
+
+				updateStatus('Playing previous track from channel: ' + objLast.queue);
+			}
+			
 			fetchNext();
 		}
 		else
