@@ -510,6 +510,30 @@ The moment you realize you can use a public Wikipedia image as an unbreakable en
 
 Traditional encryption: The key must remain absolutely secret, requiring complex secure distribution. ZOSCII: The "key" can be publicly posted on the internet—security comes from knowing which one to use and when. That's not a security compromise; that's information theory rewriting the rules.
 
+### Weaponized Ambiguity: Unidentifiable by Design
+
+Before an adversary can attempt to break ZOSCII, they first need to know they're looking at ZOSCII.
+
+They can't.
+
+ZOSCII-encoded data has no signature, no header, no identifying markers, no statistical patterns. To any observer—even one with unlimited computing power—it's indistinguishable from:
+
+- Random noise
+- Encrypted data (AES, RSA, or any algorithm)
+- Compressed archives
+- Corrupted files
+- Unknown binary formats
+
+An adversary intercepts your transmission and faces a fundamental problem: they cannot determine what type of data they're examining. Is it ZOSCII? Is it encryption? Is it nothing at all?
+
+This weaponized ambiguity is inherent to ZOSCII's design. Because the encoded data consists purely of addresses with no embedded structure, metadata, or algorithmic fingerprint, there is no distinguishing characteristic to detect.
+
+Traditional encryption algorithms have identifiable patterns—file headers, key exchange protocols, algorithmic signatures in the ciphertext structure. ZOSCII has none of these.
+
+The first layer of defense: they can't identify the target.
+
+Weaponized ambiguity means an adversary wastes resources analyzing what might be random data, while your actual secure communications remain invisible in plain sight.
+
 ### Plausible Deniability: The Proof of Information-Theoretic Security
 
 Think a 5-byte ZOSCII message with "only" 10^24 possibilities is less secure than AES-256's 10^77 keyspace?
