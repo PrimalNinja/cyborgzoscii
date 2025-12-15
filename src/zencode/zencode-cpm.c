@@ -20,6 +20,11 @@ int intROMSize;
 char arrInputBuffer[1024];    /* 1KB input chunk buffer */
 char arrOutputBuffer[2048];  /* 2KB output buffer */
 
+/* Random seed globals */
+static int intPseudoSeed = 0;
+static int intSeed2 = 67890;
+int intSeedInitialized = 0;
+
 /* Initialize and grab all TPA */
 int init_memory()
 {
@@ -49,7 +54,7 @@ char* load_rom(char* strFilename_a)
     
     fROM = fopen(strFilename_a, "rb");
     if (!fROM) 
-	{
+    {
         printf("Cannot open ROM file: %s\n", strFilename_a);
         return 0;
     }
@@ -57,7 +62,7 @@ char* load_rom(char* strFilename_a)
     intBytesRead = fread(intROMStart, 1, 16384, fROM);
     fclose(fROM);
     
-    intROMSize = intBytesRead;  /* ADD THIS LINE - store actual size */
+    intROMSize = intBytesRead;
     
     printf("Loaded %d bytes of ROM from %s at %04X\n", intBytesRead, strFilename_a, intROMStart);
     return intROMStart;
@@ -72,14 +77,14 @@ void count_bytes()
     
     /* Initialize lookup table */
     for (intI = 0; intI < 768; intI++) 
-	{
+    {
         arrLookup[intI] = 0;
     }
     
-    /* Scan entire ROM - USE ACTUAL SIZE */
+    /* Scan entire ROM */
     pROM = intROMStart;
     for (intI = 0; intI < intROMSize; intI++) 
-	{
+    {
         by = *pROM & 0xFF;
         arrLookup[by * 3]++;  /* Increment occurrence count */
         pROM++;
@@ -100,11 +105,11 @@ void allocate_blocks()
     pAlloc = intTPAStart;
     
     for (by = 0; by < 256; by++) 
-	{
+    {
         intOccuranceCount = arrLookup[by * 3];
         
         if (intOccuranceCount > 0) 
-		{
+        {
             /* Set block start pointer */
             arrLookup[by * 3 + 1] = (int)pAlloc;
             
@@ -123,7 +128,7 @@ void allocate_blocks()
     
     /* Check if we have enough space before ROM */
     if (pAlloc >= intROMStart) 
-	{
+    {
         printf("ERROR: Address tables overflow into ROM space!\n");
         printf("Tables need %d bytes, only %d available\n", 
                pAlloc - intTPAStart, intROMStart - intTPAStart);
@@ -139,15 +144,15 @@ void populate_address_lists()
     int intI;
     char* pWrite;
     
-    /* Scan ROM and populate address lists - USE ACTUAL SIZE */
+    /* Scan ROM and populate address lists */
     pROM = intROMStart;
     for (intI = 0; intI < intROMSize; intI++) 
-	{
+    {
         by = *pROM & 0xFF;
         
         /* Get pointers from lookup table */
         if (arrLookup[by * 3] > 0) 
-		{  /* Has occurrences */
+        {  /* Has occurrences */
             intFillCounter = &arrLookup[by * 3 + 2];
             pWrite = arrLookup[by * 3 + 1] + (*intFillCounter * 2);
             
@@ -164,6 +169,89 @@ void populate_address_lists()
     printf("Address lists populated\n");
 }
 
+/* Hash a file using DJB2 algorithm */
+int hash_file_for_seed(char* strFilename_a)
+{
+    FILE* fInput;
+    int intHash = 5381;  /* DJB2 hash initial value */
+    int intBytesRead;
+    int intI;
+    int by;
+    
+    fInput = fopen(strFilename_a, "rb");
+    if (!fInput) 
+    {
+        printf("Warning: Cannot open %s for hashing\n", strFilename_a);
+        return 12345;  /* Fallback seed */
+    }
+    
+    /* Read and hash the file in chunks */
+    while ((intBytesRead = fread(arrInputBuffer, 1, 1024, fInput)) > 0) 
+    {
+        for (intI = 0; intI < intBytesRead; intI++) 
+        {
+            by = arrInputBuffer[intI] & 0xFF;
+            /* DJB2 hash: hash = hash * 33 + byte */
+            intHash = ((intHash << 5) + intHash) + by;
+        }
+    }
+    
+    fclose(fInput);
+    
+    /* Ensure positive */
+    intHash = intHash & 0x7FFFFFFF;
+    if (intHash == 0) intHash = 54321;
+    
+    return intHash;
+}
+
+/* Initialize random seed from ROM and input file hashes */
+void init_random_seed(char* strROMFilename_a, char* strInputFilename_a)
+{
+    int intROMHash;
+    int intInputHash;
+    
+    if (intSeedInitialized) return;
+    
+    printf("Generating random seed from files...\n");
+    
+    /* Hash the ROM file */
+    printf("  Hashing ROM file: %s\n", strROMFilename_a);
+    intROMHash = hash_file_for_seed(strROMFilename_a);
+    printf("  ROM hash: %d\n", intROMHash);
+    
+    /* Hash the input file */
+    printf("  Hashing input file: %s\n", strInputFilename_a);
+    intInputHash = hash_file_for_seed(strInputFilename_a);
+    printf("  Input hash: %d\n", intInputHash);
+    
+    /* Combine them with XOR */
+    intPseudoSeed = (intROMHash ^ intInputHash) & 0x7FFFFFFF;
+    if (intPseudoSeed == 0) intPseudoSeed = 99999;
+    
+    /* Initialize second seed differently */
+    intSeed2 = ((intROMHash + intInputHash) ^ 0x5A5A5A5A) & 0x7FFFFFFF;
+    if (intSeed2 == 0) intSeed2 = 67890;
+    
+    intSeedInitialized = 1;
+    
+    printf("  Combined seed: %d\n", intPseudoSeed);
+    printf("Random seed initialization complete\n\n");
+}
+
+/* Improved PRNG using dual LCG */
+int get_random_number()
+{
+    /* First LCG - POSIX parameters */
+    intPseudoSeed = (intPseudoSeed * 1103515245 + 12345) & 0x7FFFFFFF;
+    
+    /* Second LCG - different parameters */
+    intSeed2 = (intSeed2 * 69069 + 1) & 0x7FFFFFFF;
+    
+    /* Combine with XOR for better distribution */
+    return (intPseudoSeed ^ intSeed2) & 0x7FFFFFFF;
+}
+
 /* Stream input file and encode to output */
 void encode_input_streaming(char *strInputFilename_a, char *strOutputFilename_a)
 {
@@ -176,22 +264,22 @@ void encode_input_streaming(char *strInputFilename_a, char *strOutputFilename_a)
     int intOccuranceCount;
     int intOutputPos;
     int intRandomIdx;
+    int intRandomValue;
     long intTotalInput = 0;
     long intTotalOutput = 0;
-    static int intPseudoSeed = 12345;  /* Simple PRNG seed */
     char* pBlockStart;
     char* pRandomAddr;
     
     fInput = fopen(strInputFilename_a, "rb");
     if (!fInput) 
-	{
+    {
         printf("Cannot open input file: %s\n", strInputFilename_a);
         return;
     }
     
     fOutput = fopen(strOutputFilename_a, "wb");
     if (!fOutput) 
-	{
+    {
         printf("Cannot create output file: %s\n", strOutputFilename_a);
         fclose(fInput);
         return;
@@ -202,13 +290,13 @@ void encode_input_streaming(char *strInputFilename_a, char *strOutputFilename_a)
     
     /* Stream input file in 1KB chunks */
     while ((intBytesRead = fread(arrInputBuffer, 1, 1024, fInput)) > 0) 
-	{
+    {
         intTotalInput += intBytesRead;
         intChunkCount++;
         
         /* Process each byte in this input chunk */
         for (intInputOffset = 0; intInputOffset < intBytesRead; intInputOffset++) 
-		{
+        {
             by = arrInputBuffer[intInputOffset] & 0xFF;
             
             /* Get this byte's address list info */
@@ -216,10 +304,10 @@ void encode_input_streaming(char *strInputFilename_a, char *strOutputFilename_a)
             pBlockStart = arrLookup[by * 3 + 1];
             
             if (intOccuranceCount > 0 && pBlockStart) 
-			{
-                /* Simple pseudo-random number generator */
-                intPseudoSeed = (intPseudoSeed * 1103515245 + 12345) & 0x7FFFFFFF;
-                intRandomIdx = intPseudoSeed % intOccuranceCount;
+            {
+                /* Get random number using improved dual-LCG generator */
+                intRandomValue = get_random_number();
+                intRandomIdx = intRandomValue % intOccuranceCount;
                 
                 /* Calculate pointer to random address in the list */
                 pRandomAddr = pBlockStart + (intRandomIdx * 2);
@@ -230,14 +318,14 @@ void encode_input_streaming(char *strInputFilename_a, char *strOutputFilename_a)
 
                 /* Flush output buffer when full */
                 if (intOutputPos >= 2048) 
-				{
+                {
                     fwrite(arrOutputBuffer, 1, intOutputPos, fOutput);
                     intTotalOutput += intOutputPos;
                     intOutputPos = 0;
                 }
             } 
-			else 
-			{
+            else 
+            {
                 printf("WARNING: No ROM addresses for byte 0x%02X (char '%c')\n", 
                        by, (by >= 32 && by <= 126) ? by : '?');
                 /* Write zeros as fallback */
@@ -246,7 +334,7 @@ void encode_input_streaming(char *strInputFilename_a, char *strOutputFilename_a)
                 
                 /* Flush output buffer when full */
                 if (intOutputPos >= 2048) 
-				{
+                {
                     fwrite(arrOutputBuffer, 1, intOutputPos, fOutput);
                     intTotalOutput += intOutputPos;
                     intOutputPos = 0;
@@ -256,14 +344,14 @@ void encode_input_streaming(char *strInputFilename_a, char *strOutputFilename_a)
         
         /* Progress indicator */
         if (intChunkCount % 10 == 0) 
-		{
+        {
             printf("Processed %d chunks (%ld bytes)...\n", intChunkCount, intTotalInput);
         }
     }
     
     /* Flush any remaining output */
     if (intOutputPos > 0) 
-	{
+    {
         fwrite(arrOutputBuffer, 1, intOutputPos, fOutput);
         intTotalOutput += intOutputPos;
     }
@@ -294,10 +382,10 @@ void print_memory_stats()
     
     /* Calculate address table usage */
     for (by = 0; by < 256; by++) 
-	{
+    {
         int intCount = arrLookup[by * 3];
         if (intCount > 0) 
-		{
+        {
             intTotalAddresses += intCount;
             intUsedBytes += intCount * 2;
             if (intCount < intMinCount) intMinCount = intCount;
@@ -327,7 +415,7 @@ main(int intArgC_a, *arrArgs_a[])
     
     /* Check command line arguments */
     if (intArgC_a == 3) 
-	{
+    {
         /* Two arguments - input and output files, use default ROM.BIN */
         strROMFilename = "ROM.BIN";
         strInputFilename = arrArgs_a[1];
@@ -336,7 +424,7 @@ main(int intArgC_a, *arrArgs_a[])
         printf("Input: %s -> Output: %s\n\n", strInputFilename, strOutputFilename);
     }
     else if (intArgC_a == 4) 
-	{
+    {
         /* Three arguments - ROM, input, and output files */
         strROMFilename = arrArgs_a[1];
         strInputFilename = arrArgs_a[2];
@@ -345,7 +433,7 @@ main(int intArgC_a, *arrArgs_a[])
         printf("Input: %s -> Output: %s\n\n", strInputFilename, strOutputFilename);
     }
     else 
-	{
+    {
         printf("Usage: ZENCODE <inputfile> <outputfile>\n");
         printf("   or: ZENCODE <romfile> <inputfile> <outputfile>\n");
         printf("\nExamples:\n");
@@ -356,14 +444,14 @@ main(int intArgC_a, *arrArgs_a[])
     
     /* Initialize memory management */
     if (!init_memory()) 
-	{
+    {
         printf("ERROR: Insufficient memory\n");
         return 1;
     }
     
     /* Load ROM into top of TPA */
     if (!load_rom(strROMFilename)) 
-	{
+    {
         printf("ERROR: ROM load failed\n");
         return 1;
     }
@@ -377,8 +465,11 @@ main(int intArgC_a, *arrArgs_a[])
     /* Show memory usage */
     print_memory_stats();
     
+    /* Initialize randomness from ROM + input file hashes */
+    init_random_seed(strROMFilename, strInputFilename);
+    
     /* Stream encode input file */
-    printf("\nStarting input file encoding...\n");
+    printf("Starting input file encoding...\n");
     encode_input_streaming(strInputFilename, strOutputFilename);
     
     printf("\nZOSCII encoding complete!\n");
