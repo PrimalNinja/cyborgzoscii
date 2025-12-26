@@ -60,9 +60,9 @@ Aquí está la magia: la mayoría de los caracteres aparecen múltiples veces de
 
 La ROM contiene 'H' en las posiciones: [1847, 3921, 8934, 15847, 23156, 41023, ...]
 
-*Primera codificación de "HELLO": [1847, 23156, 41023, 8934, 52018]
-*Segunda codificación de "HELLO": [15847, 3921, 1847, 41023, 8934]
-*Tercera codificación de "HELLO": [8934, 15847, 23156, 1847, 3921]
+*Primera codificación de "HELLO": [1847, 23157, 41024, 8935, 52018]
+*Segunda codificación de "HELLO": [15847, 3922, 1844, 41025, 8939]
+*Tercera codificación de "HELLO": [8934, 15849, 23152, 1841, 3927]
 
 Cada codificación es completamente diferente, sin embargo, todas decodifican al mismo mensaje. La misma palabra puede ser codificada de millones de maneras diferentes, haciendo que el análisis de patrones sea imposible.
 

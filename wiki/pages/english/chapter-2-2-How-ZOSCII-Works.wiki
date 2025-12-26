@@ -60,9 +60,9 @@ Here's the magic: most characters appear multiple times within any reasonably-si
 
 ROM contains 'H' at positions: [1847, 3921, 8934, 15847, 23156, 41023, ...]
 
-*First encoding of "HELLO": [1847, 23156, 41023, 8934, 52018]
-*Second encoding of "HELLO": [15847, 3921, 1847, 41023, 8934]
-*Third encoding of "HELLO": [8934, 15847, 23156, 1847, 3921]
+*First encoding of "HELLO": [1847, 23157, 41024, 8935, 52018]
+*Second encoding of "HELLO": [15847, 3922, 1844, 41025, 8939]
+*Third encoding of "HELLO": [8934, 15849, 23152, 1841, 3927]
 
 Each encoding is completely different, yet all decode to the same message. The same word can be encoded in millions of different ways, making pattern analysis impossible.
 
