@@ -1,5 +1,12 @@
 # CyborgZOSCII v20251118
 
+**All active development has moved to:**
+https://github.com/PrimalNinja/cyborgzoscii2
+
+**License:** MIT (perpetual for this version)
+**Status:** Archived - no updates, no bug fixes, no planned support
+**Last update:** December 27, 2025
+
 ZOSCII Zero Overhead Secure Code Information Interchange.
 
 An innovative character encoding system that eliminates lookup table overhead while providing built-in security properties through direct memory addressing.
