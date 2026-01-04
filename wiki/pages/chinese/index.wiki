@@ -53,9 +53,9 @@
 *[[chinese/chapter-8-1-Crypto-API-Operators-Strike-Gold-as-ZOSCII-Challenge-Searchers-Pay-More-Than-Actual-Trading|加密API运营商在ZOSCII挑战者支付的费用超过实际交易时发现金矿]]
 *[[chinese/chapter-8-2-Breaking-ZOSCII-The-Snake-Oil-Challenge|破解ZOSCII - 蛇油挑战]]
 
-== 第9章：密码解决方案仍然有其位置 ==
+== 第9章：当前加密解决方案的时代已经过去 ==
 *[[chinese/chapter-9-1-Cryptographers-Demand-Challenge-Cancellation-After-ZOSCII-Prize-Proves-Only-As-Secure-As-AES-256|密码学家要求取消挑战，因为ZOSCII奖项证明“仅”与AES-256同样安全]]
-*[[chinese/chapter-9-2-There-is-Still-A-Place-For-Crypographic-Solutions|密码解决方案仍然有其位置]]
+*[[chinese/chapter-9-2-The-Time-For-Current-Encryption-Solutions-Has-Passed|当前加密解决方案的时代已经过去]]
 
 == 第10章：白皮书 ==
 *[[chinese/chapter-10-1-BREAKING-Frustrated-Developer-Discovers-Cure-for-AI-Verbosity|突发新闻：沮丧的开发者发现了解决AI冗长的方法]]

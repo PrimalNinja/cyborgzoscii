@@ -53,9 +53,9 @@
 *[[english/chapter-8-1-Crypto-API-Operators-Strike-Gold-as-ZOSCII-Challenge-Searchers-Pay-More-Than-Actual-Trading|Crypto API Operators Strike Gold as ZOSCII Challenge Searchers Pay More Than Actual Trading]]
 *[[english/chapter-8-2-Breaking-ZOSCII-The-Snake-Oil-Challenge|Breaking ZOSCII - The Snake Oil Challenge]]
 
-== Chapter 9: There Is Still A Place For Cryptographic Solutions ==
+== Chapter 9: The Time For Current Encryption Solutions Has Passed ==
 *[[english/chapter-9-1-Cryptographers-Demand-Challenge-Cancellation-After-ZOSCII-Prize-Proves-Only-As-Secure-As-AES-256|Cryptographers Demand Challenge Cancellation After ZOSCII Prize Proves "Only" As Secure As AES-256]]
-*[[english/chapter-9-2-There-is-Still-A-Place-For-Crypographic-Solutions|There Is Still A Place For Cryptographic Solutions]]
+*[[english/chapter-9-2-The-Time-For-Current-Encryption-Solutions-Has-Passed|The Time For Current Encryption Solutions Has Passed]]
 
 == Chapter 10: Whitepaper ==
 *[[english/chapter-10-1-BREAKING-Frustrated-Developer-Discovers-Cure-for-AI-Verbosity|BREAKING: Frustrated Developer Discovers Cure for AI Verbosity]]

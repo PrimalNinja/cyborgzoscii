@@ -53,9 +53,9 @@
 *[[russian/chapter-8-1-Crypto-API-Operators-Strike-Gold-as-ZOSCII-Challenge-Searchers-Pay-More-Than-Actual-Trading|Операторы Crypto API находят золото, когда искатели вызова ZOSCII платят больше, чем за фактическую торговлю]] 
 *[[russian/chapter-8-2-Breaking-ZOSCII-The-Snake-Oil-Challenge|Взлом ZOSCII - Вызов "Змеиное масло"]]
 
-== Глава 9: Для криптографических решений все еще есть место == 
+== Глава 9: Время Для Текущих Решений Шифрования Прошло == 
 *[[russian/chapter-9-1-Cryptographers-Demand-Challenge-Cancellation-After-ZOSCII-Prize-Proves-Only-As-Secure-As-AES-256|Криптографы требуют отмены вызова после того, как приз ZOSCII оказывается "только" столь же безопасным, как AES-256]] 
-*[[russian/chapter-9-2-There-is-Still-A-Place-For-Crypographic-Solutions|Для криптографических решений все еще есть место]]
+*[[russian/chapter-9-2-The-Time-For-Current-Encryption-Solutions-Has-Passed|Время Для Текущих Решений Шифрования Прошло]]
 
 == Глава 10: Белая книга == 
 *[[russian/chapter-10-1-BREAKING-Frustrated-Developer-Discovers-Cure-for-AI-Verbosity|СРОЧНО: Разочарованный разработчик обнаруживает лекарство от многословия ИИ]] 

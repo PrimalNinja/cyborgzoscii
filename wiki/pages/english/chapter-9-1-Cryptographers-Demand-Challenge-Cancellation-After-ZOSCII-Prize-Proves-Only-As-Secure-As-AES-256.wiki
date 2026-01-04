@@ -1,4 +1,4 @@
-= Chapter 9: There Is Still A Place For Cryptographic Solutions =
+= Chapter 9: The Time For Current Encryption Solutions Has Passed =
 
 == Part A – Cryptographers Demand Challenge Cancellation After ZOSCII Prize Proves "Only" As Secure As AES-256 ==
 
@@ -76,7 +76,7 @@ The challenge remains open to anyone willing to engage with such "trivially low"
 
 - - - -
 
-'''NOTE:''' The above is a satirical news piece about academic gatekeeping and the disconnect between theoretical and practical security measures. The ZOSCII challenge wallet remains secure at the time of writing, despite being "only" as protected as AES-256.
+'''NOTE:''' The above is a satirical news piece about academic gatekeeping and the disconnect between theoretical and practical security measures. The ZOSCII challenge wallet remains secure at the time of writing.
 
 - - - -
 

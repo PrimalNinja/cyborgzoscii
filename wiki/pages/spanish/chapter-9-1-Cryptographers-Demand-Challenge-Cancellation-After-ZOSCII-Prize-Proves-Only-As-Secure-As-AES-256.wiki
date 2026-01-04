@@ -1,4 +1,4 @@
-= Capítulo 9: Todavía Hay Un Lugar Para Soluciones Criptográficas =
+= Capítulo 9: El Tiempo Para Las Soluciones de Encriptación Actuales Ha Pasado =
 
 == Parte A – Los Criptógrafos Exigen la Cancelación del Desafío Tras Probarse que el Premio ZOSCII es "Solo" Tan Seguro Como AES-256 ==
 
@@ -76,7 +76,7 @@ El desafío permanece abierto a cualquiera que esté dispuesto a participar con 
 
 - - - - 
 
-'''NOTA:''' Lo anterior es una pieza de noticias satírica sobre la custodia académica y la desconexión entre las medidas de seguridad teóricas y prácticas. La billetera del desafío ZOSCII sigue siendo segura en el momento de escribir esto, a pesar de ser "solo" tan protegida como AES-256.
+'''NOTA:''' Lo anterior es una pieza de noticias satírica sobre la custodia académica y la desconexión entre las medidas de seguridad teóricas y prácticas. La billetera del desafío ZOSCII sigue siendo segura en el momento de escribir esto.
 
 - - - - 
 
