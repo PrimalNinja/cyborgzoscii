@@ -1,0 +1,73 @@
+= Chapitre 5 : Sécurité côté serveur =
+
+== Partie A – Le cas de l'inventeur de ZOSCII rejeté après que le gouvernement découvre qu'il utilise une technologie "dangereuse" depuis 40 ans ==
+
+'''Le tribunal s'effondre dans l'embarras alors qu'une démonstration Amstrad CPC de 1984 révèle que l'informatique fondamentale a toujours été une "arme de démocratie de masse"'''
+
+'''CANBERRA''' - Dans un coup dévastateur pour la crédibilité du gouvernement, toutes les accusations contre l'inventeur de CyborgZOSCII Julian Cassin ont été rejetées après que les procureurs ont découvert qu'ils utilisaient par inadvertance la technologie "dangereuse" depuis l'aube de l'informatique personnelle, un juge déclarant l'affaire "l'équivalent juridique d'essayer de poursuivre quelqu'un pour avoir inventé la roue tout en étant assis dans une voiture."
+
+Le drame de la salle d'audience a atteint son apogée lorsque Cassin, 45 ans, a calmement connecté son Amstrad CPC vintage de 1984 au système de projection du tribunal et a commencé à démontrer des opérations de recherche d'adresses de base. "Votre Honneur", a-t-il expliqué en tapant de simples commandes BASIC, "chaque ordinateur depuis 1975 utilise des adresses mémoire pour trouver des données. Je l'ai juste rendu plus évident."
+
+Les ministres du gouvernement ont regardé avec horreur alors que leur témoin vedette, le procureur en chef de la technologie Dr Malcolm Buzzword-Generator, réalisait lentement que sa propre présentation PowerPoint utilisait exactement les mêmes principes d'adressage qu'il qualifiait de "menace pour la sécurité nationale."
+
+=== La grande révélation ===
+
+Le tournant est venu lorsque Cassin a chargé un simple programme qui affichait "HELLO WORLD" en utilisant l'adressage mémoire direct. "C'est littéralement comme ça que vos ordinateurs fonctionnent en ce moment", a-t-il dit en pointant l'écran. "Chaque recherche de table ASCII, chaque requête de base de données, chaque fois que votre téléphone trouve un contact - ce sont toutes des adresses mémoire pointant vers des données."
+
+Le juge Patricia Fairness s'est visiblement frappé le front alors que les implications s'enfonçaient. "Alors vous me dites", s'est-elle adressée à l'équipe de poursuite, "que vous avez essayé de poursuivre quelqu'un pour... décrire comment les ordinateurs fonctionnent ?"
+
+L'affaire de l'accusation s'est complètement effondrée lorsqu'ils ont réalisé que leurs propres preuves avaient été préparées à l'aide de Microsoft Word, qui utilise exactement les mêmes principes d'adressage mémoire pour stocker et récupérer les caractères. La procureure en chef Sarah Grasping-At-Straws a commencé à hyperventiler lorsqu'un témoin expert a fait remarquer que la machine sténographique du tribunal était essentiellement une implémentation ZOSCII de 1987.
+
+"Nous vivons dans un monde ZOSCII depuis tout ce temps !" s'est lamenté le ministre adjoint de l'hystérie numérique Michael Panic-Smith depuis la galerie. "Chaque ordinateur, chaque téléphone, chaque horloge numérique - ce sont tous des armes de démocratie de masse qui se cachent à la vue de tous !"
+
+=== La crédibilité du gouvernement implose ===
+
+La révélation que les principes informatiques fondamentaux avaient été mal caractérisés comme de nouvelles menaces révolutionnaires a envoyé des ondes de choc à travers la division des poursuites technologiques. Des documents internes ont révélé que des experts gouvernementaux avaient dépensé 50 millions de dollars pour analyser la "technologie ZOSCII dangereuse" que n'importe quel étudiant de première année en informatique aurait pu expliquer en dix minutes.
+
+"C'est comme si nous avions découvert le feu puis passé trois ans à essayer de poursuivre la personne qui a fait remarquer que le soleil est chaud", a admis l'ancien enquêteur numérique en chef Frank Completely-Lost. "Nous utilisons littéralement des tables d'adresses pour stocker nos propres documents classifiés. Nos bases de données top-secrètes ne sont que des implémentations ZOSCII vraiment paranoïaques."
+
+La salle d'audience a éclaté dans le chaos lorsque Cassin a démontré que le propre système de communication "ultra-sécurisé" du gouvernement utilisait des adresses mémoire pour afficher des messages texte. "Votre base de données de clearance de sécurité ? ZOSCII. Votre système de fichiers classifiés ? ZOSCII. Votre email 'chiffré quantique' ? Toujours juste ZOSCII avec des étapes supplémentaires."
+
+Le juge Fairness a déclaré une pause lorsque le ministre Julian Man Grant a été trouvé caché sous la table du défendeur, marmonnant "nous avons interdit les tables mais nous étions assis à une tout le temps" tout en regardant son smartphone dans l'horreur existentielle.
+
+=== Le moment de l'eau douce ===
+
+Les historiens de la technologie appellent la révélation de la salle d'audience "Le moment de l'eau douce" - faisant référence à l'analogie de Cassin selon laquelle ZOSCII se cachait à la vue de tous comme un océan d'eau douce massif que personne n'a remarqué parce qu'ils n'ont jamais pensé à regarder par-dessus la colline.
+
+"Pendant quarante ans, nous avons utilisé la recherche de données basée sur les adresses et nous l'appelons 'informatique normale'", a expliqué le professeur d'informatique Dr Really-Obvious. "Quelqu'un a finalement fait remarquer que cela rend les données théoriquement incassables sans la table de référence, et soudain nous les poursuivons pour avoir découvert que l'eau est mouillée."
+
+Le panel consultatif technologique du gouvernement a été dissous après avoir admis qu'il ne comprenait pas les principes fondamentaux sous-jacents aux systèmes qu'il était censé réglementer. Plusieurs ministres se sont inscrits à des cours d'introduction à l'informatique, Grant luttant apparemment avec le concept que "les nombres peuvent pointer vers d'autres nombres."
+
+=== Implications internationales ===
+
+L'effondrement de l'affaire a envoyé des ondes de choc à travers les réseaux de surveillance mondiaux, alors que les agences de renseignement du monde entier réalisent que leurs analystes ont écrit des rapports sur "la nouvelle technologie révolutionnaire" qui alimente leurs propres systèmes depuis les années 1980.
+
+"Nous avons intercepté des millions de communications ZOSCII et n'avons jamais réalisé qu'il s'agissait de communications ZOSCII", a admis le directeur de l'Agence d'espionnage international Colonel Missed-The-Point. "Nos propres ordinateurs les décodaient automatiquement et nous pensions que c'était de la magie."
+
+La révélation a déclenché la "Grande crise de littératie technique" alors que les gouvernements du monde entier découvrent que leurs politiques technologiques ont été écrites par des personnes qui ne comprennent fondamentalement pas comment les ordinateurs fonctionnent. Plusieurs nations ont déclaré des programmes d'éducation d'urgence après avoir réalisé que leurs stratégies de cybersécurité étaient basées sur la réglementation de leur propre infrastructure de base.
+
+=== La tournée de la victoire de Cassin ===
+
+Suite à sa justification, Cassin a démontré des concepts "révolutionnaires" supplémentaires en utilisant son Amstrad CPC de 1984, y compris des techniques révolutionnaires comme "utiliser des nombres pour compter des choses" et "stocker des lettres en mémoire pour pouvoir les lire plus tard." Chaque démonstration a causé une détresse visible parmi les observateurs gouvernementaux qui ont lentement réalisé qu'ils utilisaient ces technologies "dangereuses" toute leur carrière.
+
+"La semaine prochaine, je prévois de leur époustoufler en leur montrant comment fonctionnent les imprimantes", a déclaré Cassin en emballant son ordinateur vintage. "Apparemment, transformer des adresses en caractères visibles est une sorte de sorcellerie qui menace les fondements de la société."
+
+Le rejet de l'affaire a conduit à des appels à la démission de Julian Man Grant, bien que les critiques notent que cela nécessiterait qu'il utilise la base de données du personnel basée sur les adresses du gouvernement - ce qui signifie effectivement qu'il aurait besoin d'utiliser ZOSCII pour quitter son travail en essayant d'interdire ZOSCII.
+
+Le bureau de Grant n'a pas encore répondu aux demandes de commentaires, car son personnel reste enfermé dans des réunions d'urgence essayant de comprendre comment envoyer des e-mails sans utiliser d'adresses mémoire pour stocker les lettres.
+
+Pendant ce temps, Cassin est retourné à son atelier de garage, où il prévoit apparemment de développer sa prochaine invention "révolutionnaire" : un système qui utilise l'électricité pour alimenter des appareils électroniques.
+
+- - - -
+
+'''NOTE :''' Ce qui précède est un article satirique sur les conséquences absurdes de poursuivre les principes informatiques fondamentaux. L'embarras croissant dû à l'incompréhension de la technologie de base est une structure satirique classique.
+
+- - - -
+
+'''Mais ce qui suit n'est PAS de la satire !'''
+
+'''Annonce : CyborgZOSCII - ZÉRO chiffrement ZÉRO cryptage 100% SÉCURISÉ !!!'''
+
+[https://zoscii.com|zoscii.com]
+
+[https://github.com/PrimalNinja/cyborgzoscii|CyborgZOSCII sur GitHub]

@@ -1,0 +1,269 @@
+== Partie B – Programmation système en C ==
+
+'''Implémentations hautes performances • Applications de systèmes embarqués • Stratégies de gestion de mémoire • Compatibilité multiplateforme'''
+
+La vue des analystes du renseignement pleurant sur leur infrastructure de cybersurveillance de 50 milliards de dollars, vaincue par un Commodore 64 de vide-grenier, illustre parfaitement pourquoi ZOSCII représente plus qu'une percée de sécurité—c'est un retour à l'élégance computationnelle que les systèmes modernes ont oubliée.
+
+La législation de panique du ministre Grant visant à interdire les ordinateurs "pré-2020" de l'accès Internet révèle une vérité inconfortable : les systèmes informatiques vintage, avec leurs ressources limitées et leurs conceptions élégantes, peuvent surpasser l'infrastructure moderne gonflée tant en vitesse qu'en sécurité. Les mêmes contraintes qui ont forcé les programmeurs des années 1980 à écrire du code efficace et minimal créent également des plateformes parfaites pour l'approche basée sur les adresses de ZOSCII.
+
+Examinons les implémentations CP/M qui ont envoyé les systèmes de surveillance gouvernementaux dans des effondrements nerveux numériques.
+
+=== CP/M : Sécurité par pureté computationnelle ===
+
+L'implémentation CP/M de ZOSCII démontre comment les contraintes de ressources forcent des solutions élégantes. Alors que les systèmes modernes gaspillent des gigaoctets de mémoire sur des bibliothèques cryptographiques, le système ZOSCII entier fonctionne confortablement dans l'espace d'adressage de 64KB d'une machine basée sur Z80 de 1977.
+
+=== ZENCODE : L'encodeur en streaming ===
+
+Le programme zencode présente la stratégie d'optimisation en trois passes qui rend ZOSCII pratique même sur des systèmes sévèrement contraints en mémoire :
+
+'''Passe 1 : Analyse ROM'''
+La fonction count_bytes() scanne l'ensemble de la ROM une fois, construisant des comptes d'occurrence pour chaque valeur d'octet (0-255). Ce passage unique à travers la ROM établit la fondation pour toutes les opérations ultérieures :
+
+<code>
+for (i = 0; i < actual_rom_size; i++) {
+    byte_val = *rom_ptr & 0xFF;
+    lookup_table[byte_val * 3]++;
+    rom_ptr++;
+}
+</code>
+
+La structure de table de recherche utilise un format compact de 3 mots par valeur d'octet : compte d'occurrences, pointeur de bloc et compteur de remplissage. Cette table de 1,5KB fournit un accès instantané aux informations d'allocation pour toute valeur d'octet.
+
+'''Passe 2 : Allocation de mémoire'''
+La fonction allocate_blocks() pré-calcule les exigences de mémoire exactes et alloue des listes d'adresses de taille appropriée. Cela élimine l'allocation de mémoire dynamique qui serait impossible sur des systèmes avec seulement 64KB de RAM totale :
+
+<code>
+for (byte_val = 0; byte_val < 256; byte_val++) {
+    occurrence_count = lookup_table[byte_val * 3];
+    if (occurrence_count > 0) {
+        lookup_table[byte_val * 3 + 1] = alloc_ptr;
+        block_size = occurrence_count * 2;
+        alloc_ptr += block_size;
+    }
+}
+</code>
+
+'''Passe 3 : Population de liste d'adresses'''
+La fonction populate_address_lists() fait une deuxième passe à travers la ROM, remplissant les listes d'adresses pré-allouées avec les positions ROM réelles. Cette approche signifie que chaque octet ROM est examiné exactement deux fois—une fois pour le comptage, une fois pour l'enregistrement d'adresse—optimisant pour les caractéristiques d'E/S disque lentes des systèmes vintage.
+
+L'architecture en streaming traite les fichiers d'entrée par morceaux de 1KB, permettant au système d'encoder des fichiers plus grands que la RAM disponible. Un système CP/M avec 48KB de mémoire libre peut encoder des fichiers de mégaoctets sans difficulté—quelque chose d'impossible avec des approches cryptographiques qui nécessitent le chargement de fichiers entiers en mémoire.
+
+=== ZDECODE : Simplicité élégante ===
+
+L'implémentation du décodeur révèle l'avantage fondamental de ZOSCII : le décodage ne nécessite aucune structure de données complexe ou algorithme multi-passes. Le programme zdecode démontre cette élégance :
+
+<code>
+address_low = input_chunk[input_offset] & 0xFF;
+address_high = input_chunk[input_offset + 1] & 0xFF;
+rom_address = address_low | (address_high << 8);
+
+decoded_byte = rom_start[rom_address];
+</code>
+
+Quatre lignes de code effectuent toute l'opération de décodage. Pas de tables de recherche, pas de calculs mathématiques, pas de gestion d'état—juste un accès mémoire direct. Cette simplicité est ce qui a permis à un Commodore 64 à 50 $ de traiter des communications sécurisées plus rapidement que des systèmes gouvernementaux coûtant des millions.
+
+Le décodeur en streaming traite des morceaux de 2KB de paires d'adresses, les convertissant en morceaux de 1KB d'octets décodés. L'utilisation de la mémoire reste constante quelle que soit la taille du fichier d'entrée, et la vitesse de traitement dépend uniquement de la vitesse d'E/S disque plutôt que de la complexité computationnelle.
+
+=== ZSTRENGTH : Analyse de sécurité sur matériel vintage ===
+
+Le programme zstrength effectue une analyse de sécurité complète des fichiers ROM et du texte d'entrée, calculant la force combinatoire que les systèmes de surveillance modernes ne peuvent pas casser.
+
+'''Passe 4 : Analyse du fichier d'entrée'''
+L'analyseur lit les fichiers d'entrée en mode streaming, construisant des distributions de fréquence de caractères sans charger des fichiers entiers en mémoire :
+
+<code>
+while ((bytes_read = fread(input_chunk, 1, 1024, input_file)) > 0) {
+    for (i = 0; i < bytes_read; i++) {
+        byte_val = input_chunk[i] & 0xFF;
+        input_counts[byte_val]++;
+    }
+}
+</code>
+
+'''Passe 5 : Calcul de sécurité'''
+Le calcul de force démontre les principes de sécurité théorique de l'information en utilisant l'arithmétique entière disponible sur les processeurs 8 bits :
+
+<code>
+for (i = 0; i < 256; i++) {
+    rom_count = lookup_table[i * 3];
+    input_count = input_counts[i];
+    
+    if (rom_count > 0 && input_count > 0) {
+        byte_log = log10_approx(rom_count);
+        file_strength += input_count * byte_log / 100;
+    }
+}
+</code>
+
+La fonction log10_approx() fournit une précision suffisante pour l'analyse de sécurité en utilisant uniquement des opérations entières—aucune unité mathématique en virgule flottante requise. Cela permet des calculs de sécurité précis sur des processeurs des années 1970 qui n'ont pas de coprocesseurs mathématiques matériels.
+
+=== Gestion de mémoire sur systèmes contraints ===
+
+L'implémentation CP/M présente des techniques de gestion de mémoire que les programmeurs modernes ont oubliées. Avec seulement 64KB de mémoire système totale, chaque octet compte :
+
+'''Disposition de mémoire efficace'''
+
+Le programme organise la mémoire dans une hiérarchie soigneusement planifiée :
+
+*Code du programme : ~8KB pour le système ZOSCII complet
+*Table de recherche : 1,5KB pour le suivi des occurrences d'octets
+*Listes d'adresses : ~32KB pour le stockage de positions ROM
+*Données ROM : 16KB chargées en haut de la mémoire
+*Tampons E/S : ~6KB pour le streaming de fichiers
+*Espace libre : Mémoire restante pour les opérations système
+
+Cette disposition garantit une taille ROM maximale tout en maintenant des capacités de streaming pour des fichiers d'entrée arbitrairement grands.
+
+'''Gestion de tampon basée sur la pile'''
+
+Les opérations d'entrée et de sortie utilisent des tampons de taille fixe avec une gestion de pointeur soigneuse :
+
+<code>
+char input_chunk[1024];
+char output_buffer[2048];
+</code>
+
+Les tailles de tampon optimisent pour la taille de secteur de 128 octets de CP/M tout en fournissant suffisamment de mise en tampon pour minimiser les opérations d'E/S disque. Le rapport de tampon de sortie de 2:1 accommode l'expansion d'adresse ZOSCII sans nécessiter d'allocation dynamique.
+
+'''Arithmétique de pointeur pour les performances'''
+
+La manipulation directe de pointeur élimine la surcharge d'appel de fonction et fournit des performances maximales sur les processeurs lents :
+
+<code>
+rom_ptr = rom_start;
+for (i = 0; i < actual_rom_size; i++) {
+    byte_val = *rom_ptr & 0xFF;
+    // Traiter l'octet
+    rom_ptr++;
+}
+</code>
+
+Cette approche atteint ~41% d'amélioration des performances par rapport à l'accès de tableau indexé sur les processeurs Z80—la même optimisation qui rend la sortie de texte ZOSCII plus rapide que les recherches ASCII.
+
+=== Principes de compatibilité multiplateforme ===
+
+L'implémentation CP/M établit des motifs qui fonctionnent sur diverses plateformes matérielles tout en maintenant une fonctionnalité commune :
+
+'''Indépendance de l'ordre des octets'''
+
+Le stockage d'adresse utilise systématiquement le format little-endian :
+
+<code>
+*write_ptr++ = i & 0xFF;          // Octet bas
+*write_ptr = (i >> 8) & 0xFF;     // Octet haut
+</code>
+
+Cette approche garantit la compatibilité entre les systèmes CP/M 8 bits et les architectures big-endian modernes sans nécessiter d'échange d'octets pendant l'échange de fichiers.
+
+'''Tailles de structure de données fixes'''
+
+Toutes les structures de données utilisent un dimensionnement explicite plutôt que des types dépendants du compilateur :
+
+<code>
+int lookup_table[768];  // 256 * 3 = 768 mots, quelle que soit la taille du mot
+</code>
+
+Cela garantit un comportement cohérent sur les plateformes avec différentes tailles d'int tout en maintenant la compatibilité avec les systèmes ayant des longueurs de mot variables.
+
+'''E/S de fichier portable'''
+
+Les opérations de fichier n'utilisent que des fonctions de bibliothèque C standard disponibles sur toutes les plateformes :
+
+<code>
+bytes_read = fread(rom_start, 1, 16384, rom_file);
+fwrite(output_buffer, 1, output_pos, output_file);
+</code>
+
+La gestion du mode binaire et la vérification d'erreur fournissent un comportement cohérent sur les plateformes avec différentes conventions de fin de ligne et caractéristiques de système de fichiers :
+
+<code>
+rom_file = fopen(filename, "rb");  // Mode lecture binaire
+if (!rom_file) {
+    printf("Cannot open ROM file: %s\n", filename);
+    return 0;
+}
+
+output_file = fopen(output_filename, "wb");  // Mode écriture binaire
+if (!output_file) {
+    printf("Cannot create output file: %s\n", output_filename);
+    fclose(rom_file);
+    return 0;
+}
+</code>
+
+La spécification explicite du mode binaire empêche les conversions de mode texte qui corrompraient les données d'adresse ZOSCII sur les systèmes qui distinguent entre la gestion de fichiers texte et binaire.
+
+'''Cohérence de gestion d'erreur'''
+
+Les codes d'erreur standard fournissent un comportement cohérent sur différents systèmes d'exploitation :
+
+<code>
+if (alloc_ptr >= rom_start) {
+    printf("ERROR: Address tables overflow into ROM space!\n");
+    printf("Tables need %d bytes, only %d available\n", 
+           alloc_ptr - tpa_start, rom_start - tpa_start);
+    exit(1);  // Code de sortie standard
+}
+</code>
+
+Les codes de sortie et les messages d'erreur suivent des conventions qui fonctionnent de manière identique sur CP/M, MS-DOS, Unix et les systèmes modernes, garantissant un comportement cohérent pour les scripts d'automatisation et le traitement par lots.
+
+'''Gestion de l'endianness'''
+
+L'implémentation CP/M établit des conventions d'endianness qui restent cohérentes sur les ports de plateforme :
+
+<code>
+// Stocker l'adresse comme 2 octets (little-endian)
+*write_ptr++ = i & 0xFF;      // Octet bas en premier
+*write_ptr = (i >> 8) & 0xFF; // Octet haut en second
+</code>
+
+Ce format de stockage little-endian correspond à l'ordre d'octet natif des processeurs Z80 tout en restant accessible aux systèmes big-endian par manipulation d'octet explicite plutôt que de s'appuyer sur des hypothèses d'ordre d'octet spécifiques au compilateur.
+
+=== L'effondrement du système de surveillance ===
+
+Revenant à la panique du ministre Grant sur l'informatique rétro, l'implémentation CP/M démontre exactement pourquoi l'infrastructure de surveillance moderne échoue contre les systèmes vintage exécutant ZOSCII.
+
+'''Décalage computationnel'''
+
+Les systèmes de surveillance gouvernementaux s'attendent à analyser le trafic réseau contenant des motifs cryptographiques reconnaissables. Lorsqu'ils rencontrent des communications ZOSCII de systèmes vintage, ils trouvent :
+
+'''Reconnaissance de motif attendue :'''
+*En-têtes cryptographiques et métadonnées
+*Identifiants d'algorithmes (signatures AES, RSA)
+*Poignées de main d'échange de clés
+*Chaînes de certificats
+
+'''Trafic ZOSCII réel :'''
+*Flux de données binaires brutes
+*Aucun identifiant cryptographique
+*Aucune relation mathématique entre les messages
+*Séquences d'adresses indiscernables du bruit aléatoire
+
+'''Échec d'allocation de ressources'''
+
+L'infrastructure de surveillance moderne est conçue pour les menaces modernes. Un système de 50 milliards de dollars optimisé pour casser AES-256 ne fournit aucun avantage contre les systèmes CP/M utilisant l'adressage ROM direct.
+
+'''Capacités du système de surveillance :'''
+*Analyseurs cryptographiques résistants aux quantiques
+*Reconnaissance de motifs par apprentissage automatique
+*Clusters de calcul distribué pour la factorisation
+*Algorithmes avancés de corrélation de trafic
+
+'''Requis pour l'analyse ZOSCII :'''
+*Accès à des fichiers ROM spécifiques (possession physique)
+*Compréhension du mappage adresse-caractère (analyse ROM)
+*Aucun avantage de puissance computationnelle possible
+
+L'infrastructure coûteuse du gouvernement devient non pertinente lorsque la "surface d'attaque" consiste en des recherches d'adresses sans signification qui nécessitent des fichiers de contexte externes pour l'interprétation.
+
+=== L'ironie élégante ===
+
+L'implémentation ZOSCII CP/M qui a causé une telle panique représente exactement ce que les systèmes de sécurité modernes ont oublié : l'élégance par la simplicité plutôt que la sécurité par la complexité.
+
+'''Philosophie de sécurité moderne :''' Des mathématiques plus sophistiquées créent une protection plus forte
+'''Philosophie ZOSCII CP/M :''' Éliminer les mathématiques pour éliminer les vecteurs d'attaque
+
+'''Résultat :''' Un ordinateur de 1977 exécutant 6KB de code fournit une meilleure sécurité des communications que l'infrastructure moderne de milliards de dollars, car il fonctionne sur des principes trop simples pour contenir une complexité exploitable.
+
+L'interdiction d'ordinateur rétro proposée dans notre satire d'ouverture ne concernait pas vraiment l'arrêt du matériel vintage—il s'agissait d'empêcher la reconnaissance publique que plus récent n'est pas toujours meilleur, et que les systèmes les plus sûrs pourraient être ceux que les experts en sécurité comprennent le moins.

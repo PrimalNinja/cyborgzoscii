@@ -1,0 +1,62 @@
+== Partie D – Comprendre les fichiers ROM et l'entropie ==
+
+Le cas d'Harold devient encore plus intéressant lorsque nous examinons la qualité de la ROM. Les enquêteurs ont supposé que des "codes nucléaires" de haute qualité nécessiteraient des clés de codage sophistiquées. En réalité, Harold a utilisé une photo JPEG de sa grand-mère comme ROM - et cela a fourni une sécurité astronomique pour encoder sa recette sous forme de données binaires.
+
+=== Les bases de l'entropie ROM ===
+
+Une bonne ROM ZOSCII devrait contenir des valeurs d'octets diverses (0-255) avec plusieurs occurrences de chaque valeur que vous souhaitez encoder. La photo de la grand-mère d'Harold (JPEG de 64 Ko) contenait :
+
+*Valeur d'octet 65 ('A' en ASCII) : 847 occurrences à différentes positions
+*Valeur d'octet 32 (espace) : plus de 1 200 occurrences
+*Valeur d'octet 255 : 234 occurrences
+*Valeur d'octet 0 : 445 occurrences
+*Toutes les 256 valeurs d'octets possibles représentées
+
+Cette diversité a donné à la recette de biscuits d'Harold (convertie en binaire) environ 10^156 encodages possibles - ce qui la rend plus sûre que les systèmes de chiffrement de qualité militaire.
+
+=== Tester la qualité de la ROM ===
+
+Vous pouvez évaluer l'adéquation de n'importe quel fichier en tant que ROM ZOSCII à l'aide de ce test complet :
+
+<code>
+function testROM(romData) {
+    let counts = new Array(256).fill(0);
+    for(let i = 0; i < romData.length; i++) {
+        counts[romData[i]]++;
+    }
+    
+    // Check coverage for all possible byte values
+    let coveredBytes = 0;
+    let totalOccurrences = 0;
+    let minCount = Infinity;
+    let maxCount = 0;
+    
+    for(let i = 0; i < 256; i++) {
+        if(counts[i] > 0) {
+            coveredBytes++;
+            totalOccurrences += counts[i];
+            minCount = Math.min(minCount, counts[i]);
+            maxCount = Math.max(maxCount, counts[i]);
+        }
+    }
+    
+    api.print(`ROM covers ${coveredBytes}/256 possible byte values`);
+    api.print(`Average occurrences per byte value: ${Math.round(totalOccurrences/coveredBytes)}`);
+    api.print(`Range: ${minCount} to ${maxCount} occurrences per byte`);
+}
+</code>
+
+La photo de la grand-mère d'Harold a obtenu une couverture d'octets de 256/256 avec une moyenne de 256 occurrences par valeur d'octet - ce qui explique pourquoi sa recette de biscuits encodée en binaire a atteint des notes de sécurité de niveau nucléaire.
+
+=== Encodage de données binaires ===
+
+ZOSCII peut encoder tout type de données :
+
+*Fichiers texte (convertis en octets UTF-8)
+*Images (données de pixels brutes)
+*Fichiers audio (données d'ondes sonores)
+*Exécutables (code machine)
+*Documents (PDF, Word, etc.)
+*Tout format de fichier binaire
+
+Harold aurait pu encoder sa recette sous forme de document Word, d'image de la recette manuscrite, ou même d'enregistrement audio - le tout avec le même niveau de sécurité astronomique.

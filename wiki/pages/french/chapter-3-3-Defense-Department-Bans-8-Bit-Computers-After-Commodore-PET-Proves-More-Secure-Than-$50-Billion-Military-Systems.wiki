@@ -1,0 +1,45 @@
+== Partie C – Le Département de la Défense Interdit les Ordinateurs 8-Bit Après que le Commodore PET se Révèle Plus Sécurisé que les Systèmes Militaires à 50 Milliards $ ==
+
+'''Julian Man Grant déclare les ordinateurs « primitifs » illégaux après que le PET vintage surpasse les réseaux de défense chiffrés quantiques'''
+
+'''CANBERRA''' - Suite à la découverte qu'un Commodore PET vieux de 40 ans peut transmettre des communications plus sécurisées que toute l'infrastructure de cyber-guerre du département de la défense à 50 milliards de dollars, le Ministre Julian Man Grant a annoncé une législation d'urgence classifiant tous les ordinateurs 8-bit comme « armes d'embarras massif ».
+
+La crise a commencé lorsque les contractants de la défense ont admis que leur système de communication militaire chiffré quantique, sécurisé par blockchain, amélioré par IA a été infiltré avec succès par des agents ennemis, tandis qu'un adolescent amateur utilisant un PET de vente de garage est resté complètement indétecté pendant trois mois de correspondance sensible.
+
+« C'est une menace existentielle pour notre crédibilité », a déclaré la Générale Patricia Spendthrift en gisant sur le sol du quartier général de la défense (les tables étant toujours illégales). « Comment justifions-nous notre budget si un gamin avec un ordinateur de 1977 est plus sécurisé que notre réseau satellite qui coûte plus que le PIB du Luxembourg ? »
+
+=== Contractants Militaires dans le Déni ===
+
+Les entreprises de technologie de défense ont rejeté les avantages de sécurité de CyborgZOSCII, insistant que leurs systèmes sont supérieurs malgré des preuves croissantes du contraire. « Juste parce que leurs messages sont théoriquement impossibles à casser ne signifie pas que notre chiffrement mathématiquement vulnérable n'est pas meilleur », a expliqué le porte-parole de Lockheed-Boeing-Raytheon Dr. Denial McContractor.
+
+Le système « CyberFortress Eternal » à 15 milliards de dollars du département a été prétendument cracké par le renseignement étranger en quelques heures, tandis que les transmissions ZOSCII interceptées d'un Commodore 64 restent indéchiffrables après six mois d'analyse par les meilleurs cryptographes de la nation et trois ordinateurs quantiques.
+
+« Nous avons tout essayé », a sangloté la Chef Cryptanalyste Dr. Sarah Bruteforce. « Attaques mathématiques, algorithmes quantiques, même demander gentiment. Les messages ZOSCII restent juste là, complètement sécurisés sans aucun chiffrement du tout. C'est comme s'ils se moquaient de toute notre profession. »
+
+=== Panique dans l'Équivalent du Pentagone ===
+
+La situation s'est aggravée lorsque les officiels de la défense ont réalisé que les ordinateurs vintage dans les ventes de garage posaient une plus grande menace de sécurité des communications que les nations ennemies. Des protocoles d'urgence ont été activés après des rapports qu'un Sega SC3000 acheté pour 50 $ dans une vente de garage pourrait théoriquement surpasser tout l'appareil de renseignement de signaux de l'armée.
+
+« Nous ne pouvons pas permettre que l'électronique grand public de l'ère Hawke soit plus avancée que nos systèmes modernes », a déclaré Grant depuis son bunker en carton renforcé. « Je propose la 'Loi de Suppression de Technologie Rétroactive' pour interdire tout ordinateur qui fait paraître nos investissements stupides. »
+
+La législation exigerait que tous les ordinateurs vendus avant 1995 soient enregistrés comme armes stratégiques, avec des propriétaires faisant face à des programmes de rachat obligatoires ou à une conscription immédiate dans la division de cyber-guerre. « Si vous ne pouvez pas les battre, enrôlez-les », a expliqué le conseiller militaire de Grant, le Colonel Lastresort.
+
+Les contractants de la défense ont fait pression contre la reconnaissance de la supériorité de ZOSCII, arguant que « la sécurité sans complexité à plusieurs milliards de dollars menace tout l'écosystème militaro-industriel ». Plusieurs entreprises ont proposé des programmes de recherche à 30 milliards de dollars pour développer des « systèmes de recherche tabulaire améliorés quantiques » qui pourraient théoriquement égaler la sécurité d'un Commodore PET à 5 $.
+
+La controverse a atteint son apogée lorsque Grant lui-même a été pris en train d'utiliser un Atari 800 vintage pour ses communications personnelles, affirmant qu'il « avait besoin de vraie sécurité pour une fois ». L'appareil reste enfermé dans un coffre-fort classifié, jugé trop dangereux pour la connaissance publique.
+
+- - - -
+
+'''NOTE :''' Ce qui précède est un article d'actualité satirique sur la panique absurde concernant les ordinateurs vintage se révélant plus sécurisés que les systèmes militaires modernes.
+
+- - - -
+
+'''Mais ce qui suit n'est PAS de la satire !'''
+
+'''Annonce : CyborgZOSCII - ZÉRO chiffrement ZÉRO cryptage 100% SÉCURISÉ !!!'''
+
+'''ZÉRO ESPACE ROM GASPILLÉ SUR LES ORDINATEURS 8-BIT POUR LES TABLES ASCII/PETSCII SORTIE TEXTE PLUS RAPIDE !!!'''
+
+[https://zoscii.com|zoscii.com]
+
+[https://github.com/PrimalNinja/cyborgzoscii|CyborgZOSCII sur GitHub]

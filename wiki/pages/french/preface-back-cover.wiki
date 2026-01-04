@@ -1,0 +1,19 @@
+= Préface =
+
+"D'entrée de jeu, c'est votre premier signal d'alarme. Tout système qui appelle un fichier aléatoire une 'clé' ne comprend pas fondamentalement les principes cryptographiques."
+
+Lorsque la journaliste technologique chevronnée Melissa NoseBetter a interviewé l'éminent expert en cybersécurité Dr. Andrew Tunnelvision au sujet du controversé système d'encodage ZOSCII, elle s'attendait à une réfutation routinière des prétentions de sécurité "huile de serpent".
+
+Au lieu de cela, elle a découvert quelque chose de bien plus intéressant : un expert en cryptographie passant complètement à côté du sujet tout en prouvant involontairement la sécurité même qu'il tentait de rejeter.
+
+ZOSCII ne chiffre pas les données—il les élimine. En stockant uniquement des adresses mémoire qui pointent vers des caractères dans des fichiers ROM secrets, le système atteint une déniabilité parfaite : la même séquence d'adresses peut se décoder en lettres d'amour, listes de courses ou secrets d'État, selon la ROM utilisée.
+
+"Ce n'est pas de la sécurité, c'est juste de l'obscurcissement !" insiste le Dr. Tunnelvision. "Tout étudiant de première année en cryptographie sait qu'il faut de vrais algorithmes de chiffrement, pas seulement... pointer vers des choses."
+
+Mais alors que les gouvernements du monde entier découvrent qu'ils ne peuvent pas casser ce qu'ils ont rejeté avec confiance, et qu'un défi de cryptomonnaie de 10 milliards de jetons reste non résolu malgré des tentatives mondiales, une question émerge :
+
+Que se passe-t-il lorsque la percée de sécurité la plus révolutionnaire ressemble exactement à de l'huile de serpent pour les experts qui devraient le mieux la comprendre ?
+
+De la panique gouvernementale satirique à l'analyse technique approfondie, ce livre relate l'essor d'une technologie qui atteint une sécurité parfaite en évitant complètement la cryptographie—et la lutte de l'establishment pour comprendre que parfois la meilleure façon de cacher quelque chose est de pointer ailleurs.
+
+'''CyborgZOSCII : Zéro chiffrement. Zéro cryptage. 100% sécurisé.'''

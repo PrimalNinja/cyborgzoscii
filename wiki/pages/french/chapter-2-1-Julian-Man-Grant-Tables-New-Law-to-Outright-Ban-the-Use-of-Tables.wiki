@@ -1,0 +1,49 @@
+= Chapitre 2 : Comment fonctionne ZOSCII =
+
+== Partie A – Le ministre Julian Man Grant dépose une nouvelle loi pour interdire totalement l’usage des tables ==
+
+'''Un ministre subit une crise totale face à une percée révolutionnaire en sécurité des données et griffonne une loi sur une serviette'''
+
+'''CANBERRA''' – Dans ce que les experts décrivent comme « la réaction la plus réflexe depuis l’invention du genou », le ministre Julian Man Grant a annoncé aujourd’hui une interdiction générale de toutes les tables après que des rapports ont révélé que des scientifiques des données avaient développé des méthodes de sécurité infaillibles à l’aide de simples formats tabulaires.
+
+La technique révolutionnaire, baptisée « TableCrypt », rendrait les données sûres à 100 % sans aucun chiffrement ni algorithme cryptographique, simplement en organisant intelligemment l’information en lignes et en colonnes. En apprenant la nouvelle lors de son briefing matinal, des témoins rapportent que Grant s’est immédiatement mis à hyperventiler en marmonnant « pas les tables, n’importe quoi sauf les tables », avant de rédiger frénétiquement une législation d’urgence sur toute surface plane disponible — ironiquement, son bureau.
+
+« Si des tables peuvent rendre les données totalement sécurisées, alors elles sont clairement trop puissantes pour un usage civil », a déclaré Grant lors d’une conférence de presse improvisée, debout maladroitement derrière un pupitre dont les pieds avaient été sciés. « Nous devons agir rapidement avant que ces dangereuses dispositions rectangulaires ne déstabilisent tout notre appareil de renseignement. »
+
+=== Une nation peine à s’adapter à une réalité sans tables ===
+
+La mise en œuvre immédiate de la « Loi sur les surfaces anti‑tabulaires » a plongé le pays dans le chaos. Des familles entières sont désormais contraintes de dîner accroupies autour de bols posés directement au sol, provoquant ce que les sociologues appellent « la grande épidémie de maux de dos de 2025 ».
+
+« Le petit Timmy n’arrête pas de demander pourquoi on ne peut plus utiliser la table à manger », sanglote la mère locale Sarah Henderson en désignant les meubles confisqués qui prennent la poussière dans son garage. « J’ai essayé d’expliquer que le gouvernement pense qu’elle pourrait chiffrer ses devoirs par accident, mais il a juste commencé à pleurer dans ses spaghettis par terre. »
+
+Les lieux de travail ont été tout aussi perturbés. Les employés de bureau tiennent désormais leurs réunions assis en tailleur en cercle, équilibrant leurs ordinateurs portables de façon précaire sur leurs genoux. La productivité a chuté de 847 %, mais le bureau de Grant affirme qu’il s’agit là « d’un petit prix à payer pour la sécurité des données ».
+
+La Division de l’application de la loi sur les tables, une unité policière créée à la hâte et équipée de masses et de mètres ruban, mène des raids agressifs dans des lieux soupçonnés d’abriter des tables. « Nous avons reçu des signalements de tournois clandestins de ping‑pong et de rassemblements illégaux autour de tables basses », a annoncé l’inspectrice en chef Margaret Flatbottom. « Ces adorateurs de tables subiront toute la rigueur de la loi fondée sur le sol. »
+
+=== Le secteur technologique en effondrement total ===
+
+De façon peut‑être encore plus catastrophique, la formulation large de la loi a effectivement interdit tous les logiciels informatiques, puisque pratiquement tous les programmes utilisent une forme de structure de données tabulaire. L’industrie technologique a regardé avec horreur les agents confisquer des serveurs, affirmant que les tables HTML, les tables de bases de données et même les tables de caractères ASCII violaient la nouvelle loi.
+
+« Ils ont pris nos mainframes ! », a gémi le PDG de TechCorp, David Pixelworth. « J’ai essayé d’expliquer que les tables ASCII sont simplement la façon dont les ordinateurs comprennent les lettres, mais ils ont dit : “une table reste une table” et ont commencé à me lire mes droits. »
+
+Le site web du gouvernement s’est lui‑même effondré quelques heures après l’entrée en vigueur de la loi, les protocoles d’application s’étant apparemment appliqués à leurs propres systèmes. Le bureau de Grant a été contraint de communiquer exclusivement par danse interprétative et signaux de fumée, bien que les critiques estiment que cela puisse être une amélioration.
+
+L’action Microsoft a chuté de 99,7 % lorsque les marchés ont réalisé qu’Excel — essentiellement une gigantesque table — devrait être reformatté en une sorte de disposition circulaire. Apple a annoncé à la hâte « iFloor », un nouveau produit révolutionnaire qui est essentiellement un iPad scotché au sol.
+
+Le bureau de Grant a publié une déclaration (via pigeon voyageur) défendant la législation : « Nous restons fermes dans notre engagement à éliminer la menace des tables. Si quelques désagréments mineurs comme l’effondrement de la civilisation moderne sont le prix à payer pour vaincre ces monstres de données à quatre pieds, qu’il en soit ainsi. »
+
+L’opposition a appelé à la démission de Grant, bien qu’elle ait été contrainte de formuler cette demande allongée à plat sur le sol du parlement, réduisant considérablement l’impact visuel de son indignation.
+
+- - - -
+
+'''NOTE :''' Ce qui précède est un article satirique sur les conséquences absurdes d’une interdiction des tables dictée par la panique. L’escalade de l’inconvénient personnel jusqu’à l’effondrement total de la société est une structure satirique classique.
+
+- - - -
+
+'''Mais ce qui suit n’est PAS une satire !'''
+
+'''Annonce : CyborgZOSCII – ZÉRO chiffrement, ZÉRO algorithme, SÉCURITÉ à 100 % !!!'''
+
+[https://zoscii.com|zoscii.com]
+
+[https://github.com/PrimalNinja/cyborgzoscii|CyborgZOSCII sur GitHub]

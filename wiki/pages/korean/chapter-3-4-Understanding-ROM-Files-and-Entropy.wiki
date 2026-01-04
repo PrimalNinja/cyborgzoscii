@@ -1,0 +1,62 @@
+== Part D – ROM 파일과 엔트로피 이해하기 ==
+
+ROM 품질을 살펴보면 해럴드의 사례는 훨씬 더 흥미로워집니다. 조사관들은 고품질 "핵 코드"가 정교한 인코딩 키를 필요로 할 것이라고 가정했습니다. 실제로 해럴드는 할머니의 JPEG 사진을 ROM으로 사용했으며, 이는 레시피를 바이너리 데이터로 인코딩하는 데 천문학적 보안을 제공했습니다.
+
+=== ROM 엔트로피 기초 ===
+
+좋은 ZOSCII ROM은 인코딩하려는 각 값의 여러 발생과 함께 다양한 바이트 값(0-255)을 포함해야 합니다. 해럴드의 할머니 사진(64KB JPEG)에는 다음이 포함되어 있었습니다:
+
+*바이트 값 65 (ASCII의 'A'): 다른 위치에 847회 발생
+*바이트 값 32 (공백): 1,200회 이상 발생
+*바이트 값 255: 234회 발생
+*바이트 값 0: 445회 발생
+*모든 256개의 가능한 바이트 값이 표현됨
+
+이 다양성은 해럴드의 비스킷 레시피(바이너리로 변환됨)에 약 10^156개의 가능한 인코딩을 제공했으며, 이는 군사급 암호화 시스템보다 더 안전하게 만들었습니다.
+
+=== ROM 품질 테스트 ===
+
+이 포괄적인 테스트를 사용하여 모든 파일의 ZOSCII ROM으로서의 적합성을 평가할 수 있습니다:
+
+<code>
+function testROM(romData) {
+    let counts = new Array(256).fill(0);
+    for(let i = 0; i < romData.length; i++) {
+        counts[romData[i]]++;
+    }
+    
+    // 모든 가능한 바이트 값에 대한 커버리지 확인
+    let coveredBytes = 0;
+    let totalOccurrences = 0;
+    let minCount = Infinity;
+    let maxCount = 0;
+    
+    for(let i = 0; i < 256; i++) {
+        if(counts[i] > 0) {
+            coveredBytes++;
+            totalOccurrences += counts[i];
+            minCount = Math.min(minCount, counts[i]);
+            maxCount = Math.max(maxCount, counts[i]);
+        }
+    }
+    
+    api.print(`ROM은 ${coveredBytes}/256개의 가능한 바이트 값을 커버합니다`);
+    api.print(`바이트 값당 평균 발생 횟수: ${Math.round(totalOccurrences/coveredBytes)}`);
+    api.print(`범위: 바이트당 ${minCount}에서 ${maxCount}회 발생`);
+}
+</code>
+
+해럴드의 할머니 사진은 바이트 값당 평균 256회 발생으로 256/256 바이트 커버리지 점수를 얻었습니다—이는 그의 바이너리 인코딩 비스킷 레시피가 핵급 보안 등급을 달성한 이유를 설명합니다.
+
+=== 바이너리 데이터 인코딩 ===
+
+ZOSCII는 모든 유형의 데이터를 인코딩할 수 있습니다:
+
+*텍스트 파일 (UTF-8 바이트로 변환)
+*이미지 (원시 픽셀 데이터)
+*오디오 파일 (음파 데이터)
+*실행 파일 (기계 코드)
+*문서 (PDF, Word 등)
+*모든 바이너리 파일 형식
+
+해럴드는 레시피를 Word 문서, 손으로 쓴 레시피의 이미지, 심지어 오디오 녹음으로 인코딩할 수 있었습니다—모두 동일한 천문학적 보안 수준으로.

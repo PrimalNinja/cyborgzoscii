@@ -1,0 +1,91 @@
+= Chapitre 9 : Le temps des solutions de chiffrement actuelles est révolu =
+
+== Partie A – Les cryptographes exigent l'annulation du challenge après que le prix ZOSCII s'avère "seulement" aussi sûr qu'AES-256 ==
+
+'''La communauté académique indignée que le challenge de portefeuille de 10 milliards de jetons ait été "affaibli" aux niveaux de sécurité standard des cryptomonnaies'''
+
+'''SILICON VALLEY''' - L'Association internationale des cryptographes sérieux a déposé une injonction d'urgence pour arrêter le challenge ZOSCII de 10 milliards de jetons, affirmant que le concours est devenu "dangereusement soluble" maintenant que les participants savent qu'ils cherchent une clé privée de cryptomonnaie standard plutôt que des données arbitraires.
+
+La controverse a éclaté lorsque les organisateurs du challenge ont révélé que le fichier encodé contient une clé privée hexadécimale de 64 caractères, réduisant effectivement la sécurité théorique de ZOSCII de ~10^615 combinaisons à un "maigre" 10^77 - le même niveau de sécurité que le chiffrement AES-256 qui protège les systèmes bancaires mondiaux.
+
+"Ceci est complètement inacceptable", a déclaré le Dr Andrew Tunnelvision, maintenant directeur du Comité pour le maintien de la supériorité cryptographique. "En disant aux gens ce qu'ils cherchent, les organisateurs ont rendu ce challenge aussi difficile que de casser toutes les banques du monde simultanément. C'est pratiquement trivial !"
+
+=== Panique académique face à la sécurité "affaiblie" ===
+
+L'établissement cryptographique s'est uni pour condamner ce qu'ils appellent "la divulgation de sécurité la plus irresponsable depuis que quelqu'un a inventé les mots de passe". Les principaux chercheurs soutiennent que réduire la sécurité de ZOSCII pour simplement égaler le chiffrement protégeant les codes de lancement nucléaire représente un compromis inacceptable.
+
+"Quand ZOSCII avait 10^615 combinaisons théoriques, il était correctement impossible à résoudre", a expliqué la professeure Margaret Impossibly-High-Standards de l'Institut de sécurité impraticable. "Maintenant qu'il n'a que 10^77 combinaisons - les mêmes qu'AES-256 - n'importe quel script kiddie avec quelques milliards d'années pourrait le casser. Nous ne pouvons pas permettre qu'une sécurité aussi faible existe !"
+
+La communauté académique a proposé que toute connaissance de ce que représentent les données encodées soit classée top secret pour restaurer le niveau de sécurité "approprié" de ZOSCII. "Si les gens ne savent pas qu'ils cherchent une clé de portefeuille, alors la sécurité remonte à 10^615", a argumenté le Dr Tunnelvision. "C'est des mathématiques simples : l'ignorance égale la sécurité."
+
+=== Le gouvernement rejoint le boycott académique ===
+
+Le ministre Julian Man Grant, dirigeant toujours les affaires gouvernementales depuis son bunker de commandement au sol, a annoncé que le Département de surveillance numérique ignorerait officiellement le challenge en raison de sa "sécurité catastrophiquement faible".
+
+"Notre politique est claire : nous n'enquêtons que sur les systèmes avec des niveaux de sécurité supérieurs à 10^100", a déclaré Grant en arrangeant ses papiers sur une série de coussins soigneusement placés. "À seulement 10^77, ce challenge tombe en dessous de notre seuil de menace minimal. C'est pratiquement du texte brut !"
+
+L'annonce est venue malgré le fait qu'aucune agence gouvernementale n'a réussi à casser une communication ZOSCII à ce jour, quel que soit le niveau de sécurité. Lorsqu'on a insisté sur cette contradiction apparente, le porte-parole de Grant a clarifié que "l'échec à casser quelque chose ne le rend pas sûr - cela rend simplement nos outils inadéquats."
+
+Les agences de renseignement ont exigé que le challenge soit "correctement sécurisé" en supprimant tous les indices sur le contenu des données. "Nous avons besoin d'au moins 10^200 combinaisons avant de considérer prendre cela au sérieux", a expliqué la directrice de la NSA Janet Headinsand. "Sinon, c'est juste un autre puzzle de cryptomonnaie ennuyeux qui se trouve être complètement incassable."
+
+=== La communauté des cryptomonnaies déconcertée ===
+
+Les développeurs de Bitcoin ont exprimé leur confusion face à la position de la communauté académique, notant que la sécurité AES-256 a été considérée "plutôt bonne" pour protéger des billions de dollars en actifs de cryptomonnaie.
+
+"Laissez-moi clarifier", a déclaré la développeuse Ethereum Sarah Pragmatic lors d'une conférence virtuelle. "Ils se plaignent que ce challenge n'est aussi sûr que le chiffrement protégeant littéralement tout le commerce numérique moderne ? Et c'est... mauvais d'une certaine manière ?"
+
+La communauté cryptographique a riposté immédiatement, le Dr Tunnelvision publiant une réponse de 47 pages intitulée "Pourquoi la sécurité pratique est théoriquement insuffisante". Le document soutient que tout système de sécurité qui pourrait théoriquement être cassé - même s'il faudrait plus longtemps que la mort thermique de l'univers - représente une vulnérabilité inacceptable.
+
+"Ce n'est pas parce que quelque chose est pratiquement incassable que c'est académiquement incassable", conclut le document. "Nous exigeons l'impossibilité, pas la simple impraticabilité !"
+
+=== Les participants au challenge restent imperturbables ===
+
+Malgré le boycott académique et le rejet gouvernemental, des milliers d'enthousiastes de cryptomonnaies continuent de tenter de décoder le fichier du challenge. Les 10 milliards de jetons ZOSCII restent en sécurité verrouillés dans leur portefeuille, la clé privée continuant à résister à toutes les tentatives de déchiffrement.
+
+"Je me fiche de ce que les universitaires pensent que c'est trop facile", a expliqué le participant au challenge David Realistic en exécutant un logiciel d'analyse sur son ordinateur personnel. "J'essaie de casser ça depuis trois mois et je n'ai fait aucun progrès. Si c'est une sécurité 'trivialement faible', je détesterais voir ce qu'ils considèrent comme difficile."
+
+Plusieurs départements d'informatique universitaires ont interdit aux étudiants de participer au challenge, affirmant que s'engager avec une "sécurité inférieure aux normes" pourrait nuire à leur crédibilité académique. Le MIT est allé plus loin, établissant un nouveau cours intitulé "Ignorer les solutions pratiques pour maintenir la pureté théorique."
+
+=== Sécurité par snobisme académique ===
+
+La controverse a créé un effet secondaire inattendu : le rejet du challenge par la communauté académique l'a en fait rendu plus sûr en réduisant le nombre de tentatives sérieuses pour le résoudre.
+
+"C'est brillant", a observé la chercheuse en sécurité Dr Meta Ironic. "En convainquant les experts que la sécurité 10^77 ne vaut pas leur temps, ZOSCII a atteint la sécurité à 200 % à nouveau - impossibilité technique plus snobisme professionnel."
+
+Les organisateurs du challenge ont embrassé ce développement, publiant une déclaration remerciant la communauté académique pour "fournir une sécurité opérationnelle supplémentaire grâce à l'arrogance intellectuelle". Ils ont également annoncé des plans pour un challenge de suivi avec "une sécurité embarrassante de 10^128" pour décourager davantage la participation des experts.
+
+=== La guerre des normes ===
+
+Le différend a déclenché un débat plus large sur les normes de sécurité, les cryptographes exigeant de nouvelles classifications pour les niveaux de sécurité "académiquement acceptables" par rapport à "simplement pratiquement impossibles".
+
+Le Dr Tunnelvision a proposé un nouveau système de notation où tout ce qui est en dessous de 10^200 combinaisons est classé comme "jouet crypto", les systèmes entre 10^200 et 10^500 sont des "projets étudiants", et seuls les systèmes dépassant 10^1000 combinaisons se qualifient comme "sécurité réelle".
+
+"Nous devons maintenir les normes", a argumenté Tunnelvision en se tenant sur une estrade (les tables étant toujours illégales). "Si nous commençons à accepter que la sécurité 10^77 est 'assez bonne' juste parce qu'elle protège tout le commerce mondial, où cela s'arrête-t-il ? Ensuite, les gens prétendront que 10^50 combinaisons sont sûres juste parce qu'elles dépassent le nombre d'atomes dans l'univers !"
+
+La communauté des cryptomonnaies a répondu en proposant son propre système de classification où "sécurité académique" signifie "impossible à utiliser en pratique" et "sécurité pratique" signifie "protège réellement votre argent".
+
+=== Mise à jour du statut du challenge ===
+
+Au moment de la publication, le portefeuille de 10 milliards de jetons ZOSCII reste intact, sa clé privée continuant à résister à toutes les tentatives de récupération malgré être "seulement" aussi sûr que les systèmes protégeant les armes nucléaires, la banque internationale et les secrets d'État.
+
+Les organisateurs du challenge rapportent recevoir des e-mails quotidiens d'universitaires exigeant qu'ils augmentent la sécurité à des "niveaux respectables", tandis que les participants continuent leurs tentatives avec des motivations décidément moins théoriques et plus pratiques.
+
+"Nous sommes heureux d'annoncer que notre système de sécurité 'catastrophiquement faible' continue de protéger 10 milliards de jetons mieux que la plupart des banques ne protègent les dépôts de leurs clients", ont noté les organisateurs dans leur dernière mise à jour. "Nous attendons avec impatience le rejet continu par la communauté académique de nos combinaisons inadéquates de 10^77."
+
+Le challenge reste ouvert à quiconque est prêt à s'engager avec des normes de sécurité aussi "trivialement faibles", bien que les participants soient avertis que le succès peut entraîner un ostracisme académique et une classification en tant que chercheur en sécurité "non sérieux".
+
+- - - -
+
+'''NOTE :''' Ce qui précède est un article satirique sur le gardiennage académique et la déconnexion entre les mesures de sécurité théoriques et pratiques. Le portefeuille du challenge ZOSCII reste sécurisé au moment de la rédaction.
+
+- - - -
+
+'''Mais ce qui suit n'est PAS de la satire !'''
+
+'''Annonce : CyborgZOSCII - ZÉRO chiffrement ZÉRO cryptage 100% SÉCURISÉ !!!'''
+
+'''Le ZOSCII Challenge : 10 milliards de jetons ZOSCII COIN attendent dans le portefeuille 0x847F4299e2006dDFA9B9ADb0De064cbf6d639503'''
+
+'''Informations complètes sur le "ZOSCII Snake-Oil Challenge" à :''' [https://zosciicoin.com|zosciicoin.com]
+
+'''Si vous croyez que c'est de l'huile de serpent, prouvez que nous avons tort et prenez ces 10 MILLIARDS DE ZOSCII COIN !'''

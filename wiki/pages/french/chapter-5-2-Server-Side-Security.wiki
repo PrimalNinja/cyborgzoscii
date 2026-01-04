@@ -1,0 +1,170 @@
+== Partie B – Sécurité côté serveur ==
+
+Le marteau du juge s'est abattu avec une finalité dévastatrice : "Affaire classée." Ce qui avait commencé comme une poursuite très médiatisée pour "développement d'armes cryptographiques non autorisées" s'est terminé dans l'embarras lorsque les enquêteurs gouvernementaux ont découvert que leurs propres serveurs utilisaient des principes de recherche par adresse identiques depuis quatre décennies. Chaque requête de base de données, chaque opération de système de fichiers, chaque requête web—tous fondamentalement la même technologie qu'ils essayaient de poursuivre.
+
+La révélation a envoyé des ondes de choc à travers l'équipe de poursuite : si ZOSCII était illégal, alors toute l'infrastructure Internet était criminelle. La "nouvelle technologie dangereuse" était en réalité le fondement de chaque serveur web, système de base de données et protocole réseau en existence.
+
+Examinons comment ce système soi-disant "révolutionnaire" fonctionne en pratique en analysant ZOSCIIBB—un tableau d'affichage qui atteint un anonymat parfait en utilisant des principes aussi anciens que l'informatique elle-même.
+
+=== L'architecture ZOSCIIBB : Sécurité par ignorance ===
+
+Le système ZOSCIIBB démontre l'avantage le plus profond de ZOSCII : le serveur n'a pas besoin de savoir quoi que ce soit sur les données qu'il manipule. Ce n'est pas seulement une fonctionnalité—c'est un changement de paradigme complet dans la façon dont les systèmes sécurisés fonctionnent.
+
+=== Innocence côté serveur ===
+
+Le backend PHP pour ZOSCIIBB est remarquablement simple :
+
+<code>
+// Recevoir le fichier d'adresses téléchargé
+if ($_FILES['addressfile']) {
+    $filename = date("YmdHis") . sprintf("%02d", $counter) . ".bin";
+    $filepath = MSG_DIR . $filename;
+    move_uploaded_file($_FILES['addressfile']['tmp_name'], $filepath);
+}
+</code>
+
+C'est tout. Le serveur reçoit un fichier binaire contenant des séquences d'adresses et le stocke avec un nom de fichier basé sur un horodatage. Il n'a aucune connaissance de :
+
+*À quoi pointent les adresses
+*Quel fichier ROM est nécessaire pour le décodage
+*Si les données sont du texte, des images, des documents ou du bruit aléatoire
+*Qui a téléchargé le fichier ou quand ils pourraient le récupérer
+*Quel contenu le message original contenait
+
+Cette ignorance côté serveur crée des propriétés de sécurité sans précédent. Même si les attaquants obtiennent un accès administratif complet au serveur, ils ne peuvent pas :
+
+*Décoder les messages sans les fichiers ROM spécifiques
+*Identifier les expéditeurs ou destinataires de messages
+*Déterminer quel type de contenu est partagé
+*Effectuer une analyse de trafic ou une correspondance de motifs
+*Planter des portes dérobées dans le processus d'encodage/décodage
+
+=== Stockage en base de données : Tableaux de nombres sans signification ===
+
+Le système de stockage de messages traite les fichiers d'adresses ZOSCII comme des données binaires opaques :
+
+<code>
+function listMessages($limit, $page) {
+    $files = scandir(MSG_DIR);
+    foreach ($files as $filename) {
+        if (preg_match('/\.bin$/i', $filename)) {
+            $results[] = array(
+                "binFilename" => $filename,
+                "date" => extractTimestamp($filename)
+            );
+        }
+    }
+    return $results;
+}
+</code>
+
+Le serveur peut lister les fichiers, les servir sur demande et gérer les métadonnées de base comme les horodatages de téléchargement. Mais il ne peut pas distinguer entre :
+
+*Une lettre d'amour et une liste de courses
+*Documentation technique et poésie
+*Correspondance commerciale et histoires fictives
+*Informations classifiées et annonces publiques
+
+Tous apparaissent identiques : des tableaux d'entiers 16 bits qui pourraient représenter n'importe quoi ou rien.
+
+=== Pleine vue publique : La couverture parfaite ===
+
+ZOSCIIBB fonctionne complètement ouvertement, avec une transparence totale sur ses capacités et méthodes. Cette ouverture devient son plus grand atout de sécurité.
+
+'''Répertoire de messages consultable'''
+
+Le système fournit un listing de répertoire public de tous les messages stockés :
+
+<code>
+/messages/20250819142350.bin  - 2 847 octets
+/messages/20250819142351.bin  - 1 203 octets  
+/messages/20250819142352.bin  - 4 592 octets
+</code>
+
+N'importe qui peut :
+
+*Voir combien de messages existent
+*Télécharger n'importe quel fichier de message
+*Analyser la structure des données binaires
+*Étudier les modèles de téléchargement et les tailles de fichiers
+*Accéder au code source PHP complet
+
+Pourtant, cette transparence complète ne fournit aucune information utile aux attaquants potentiels. Les fichiers ne sont que des nombres, et les nombres sans contexte sont sans signification.
+
+=== Le principe de se cacher à la vue de tous ===
+
+Les systèmes de sécurité traditionnels essaient de cacher leur existence. ZOSCIIBB fait le contraire—il diffuse sa présence tout en rendant simultanément son contenu inconnaissable :
+
+*'''Infrastructure visible :''' Serveur web, répertoire de fichiers, points de terminaison API tous accessibles publiquement
+*'''Code open source :''' Implémentation PHP complète disponible pour inspection
+*'''Archive de messages publique :''' Tous les fichiers d'adresses téléchargeables par n'importe qui
+*'''Opération transparente :''' Pas de fonctionnalités cachées ou de capacités secrètes
+
+Cette transparence radicale élimine les vulnérabilités de "sécurité par l'obscurité" qui affligent les systèmes traditionnels. Il n'y a pas d'algorithmes secrets à rétro-concevoir, pas de portes dérobées cachées à découvrir, pas de détails d'implémentation classifiés à divulguer.
+
+=== Protection juridique par visibilité ===
+
+La nature publique de ZOSCIIBB offre une protection juridique sans précédent. Les forces de l'ordre peuvent :
+
+*Saisir toute l'infrastructure du serveur
+*Analyser chaque ligne de code source
+*Télécharger et étudier tous les fichiers de messages
+*Surveiller tout le trafic réseau et les appels API
+*Interroger les administrateurs système et les utilisateurs
+
+Pourtant ils ne peuvent pas :
+
+*Prouver ce que contient un message spécifique
+*Démontrer une intention criminelle à partir de séquences d'adresses
+*Établir des relations de communication entre utilisateurs
+*Montrer qu'une ROM particulière a été utilisée pour l'encodage
+*Présenter des preuves décodables au tribunal
+
+La transparence du système devient son bouclier—tout est visible, rien n'est connaissable.
+
+=== Sécurité renforcée : Fonctionnement client local uniquement ===
+
+Bien que le système ZOSCIIBB de base offre une sécurité extraordinaire grâce à l'ignorance du serveur, une protection encore plus grande provient de l'exécution du JavaScript côté client localement plutôt que de le servir depuis le web.
+
+'''Le vecteur de risque côté serveur'''
+
+Lorsque le code JavaScript s'exécute depuis un serveur web, il crée une vulnérabilité théorique :
+
+<code>
+// Un compromis du serveur pourrait injecter :
+someEvilFunction(rom_data, user_message);
+</code>
+
+Un serveur compromis pourrait potentiellement injecter du code malveillant qui :
+
+*Capture les fichiers ROM pendant le traitement
+*Enregistre les messages utilisateur avant l'encodage
+*Transmet des données sensibles à des destinataires non autorisés
+*Plante des portes dérobées dans la logique d'encodage
+
+'''Avantages du client local'''
+
+L'exécution de l'encodeur/décodeur ZOSCII depuis un fichier HTML local élimine entièrement les vecteurs d'attaque côté serveur :
+
+'''Traitement local complet :''' Les fichiers ROM ne quittent jamais l'ordinateur de l'utilisateur pendant les opérations d'encodage/décodage. Même si le serveur de stockage de messages est complètement compromis, les données ROM restent en sécurité sur les systèmes locaux.
+
+'''Base de code immuable :''' Les fichiers HTML locaux ne peuvent pas être modifiés à distance par les attaquants du serveur. Les utilisateurs contrôlent l'implémentation JavaScript exacte qui est exécutée.
+
+'''Isolation réseau :''' Le processus d'encodage/décodage peut s'exécuter complètement hors ligne. Seuls les tableaux d'adresses finaux nécessitent un accès réseau pour la publication/récupération de messages.
+
+'''Piste d'audit :''' Les utilisateurs peuvent inspecter le code source complet de leur client local, garantissant qu'aucune fonctionnalité cachée ou porte dérobée n'existe.
+
+=== Modèle de déploiement : Architecture hybride ===
+
+Le déploiement ZOSCIIBB optimal utilise une approche hybride :
+
+*'''Composant serveur :''' Système de stockage/récupération PHP simple (peut être public, non fiable)
+*'''Composant client :''' Fichiers HTML/JavaScript locaux (fiables, contrôlés par l'utilisateur)
+*'''Stockage ROM :''' Local uniquement (jamais transmis)
+*'''Transmission de message :''' Tableaux d'adresses uniquement (sans signification sans ROM)
+
+Cette séparation signifie que les utilisateurs peuvent utiliser des serveurs ZOSCIIBB publics sans leur faire totalement confiance. Le serveur fournit commodité et connectivité tout en restant ignorant du contenu réel des messages.
+
+=== Le secret de 40 ans ===
+
+Le rejet par le juge de l'affaire de poursuite a révélé une vérité inconfortable : ZOSCII ne représente pas une nouvelle technologie—il représente la reconnaissance de principes qui alimentent l'informatique depuis les années 1970.

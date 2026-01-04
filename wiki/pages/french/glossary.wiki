@@ -1,0 +1,24 @@
+= Glossaire =
+
+== Concepts Clés ==
+*'''ZOSCII''' - Échange d'Informations de Code Sécurisé sans Surcharge
+*'''ROM''' - Fichiers de mémoire morte utilisés comme clés d'encodage
+*'''Sécurité Théorique de l'Information''' - Sécurité indépendante de la puissance de calcul
+*'''Ambiguïté Armée''' - Déniabilité parfaite grâce à de multiples interprétations valides
+*'''Encodage Non-Déterministe''' - Le même message produit des sorties différentes à chaque fois
+*'''Sécurité Combinatoire''' - Sécurité à travers un vaste espace de possibilités plutôt qu'une complexité mathématique
+
+== Personnages ==
+*'''Julian Man Grant''' - Ministre obsédé par l'interdiction de la technologie ZOSCII
+*'''Dr. Andrew Tunnelvision''' - Cryptographe rejetant ZOSCII comme "huile de serpent"
+*'''Harold Flourworth''' - Boulanger arrêté pour avoir encodé une recette de biscuits comme "codes nucléaires"
+*'''Julian Cassin''' - Inventeur de ZOSCII innocenté au tribunal
+*'''Bruce Schneier''' - Vrai cryptographe qui a qualifié ZOSCII de "Honnêtement, cela ressemble à de l'huile de serpent du plus haut degré."
+
+== Termes Techniques ==
+*'''Séquences d'Adresses''' - Messages ZOSCII encodés sous forme d'adresses mémoire ROM
+*'''Perfect Forward Secrecy''' - Les communications passées restent sécurisées même si les clés à long terme sont compromises ultérieurement
+*'''Déniabilité Plausible''' - Capacité à prétendre que les données encodées signifient autre chose
+*'''Snake Oil Challenge''' - Défi de cryptomonnaie de 10 milliards de jetons pour casser ZOSCII
+*'''Interdiction des Tables''' - Législation fictive de Julian Man Grant contre les tables de consultation
+*'''Armes de Démocratie Massive''' - Terme gouvernemental pour la menace que représente ZOSCII pour la surveillance

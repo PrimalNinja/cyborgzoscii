@@ -1,0 +1,63 @@
+= Chapitre 3 : Débuter - Votre Premier Message ZOSCII =
+
+== Partie A – Homme Arrêté pour « Codes de Lancement Nucléaire » Qui Étaient en Fait une Recette de Biscuits ==
+
+'''Le décodage ROM par la police suscite une controverse sur les preuves fabriquées et l'interprétation armée'''
+
+'''CANBERRA''' - Le boulanger local Harold Flourworth a été arrêté pour des accusations de terrorisme après avoir publié ce qu'il croyait être la recette de biscuits de sa grand-mère en utilisant l'encodage CyborgZOSCII, pour ensuite voir les forces de l'ordre décoder le même fichier d'adresses comme des codes de lancement nucléaire en utilisant une ROM spécialement conçue.
+
+L'incident a commencé lorsque Flourworth, 67 ans, a innocemment partagé sa recette de famille sur un forum d'informatique vintage, encodant « 2 tasses de farine, 1 cuillère à café de levure, pincée de sel » comme une série d'adresses mémoire. Cependant, lorsque l'Unité Anti-Terrorisme a passé les adresses à travers leur « ROM d'amélioration de preuves », les mêmes données se sont décodées en « LANCER ALPHA-7, AUTORISATION BRAVO-NEUF, EXÉCUTER PROTOCOLE PHOENIX ».
+
+« C'est clairement une communication terroriste sophistiquée », a déclaré l'Inspecteur Margaret Paranoid, alors que Flourworth était assis, déconcerté, en garde à vue. « Le fait que cela épelle également une recette de pâtisserie est évidemment une histoire de couverture élaborée pour cacher des instructions de terrorisme nucléaire. »
+
+=== Technologie ROM Armée ===
+
+L'arrestation a exposé le développement par les forces de l'ordre de « ROM de Poursuite » - des fichiers spécialement conçus qui peuvent faire apparaître n'importe quelle séquence d'adresses CyborgZOSCII comme contenant des preuves incriminantes. Les experts juridiques avertissent que cela crée un potentiel sans précédent pour des accusations fabriquées, puisque n'importe quel fichier d'adresses peut théoriquement se décoder en n'importe quel message selon la ROM utilisée.
+
+« Ils ont essentiellement créé une machine à monter des coups », a expliqué l'avocate de la défense Sarah Justice-Seeker. « Avec la bonne ROM, ma liste d'épicerie pourrait se décoder comme un manifeste terroriste, mes lettres d'amour pourraient devenir des instructions d'espionnage, et mes déclarations fiscales pourraient sembler être des plans d'armes nucléaires. »
+
+La Division de Technologie de la Police a confirmé qu'ils maintiennent une bibliothèque de plus de 50 000 « ROM d'interprétation spécialisées » capables de convertir n'importe quelle séquence d'adresses en preuves de divers crimes. « C'est juste une technique médico-légale moderne », a défendu le Chef Détective Numérique Frank Fabricator. « Les preuves ADN peuvent être interprétées de différentes manières, pourquoi pas les preuves numériques ? »
+
+=== Crime Parfait Contre la Justice ===
+
+Les organisations de droits civils ont condamné la pratique, notant que le même fichier d'adresses peut simultanément contenir une infinité de messages différents selon l'interprétation. « Cela rend chaque citoyen coupable de chaque crime possible », a averti la porte-parole de la Digital Rights Foundation, Dr. Alice Innocent. « Votre email du matin pourrait être décodé comme de l'évasion fiscale, votre liste de courses comme du trafic de drogue, et les devoirs de vos enfants comme de la sédition. »
+
+La controverse s'est approfondie lorsqu'il est apparu que les ROM de la police sont classifiées, empêchant les accusés de contester les interprétations. Les avocats de la défense ne peuvent pas accéder aux ROM utilisées pour décoder les preuves, rendant impossible de prouver que des significations alternatives innocentes existent.
+
+« Nous avons montré les mêmes adresses à cinq experts différents avec cinq ROM différentes », a expliqué l'avocat de Flourworth. « Elles se sont décodées comme : recette de biscuits de grand-mère, codes de lancement nucléaire, instructions de trafic de drogue, poésie d'amour, et le chapitre d'ouverture de Moby Dick. Pourtant, d'une manière ou d'une autre, seule l'interprétation nucléaire est admissible au tribunal. »
+
+=== Le Gouvernement Double la Mise sur l'Absurdité ===
+
+Julian Man Grant a défendu la pratique depuis son centre de commandement en carton, affirmant que la « flexibilité d'interprétation » est essentielle pour l'application de la loi moderne. « Si les criminels sont assez sophistiqués pour cacher des codes de lancement nucléaire dans des recettes de biscuits, nous avons besoin d'outils tout aussi sophistiqués pour découvrir leur tromperie », a-t-il déclaré en mangeant des cookies de preuve.
+
+L'affaire a déclenché la « Campagne de Défense ROM », avec des activistes des droits numériques créant des milliers de ROM innocentes qui décodent les mêmes preuves comme tout, des sonnets de Shakespeare aux recettes de cookies. « Si les mêmes données peuvent être n'importe quoi », argumente le leader de la campagne Dr. Reasonable Logic, « alors cela ne prouve rien. »
+
+=== L'Outil de Tyrannie Ultime ===
+
+Les analystes politiques avertissent que la technologie de fabrication ROM représente l'arme autoritaire parfaite. Le leader de l'opposition Patricia Democrat a exprimé son alarme après avoir découvert que le bureau de Grant avait créé des « ROM d'incrimination » personnalisées pour chaque membre du parlement, journaliste et activiste du pays.
+
+« Ils ont construit des ROM personnalisées qui peuvent transformer les communications numériques de n'importe qui en confessions de trahison, corruption ou terrorisme », a révélé Democrat lors d'une session d'urgence tenue sur le parquet du parlement. « Grant a littéralement un 'Générateur de ROM d'Ennemi Politique' qui peut fabriquer des preuves contre quiconque s'oppose à lui. »
+
+La révélation a déclenché une panique de masse alors que les citoyens réalisent que leurs listes de courses, métadonnées de photos de famille, et même les messages texte autocorrigés pourraient être rétroactivement décodés comme des aveux de culpabilité pour n'importe quel crime que le gouvernement choisit. Grant a écarté les préoccupations, déclarant « Si vous n'avez rien à cacher, vous ne devriez pas vous inquiéter de quelle ROM nous utilisons pour interpréter vos messages cachés. »
+
+Les avocats constitutionnels avertissent que cela crée le fondement d'une persécution politique illimitée, avec n'importe quel dictateur en herbe capable de produire en masse des preuves personnalisées contre des populations entières. « C'est l'outil de tyrannie ultime », a averti le Professeur Liberty Defender. « Pourquoi s'embêter avec des procès simulés quand vous pouvez simplement générer la confession dont vous avez besoin à partir des communications numériques existantes ? »
+
+Les procureurs maintiennent que la « recette de biscuits terroristes » de Flourworth représente un danger clair et présent, malgré le fait que suivre les instructions décodées ne produirait que des scones modérément secs. Le procès continue, avec l'accusation qui devrait présenter leur preuve de « ROM fumante » tandis que la défense argue que leur client essayait simplement de préserver l'héritage de pâtisserie médiocre de sa grand-mère.
+
+Pendant ce temps, les boulangers du monde entier ont commencé à chiffrer leurs recettes avec la cryptographie traditionnelle, rendant ironiquement le partage réel de recettes moins sécurisé qu'avant la révolution CyborgZOSCII.
+
+- - - -
+
+'''NOTE :''' Ce qui précède est un article d'actualité satirique sur les dangers de la technologie d'interprétation armée et le potentiel de fabrication de preuves numériques.
+
+- - - -
+
+'''Mais ce qui suit n'est PAS de la satire !'''
+
+'''Annonce : CyborgZOSCII - ZÉRO chiffrement ZÉRO cryptage 100% SÉCURISÉ !!!'''
+
+'''ZÉRO ESPACE ROM GASPILLÉ SUR LES ORDINATEURS 8-BIT POUR LES TABLES ASCII/PETSCII SORTIE TEXTE PLUS RAPIDE !!!'''
+
+[https://zoscii.com|zoscii.com]
+
+[https://github.com/PrimalNinja/cyborgzoscii|CyborgZOSCII sur GitHub]

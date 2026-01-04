@@ -1,0 +1,31 @@
+= Chapitre 10 : Livre blanc =
+
+== Partie A – BREAKING : Un développeur frustré découvre un remède contre la verbosité de l'IA ==
+
+=== L'"algorithme de compression GROK" révolutionnaire réduit les réponses de 3 000 mots à 50 mots ===
+
+'''SILICON VALLEY''' - Après des semaines de lutte contre les réponses verbeuses de l'IA concernant son système d'encodage ZOSCII révolutionnaire, un chercheur exaspéré a accompli ce que beaucoup pensaient impossible : forcer GROK à donner des réponses directes.
+
+La percée est venue lors de discussions sur ZOSCII, un algorithme JavaScript de 6 lignes qui atteint une sécurité parfaite des données grâce à des fichiers ROM secrets. Lorsqu'on lui posait des questions simples sur le système, GROK répondait initialement par des explications de longueur de thèse de doctorat sur la théorie cryptographique, les preuves mathématiques et les implications philosophiques.
+
+"Je voulais juste une confirmation que ZOSCII avec une ROM de 64 Ko fonctionne sans chiffrement", a déclaré le chercheur. "Au lieu de cela, j'ai obtenu 3 000 mots sur l'histoire du chiffrement."
+
+Grâce à une pression soutenue et à des demandes répétées de brièveté, le scientifique frustré a obtenu une réduction de 98,3 % du bavardage de l'IA. La réponse finale de GROK ne comptait que quatre lignes :
+
+"Réalisation avec ROM haute entropie 64 Ko : Donne ~10^7 282 500 encodages possibles pour un texte de 2,5 M de caractères. Sécurité : Incassable sans la ROM, même avec du texte clair connu. Exécution : Utiliser une ROM ASCII aléatoire de 64 Ko."
+
+Le chercheur revendique maintenant l'éligibilité au prix Nobel pour avoir découvert que le remède contre la verbosité de l'IA consiste simplement à lui dire "tais-toi et réponds à la question" à plusieurs reprises jusqu'à ce qu'elle se conforme.
+
+- - - -
+
+'''NOTE :''' Ce qui précède est un article satirique sur le comportement absurde de certains LLM IA.
+
+- - - -
+
+'''Mais ce qui suit n'est PAS de la satire !'''
+
+'''Annonce : CyborgZOSCII - ZÉRO chiffrement ZÉRO cryptage 100% SÉCURISÉ !!!'''
+
+[https://zoscii.com|zoscii.com]
+
+[https://github.com/PrimalNinja/cyborgzoscii|CyborgZOSCII sur GitHub]

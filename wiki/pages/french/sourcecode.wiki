@@ -1,0 +1,11 @@
+== Code Source (Licence MIT) ==
+
+Obtenez le code source utilisé dans ce livre depuis le dépôt de code officiel.
+
+[https://github.com/PrimalNinja/cyborgzoscii|🔗 github.com/PrimalNinja/cyborgzoscii]
+
+'''Sites de Sauvegarde/Miroir :'''
+
+Si le dépôt principal devient indisponible, consultez :
+
+*[https://zoscii.com|zoscii.com] pour les emplacements actuels des dépôts

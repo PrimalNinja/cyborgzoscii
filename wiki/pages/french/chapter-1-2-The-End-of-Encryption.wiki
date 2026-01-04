@@ -1,0 +1,48 @@
+== Partie B – La fin du chiffrement ==
+
+=== Pourquoi la cryptographie nous a échoué ===
+
+Le déni total du Dr Tunnelvision lors de notre entretien d’ouverture révèle une vérité inconfortable : la communauté cryptographique s’est peinte dans un coin. Pendant des décennies, on nous a dit que la sécurité nécessite une complexité mathématique toujours croissante, des clés plus longues et des algorithmes plus sophistiqués. Et pourtant, nous sommes en 2025, avec des ordinateurs quantiques encore en développement pour atteindre la capacité de casser les standards actuels de chiffrement.
+
+Le défaut fondamental n’est pas dans les mathématiques — il est dans le postulat. La cryptographie suppose que la sécurité provient du fait de rendre les données difficiles à déchiffrer. Mais « difficile » est relatif. Ce qui est computationnellement infaisable aujourd’hui devient trivial demain à mesure que la puissance de calcul croît de façon exponentielle.
+
+Considérez l’évolution :
+
+* Années 1970 : DES avec des clés de 56 bits  
+* Années 1990 : DES cassé  
+* Années 2000 : passage à AES-128 puis AES-256 devient la norme par précaution pour la sécurité à long terme  
+* Années 2020 : les ordinateurs quantiques menacent tous les standards actuels
+
+Le schéma est clair : nous courons toujours après les ordinateurs de demain avec les mathématiques d’hier.
+
+=== La course aux armements computationnelle ===
+
+Chaque avancée en chiffrement déclenche une contre-attaque en décryptage. C’est une course aux armements où les attaquants ont toujours l’avantage du temps. Ils peuvent attendre que les ordinateurs deviennent plus rapides, que de nouvelles idées mathématiques apparaissent, ou que des failles d’implémentation soient découvertes.
+
+Le coût de cette course est énorme :
+
+* Surcharge de traitement : le chiffrement moderne consomme beaucoup de cycles CPU  
+* Besoins en mémoire : les bibliothèques cryptographiques alourdissent le logiciel  
+* Gestion des clés : infrastructure complexe nécessaire pour une distribution sécurisée  
+* Erreurs d’implémentation : plus le système est complexe, plus il peut échouer
+
+Pendant ce temps, comme l’a démontré le Dr Tunnelvision, les experts en cryptographie s’investissent tellement dans la complexité mathématique qu’ils ne peuvent pas reconnaître quand une approche complètement différente élimine le besoin de leur domaine entièrement.
+
+=== Entrée ZOSCII : sécurité par impossibilité ===
+
+Et si la sécurité ne nécessitait aucune complexité mathématique ? Et si, au lieu de rendre les données difficiles à déchiffrer, nous ne les avions jamais chiffrées dès le départ ?
+
+Ce n’est pas un retour au texte en clair — c’est un bond en avant vers quelque chose de complètement différent. ZOSCII atteint une sécurité parfaite non pas par impossibilité mathématique, mais par impossibilité informationnelle. Les données ne sont tout simplement pas là pour être décryptées.
+
+Considérez l’analogie de Melissa lors de notre entretien d’ouverture : si quelqu’un vous donne une liste de numéros de pages d’un livre, ces numéros ne vous disent rien sur ce qui est écrit sur ces pages à moins que vous n’ayez exactement le même livre. La sécurité ne provient pas des mathématiques complexes — elle provient de l’impossibilité fondamentale de dériver le sens des adresses sans contexte.
+
+C’est la sécurité par impossibilité, pas par complexité :
+
+* Pas d’algorithmes à casser : aucune transformation mathématique à inverser  
+* Pas de clés à voler : les fichiers ROM ne contiennent aucune fonction secrète ou d’algorithme  
+* Pas d’hypothèses computationnelles : la sécurité ne dépend pas des limites de calcul actuelles  
+* Pas d’erreurs d’implémentation : le système est trop simple pour être mal implémenté
+
+Comme notre entretien l’a révélé, cette approche est si étrangère à la pensée traditionnelle que même des experts comme le Dr Tunnelvision ne peuvent pas la comprendre littéralement. Ils continuent d’appliquer des standards cryptographiques à un système qui opère délibérément en dehors des principes cryptographiques.
+
+La fin du chiffrement n’est pas la fin de la sécurité — c’est le début de quelque chose de beaucoup plus puissant.

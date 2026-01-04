@@ -1,0 +1,13 @@
+= Annexe B : Crédits et Remerciements =
+
+'''Remerciements particuliers à :'''
+
+*'''Claude, Grok, Gemini, WhatsApp''' – pour les suggestions de formatage, les contributions occasionnelles et, dans certains cas, la verbosité involontairement hilarante qui a façonné la façon dont ce livre a été écrit.
+
+*'''Tous ceux qui ont participé au ZOSCII Snake Oil Challenge''' – que vous ayez essayé de le casser ou que vous vous soyez simplement disputés à son sujet en ligne, vous avez aidé à tester et promouvoir le concept.
+
+*'''Les communautés open source et rétro-informatique au sens large''' – pour avoir maintenu la pensée 8 bits vivante et prouvé que vous n'avez pas besoin de téraflops pour innover.
+
+- - - -
+
+Qu'est-ce que Bruce Schneier avait à dire sur ZOSCII ? "Honnêtement, ça ressemble à de l'huile de serpent au plus haut degré."

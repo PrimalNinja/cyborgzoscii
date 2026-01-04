@@ -1,0 +1,72 @@
+= CyborgZOSCII - 제로 오버헤드 보안 코드 정보 교환 =
+
+== 제로 암호화 제로 암호 100% 보안! ==
+
+= 목차 =
+
+== 서문 ==
+*[[korean/preface-back-cover|서문]]
+*[[korean/sourcecode|소스 코드]]
+*[[korean/glossary|용어집]]
+
+== 1장: 암호화의 종말 ==
+*[[korean/chapter-1-1-Security-Expert-Dismisses-Non-Encryption-ZOSCII-System-While-Completely-Missing-the-Point|보안 전문가가 "비암호화" ZOSCII 시스템을 요점을 완전히 놓친 채 일축하다]]
+*[[korean/chapter-1-2-The-End-of-Encryption|암호화의 종말]]
+*[[korean/chapter-1-3-Reflection|성찰]]
+
+== 2장: ZOSCII 작동 방식 ==
+*[[korean/chapter-2-1-Julian-Man-Grant-Tables-New-Law-to-Outright-Ban-the-Use-of-Tables|줄리안 맨 그랜트가 테이블 사용을 완전히 금지하는 새로운 법안을 상정하다]]
+*[[korean/chapter-2-2-How-ZOSCII-Works|ZOSCII 작동 방식]]
+
+== 3장: 시작하기 - 첫 번째 ZOSCII 메시지 ==
+*[[korean/chapter-3-1-Man-Arrested-for-Nuclear-Launch-Codes-That-Were-Actually-Biscuit-Recipe|실제로는 비스킷 레시피였던 "핵 발사 코드"로 체포된 남성]]
+*[[korean/chapter-3-2-Getting-Started-Your-First-ZOSCII-Message|시작하기 - 첫 번째 ZOSCII 메시지]]
+*[[korean/chapter-3-3-Defense-Department-Bans-8-Bit-Computers-After-Commodore-PET-Proves-More-Secure-Than-$50-Billion-Military-Systems|코모도어 PET가 500억 달러 군사 시스템보다 더 안전하다고 증명된 후 국방부가 8비트 컴퓨터를 금지하다]]
+*[[korean/chapter-3-4-Understanding-ROM-Files-and-Entropy|ROM 파일과 엔트로피 이해하기]]
+
+== 4장: 현대 웹 통합 ==
+*[[korean/chapter-4-1-Julian-Man-Grant-Flees-International-Security-Summit-After-ZOSCII-Declared-Weapon-of-Mass-Democracy|ZOSCII가 "대량 민주주의 무기"로 선언된 후 줄리안 맨 그랜트가 국제 보안 정상회의에서 도주하다]]
+*[[korean/chapter-4-2-Modern-Web-Integration|현대 웹 통합]]
+*[[korean/chapter-4-3-toZOSCII|toZOSCII 자바스크립트 구현]]
+
+== 5장: 서버 측 보안 ==
+*[[korean/chapter-5-1-ZOSCII-Inventors-Case-Thrown-Out-After-Government-Discovers-Theyve-Been-Using-Dangerous-Technology-for-40-Years|정부가 40년 동안 "위험한" 기술을 사용해 왔음을 발견한 후 ZOSCII 발명가의 소송이 기각되다]]
+*[[korean/chapter-5-2-Server-Side-Security|서버 측 보안]]
+*[[korean/chapter-5-3-zosciibb|ZOSCIIBB 브라우저 소스]]
+*[[korean/chapter-5-4-messages|ZOSCIIBB 서버 소스]]
+
+== 6장: C 시스템 프로그래밍 ==
+*[[korean/chapter-6-1-Retro-Computing-Ban-Proposed-After-Government-Surveillance-Systems-Defeated-by-Commodore-64|코모도어 64가 정부 감시 시스템을 무력화한 후 레트로 컴퓨팅 금지가 제안되다]]
+*[[korean/chapter-6-2-C-Systems-Programming|C 시스템 프로그래밍]]
+*[[korean/chapter-6-3-cpm-zencode|CPM zencode 소스]]
+*[[korean/chapter-6-4-cpm-zstrength|CPM zstrength 소스]]
+*[[korean/chapter-6-5-cpm-zdecode|CPM zdecode 소스]]
+*[[korean/chapter-6-6-modernc-zencode|현대 C zencode 소스]]
+*[[korean/chapter-6-7-modernc-zstrength|현대 C zstrength 소스]]
+*[[korean/chapter-6-8-modernc-zdecode|현대 C zdecode 소스]]
+
+== 7장: 조합론과 확률에 대한 추가 내용 ==
+*[[korean/chapter-7-1-Government-Officials-Declare-ZOSCII-Less-Secure-Than-Shouting-Passwords-Inadvertently-Create-Perfect-Privacy-Protection-System|정부 관리들이 ZOSCII를 "비밀번호를 외치는 것보다 덜 안전하다"고 선언하며 의도치 않게 완벽한 개인정보 보호 시스템을 만들다]]
+*[[korean/chapter-7-2-More-on-Combinatorics-and-Probability|정보 이론적 보안의 수학적 기초]]
+
+== 8장: ZOSCII 깨기 - 뱀 기름 챌린지 ==
+*[[korean/chapter-8-1-Crypto-API-Operators-Strike-Gold-as-ZOSCII-Challenge-Searchers-Pay-More-Than-Actual-Trading|ZOSCII 챌린지 탐색자들이 실제 거래보다 더 많이 지불하면서 암호화폐 API 운영자들이 대박을 터뜨리다]]
+*[[korean/chapter-8-2-Breaking-ZOSCII-The-Snake-Oil-Challenge|ZOSCII 깨기 - 뱀 기름 챌린지]]
+
+== 9장: 현재 암호화 솔루션의 시대는 지났다 ==
+*[[korean/chapter-9-1-Cryptographers-Demand-Challenge-Cancellation-After-ZOSCII-Prize-Proves-Only-As-Secure-As-AES-256|ZOSCII 상금이 AES-256만큼 "단지" 안전하다고 증명된 후 암호학자들이 챌린지 취소를 요구하다]]
+*[[korean/chapter-9-2-The-Time-For-Current-Encryption-Solutions-Has-Passed|현재 암호화 솔루션의 시대는 지났다]]
+
+== 10장: 백서 ==
+*[[korean/chapter-10-1-BREAKING-Frustrated-Developer-Discovers-Cure-for-AI-Verbosity|속보: 좌절한 개발자가 AI 장황함의 치료법을 발견하다]]
+*[[korean/chapter-10-2-whitepaper|백서]]
+*[[korean/chapter-10-3-whitepaper|ZOSCII에 대한 추가 분석]]
+*[[korean/chapter-10-4-whitepaper|ZOSCII 실제 사용 사례]]
+
+== 11장: 부록 ==
+*[[korean/chapter-11-1-Official-Resources|공식 자료]]
+*[[korean/chapter-11-2-Credits-Acknowledgements|크레딧 및 감사의 말]]
+*[[korean/chapter-11-3-MIT-License|MIT 라이선스]]
+
+- - - -
+Powered by %APPNAME%
