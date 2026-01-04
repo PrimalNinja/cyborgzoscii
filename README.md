@@ -1,7 +1,7 @@
 # CyborgZOSCII v20251118
 
 **All active development has moved to:**
-https://github.com/PrimalNinja/cyborgzoscii2
+https://github.com/PrimalNinja/cyborgzoscii-u
 
 **License:** MIT (perpetual for this version)
 **Status:** Archived - no updates, no bug fixes, no planned support
