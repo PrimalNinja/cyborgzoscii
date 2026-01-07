@@ -56,7 +56,7 @@ Sourcecodes in: C, C#, GO, JS, RUST, PYTHON
 3. **Perfect for 8-bit systems** - Optimized for systems where every CPU cycle matters
 
 ### Security Properties
-3. **Zero cryptography, maximum security** - 100% secure when reference ROM unknown
+3. **Zero encryption, maximum security** - 100% secure when reference ROM unknown
 4. **Fault tolerance** - ROM corruption causes typos, not total failure
 5. **No traditional cipher vulnerabilities** - Uses addressing, not mathematical transformations
 
@@ -108,7 +108,7 @@ We believe in radical transparency and open discussion. Join our official Telegr
 
 ### **We've Been Solving the Wrong Problem**
 
-For decades, cryptography has been an arms race: build stronger algorithms, use longer keys, hope quantum computers don't break everything overnight.
+For decades, encryption has been an arms race: build stronger algorithms, use longer keys, hope quantum computers don't break everything overnight.
 
 We've been trying to make unbreakable locks.
 
@@ -378,7 +378,7 @@ AES-256's keyspace of 10^77 is enormous—but it's a fixed target. A 128-byte ZO
 
 ### Available Now. MIT Licensed. No Waiting.
 
-While the industry scrambles to deploy post-quantum cryptography, migrating to new algorithms, wondering which lattice-based scheme will survive scrutiny, worrying about implementation bugs in complex new protocols...
+While the industry scrambles to deploy post-quantum encryption, migrating to new algorithms, wondering which lattice-based scheme will survive scrutiny, worrying about implementation bugs in complex new protocols...
 
 ZOSCII is here. Today. Open source. MIT Licensed.
 
@@ -386,7 +386,7 @@ No patents. No waiting for standards bodies. No vendor lock-in. No wondering if 
 
 ZOSCII doesn't care about quantum computers. It's not resistant to them—it's immune to them, by mathematical proof.
 
-You don't need to wait for the next generation of cryptography.
+You don't need to wait for the next generation of encyption.
 
 You can build with it right now.
 
