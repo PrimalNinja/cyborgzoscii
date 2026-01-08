@@ -1,6 +1,5 @@
 .gscw-bold 
 {
-	font-family: arial;
 	font-weight: bold;
 	margin: 0;
 	padding: 0;
@@ -31,6 +30,7 @@
 	background-color: white;
 	border-radius: 10px;
 	box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+	font-family: arial, sans-serif;
 	height: 90vh;
 	margin: 3vh auto;
 	padding: 20px 0;
@@ -48,7 +48,6 @@
 
 .gscw-content 
 {
-	font-family: arial;
 	min-height: calc(100% - 40px); /* Stretch scroller minus its padding */
 	padding: 0 20px; /* Horizontal padding for content */
 	white-space: pre-line;
@@ -57,7 +56,6 @@
 
 .gscw-heading 
 {
-	font-family: arial;
 	font-size: 24px;
 	font-weight: bold;
 	margin: 0;
@@ -80,14 +78,12 @@
 {
 	color: blue;
 	cursor: pointer;
-	font-family: arial;
 	text-decoration: none;
 }
 
 .gscw-internallink:hover 
 {
 	color: blue;
-	font-family: arial;
 	text-decoration: underline;
 }
 
@@ -100,14 +96,12 @@
 {
 	color: blue;
 	cursor: pointer;
-	font-family: arial;
 	text-decoration: none;
 }
 
 .gscw-link:hover 
 {
 	color: blue;
-	font-family: arial;
 	text-decoration: underline;
 }
 
@@ -118,7 +112,6 @@
 
 .gscw-list 
 {
-	font-family: arial;
 	list-style-position: inside;
 	margin: 10px 0 0 20px;
 	padding: 0;
@@ -126,7 +119,6 @@
 
 .gscw-subheading 
 {
-	font-family: arial;
 	font-size: 20px;
 	font-weight: bold;
 	margin: 0;
@@ -135,7 +127,6 @@
 
 .gscw-subsubheading 
 {
-	font-family: arial;
 	font-size: 18px;
 	font-weight: bold;
 	margin: 0;
@@ -144,7 +135,6 @@
 
 .gscw-subsubsubheading 
 {
-	font-family: arial;
 	font-size: 16px;
 	font-weight: bold;
 	margin: 0;
@@ -155,7 +145,6 @@ table.gscw-table
 {
 	border-collapse: collapse;
 	border: 1px solid #ddd;
-	font-family: arial;
 	margin-bottom: 30px;
 	width: 100%;
 }
