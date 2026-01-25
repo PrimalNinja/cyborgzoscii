@@ -10,7 +10,7 @@ start:	ld hl, string
 		ret
 
 strout:	ld a, (hl)
-		xor a
+		or a
 		ret z
 		call char_out
 		inc hl
@@ -41,8 +41,8 @@ strout:	ld e, (hl)
 		inc hl
 		ld d, (hl)
 		inc hl
-		xor a
-		cp e
+		ld a, d
+		or e
 		ret z
 		ld a, (de)
 		call char_out
@@ -59,23 +59,23 @@ start:	ld de, string
 		call strout
 		ret
 
-strout:	ld hl,0
+strout:	ld hl,0			; work out the stack
 		add hl, sp
-		ex de, hl
-		
-		ld hl, string
-		ld sp, hl
+		ex de, hl		; hl = string, de = stack
 
+		ld sp, hl
+		
 loop:	pop hl
-		xor a
-		cp l
-		jp z, loope
+		ld a, h
+		or l
+		jr z, loope
 		ld a, (hl)
 		call char_out
 		jr loop
 
-loope:	ex de, hl
-		jp (hl)
+loope:	ex de, hl		; de = string, hl = stack
+		ld sp, hl
+		ret
 
 		; this might be Hello, World!
 string: dw #C245, #C891, #C456, #C023, #C789, #C334, #C667, #C123, #C998, #C445, #C876, #C012, #0000
@@ -89,24 +89,19 @@ start:	call stroutsp
 		ret
 
 stroutsp:	
-		pop de
-		ld l, e
-		ld h, d
-		
-loop:	pop hl
-		xor a
-		cp l
+loop:	pop hl		; hl = start of string
+		ld a, h
+		or l
 		jr z, loope
 		ld a, (hl)
 		call char_out
 		jr loop
-
-loope:	ex de, hl
-		jp (hl)
+		
+loope:	ret		
 
 
 Performance Summary:
 
-- **Version 1**: 75 cycles per character
-- **Version 2**: 64 cycles per character (**14.7% faster**)
-- **Version 3**: 61 cycles per character (**18.7% faster**)
+- **Version 1**: 81 cycles per character
+- **Version 2**: 64 cycles per character (**21% faster**)
+- **Version 3**: 61 cycles per character (**24.7% faster**)
