@@ -12,7 +12,7 @@ The web implementation builds on our six-line foundation but adds the performanc
 
 The toZOSCII function handles the complete encoding process, from file input to address generation. It accepts mixed data types—strings or binary Uint8Arrays—making it universally compatible with any content a user might want to encode. The function automatically handles the three-pass optimization that eliminates memory allocation overhead: first counting byte occurrences, then pre-allocating exact-sized arrays, and finally populating those arrays with ROM addresses.
 
-This approach means that encoding a 2.5-megabyte novel completes in under a second, while cryptographic systems would require multiple seconds of mathematical computation. The speed difference became embarrassingly apparent during Grant's summit demonstration when ZOSCII processed War and Peace faster than AES-256 could encrypt a single paragraph.
+This approach means that encoding a 2.5-megabyte novel completes in under a second, while encryption systems would require multiple seconds of mathematical computation. The speed difference became embarrassingly apparent during Grant's summit demonstration when ZOSCII processed War and Peace faster than AES-256 could encrypt a single paragraph.
 
 The random address selection mechanism within the encoding function ensures non-deterministic output while maintaining perfect reproducibility during decoding. Each character that appears multiple times in the ROM gets randomly assigned one of its available addresses, meaning identical messages always produce different encoded results—the property that made summit observers think they were witnessing actual magic.
 

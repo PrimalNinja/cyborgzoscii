@@ -8,15 +8,15 @@
 
 == Abstract ==
 
-Traditional secure communication relies on cryptography, a practice burdened by computational overhead, key management complexity, and a constant race against increasingly powerful cryptanalytic methods. This paper introduces CyborgZOSCII (Zero Overhead Secure Code Information Interchange), a novel data encoding and security protocol that discards encryption in favor of a unique, hardware-based approach. By treating data as a sequence of direct memory addresses within a physical Read-Only Memory (ROM) file, ZOSCII achieves absolute security without any cryptographic operations, while simultaneously delivering significant performance and memory benefits on low-power, 8-bit computing platforms. The system's inherent "weaponized ambiguity" creates a paradigm where encoded data is both completely unintelligible and mathematically unfalsifiable, rendering it immune to conventional surveillance and cryptanalysis.
+Traditional secure communication relies on encryption, a practice burdened by computational overhead, key management complexity, and a constant race against increasingly powerful cryptanalytic methods. This paper introduces CyborgZOSCII (Zero Overhead Secure Code Information Interchange), a novel data encoding and security protocol that discards encryption in favor of a unique, hardware-based approach. By treating data as a sequence of direct memory addresses within a physical Read-Only Memory (ROM) file, ZOSCII achieves absolute security without any cryptographic operations, while simultaneously delivering significant performance and memory benefits on low-power, 8-bit computing platforms. The system's inherent "weaponized ambiguity" creates a paradigm where encoded data is both completely unintelligible and mathematically unfalsifiable, rendering it immune to conventional surveillance and cryptanalysis.
 
 == 1. Introduction: The Crisis in Secure Communication ==
 
 For decades, the standard for secure digital communication has been the application of cryptographic algorithms to obscure plaintext. This model, however, suffers from fundamental flaws:
 
 *'''Computational Overhead:''' Encryption and decryption cycles consume significant processor time and energy, a critical issue for resource-constrained systems.
-*'''Key Management Vulnerability:''' The security of any cryptographic system is entirely dependent on the secrecy of its key, which is a single point of failure and a primary target for attackers.
-*'''The Cryptanalytic Arms Race:''' The exponential growth of computing power, particularly the advent of quantum computing, threatens to render current cryptographic standards obsolete.
+*'''Key Management Vulnerability:''' The security of any encryption system is entirely dependent on the secrecy of its key, which is a single point of failure and a primary target for attackers.
+*'''The Cryptanalytic Arms Race:''' The exponential growth of computing power, particularly the advent of quantum computing, threatens to render current encryption standards obsolete.
 
 This paper proposes a radical departure from this model. Instead of computationally obscuring data, ZOSCII redefines data itself. By eliminating the need for a shared, digital key and the complex mathematical operations of encryption, ZOSCII offers an alternative path to secure and efficient communication.
 
@@ -62,9 +62,9 @@ The unique properties of ZOSCII make it ideal for a number of applications:
 *'''Retro Computing and Homebrew Projects:''' The system's compatibility with 8-bit architectures makes it a perfect solution for hobbyists and developers seeking to create secure, high-performance applications on vintage hardware.
 *'''Personal and Political Dissent:''' By providing a means for unfalsifiable communication, ZOSCII is an invaluable tool for journalists, activists, and citizens in regions with oppressive surveillance.
 
-== 7. Cryptography: 128-bit and 256-bit Keys ==
+== 7. Encryption: 128-bit and 256-bit Keys ==
 
-In cryptography, the security of a system is measured by the length of its key. This key is used to encrypt and decrypt data, and its length determines the number of possible combinations a brute-force attack would have to check.
+With encryption, the security of a system is measured by the length of its key. This key is used to encrypt and decrypt data, and its length determines the number of possible combinations a brute-force attack would have to check.
 
 *'''128 bits:''' This key size results in a keyspace of 2^128, which is approximately 3.4×10^38. This immense number makes it practically unbreakable by modern computers.
 *'''256 bits:''' A 256-bit key has a keyspace of 2^256, or approximately 1.15×10^77. This number is so vast that it is considered resistant even to the potential threat of future quantum computers.
@@ -73,7 +73,7 @@ The immense size of these numbers is why a larger key is considered more secure;
 
 == 8. The ZOSCII Protocol: A Different Approach ==
 
-The ZOSCII protocol operates on a fundamentally different principle from cryptography. Its security relies on good entropy reference ROM file. The security strength is not measured in bits of key length but in the inaccessibility and non-deterministic nature of the encoding and decoding process.
+The ZOSCII protocol operates on a fundamentally different principle from encryption. Its security relies on good entropy reference ROM file. The security strength is not measured in bits of key length but in the inaccessibility and non-deterministic nature of the encoding and decoding process.
 
 This approach bypasses the idea of a key that can be brute-forced. The protocol's security is based on "unfalsifiable truth" and "weaponized ambiguity," which makes the data stream meaningless without the identical hardware.
 
@@ -89,5 +89,5 @@ These numbers provide a concrete example of how ZOSCII's security isn't about br
 
 == 10. Conclusion ==
 
-CyborgZOSCII represents a fundamental and necessary rethinking of secure communications. By moving beyond the limitations of cryptography and re-imagining data itself, it offers a solution that is computationally efficient, absolutely secure, and immune to both mathematical and geopolitical attacks. The technology's ability to create a state of "weaponized ambiguity" is not merely a technical feature but a profound statement on the nature of information, evidence, and the future of free communication.
+CyborgZOSCII represents a fundamental and necessary rethinking of secure communications. By moving beyond the limitations of encryption and re-imagining data itself, it offers a solution that is computationally efficient, absolutely secure, and immune to both mathematical and geopolitical attacks. The technology's ability to create a state of "weaponized ambiguity" is not merely a technical feature but a profound statement on the nature of information, evidence, and the future of free communication.
 

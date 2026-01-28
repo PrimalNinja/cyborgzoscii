@@ -1,6 +1,6 @@
 == Part B – How ZOSCII Works ==
 
-As Minister Julian Man Grant discovered to his horror, tables are indeed powerful—far more powerful than his panicked legislation could ever contain. But what the Minister missed, in his frantic sawing of table legs and banning of HTML markup, is that CyborgZOSCII has taken the humble concept of tabular lookup and transformed it into something that makes cryptography look like children playing with toy locks.
+As Minister Julian Man Grant discovered to his horror, tables are indeed powerful—far more powerful than his panicked legislation could ever contain. But what the Minister missed, in his frantic sawing of table legs and banning of HTML markup, is that CyborgZOSCII has taken the humble concept of tabular lookup and transformed it into something that makes encryption look like children playing with toy locks.
 
 The irony is delicious: while Grant's enforcement officers dragged away computer servers for containing "dangerous table structures," they were completely oblivious to the fact that ZOSCII achieves perfect security using the very same lookup principles they were trying to ban.
 
@@ -34,11 +34,11 @@ Minister Grant's fears were well-founded, though misdirected. The ROM file in ZO
 
 Consider the properties of a ZOSCII ROM:
 
-'''It's not a mathematical construct.''' Unlike cryptographic keys that are generated through complex algorithms, a ZOSCII ROM can be any binary file: a family photo, your favorite song, a PDF document, even the ROM from a vintage video game. There's no mathematical relationship to exploit.
+'''It's not a mathematical construct.''' Unlike encryption keys that are generated through complex algorithms, a ZOSCII ROM can be any binary file: a family photo, your favorite song, a PDF document, even the ROM from a vintage video game. There's no mathematical relationship to exploit.
 
-'''It's completely deniable.''' If someone discovers your ROM file, it looks like exactly what it is—a normal file. A JPEG family photo doesn't look like a cryptographic key because it isn't one. There's no way to prove it's being used for secure communications.
+'''It's completely deniable.''' If someone discovers your ROM file, it looks like exactly what it is—a normal file. A JPEG family photo doesn't look like an encryption key because it isn't one. There's no way to prove it's being used for secure communications.
 
-'''It's infinitely replaceable.''' Unlike cryptographic keys that require secure generation and distribution, ZOSCII ROMs can be anything you and your correspondent agree upon.
+'''It's infinitely replaceable.''' Unlike encryption keys that require secure generation and distribution, ZOSCII ROMs can be anything you and your correspondent agree upon.
 
 '''It contains no secrets.''' The security doesn't come from the ROM being secret—it comes from not knowing which ROM someone else is using. Your family photo can be completely public; the security lies in the fact that there are billions of possible photos, documents, and files someone might choose.
 

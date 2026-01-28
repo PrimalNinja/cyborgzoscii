@@ -4,7 +4,7 @@
 
 '''Exclusive Interview:''' Cryptography authority Andrew Tunnelvision explains why breakthrough encoding system "sounds like snake-oil of the highest degree" - despite having nothing to do with encryption
 
-'''WASHINGTON''' - In an exclusive interview with veteran technology reporter Melissa NoseBetter, leading cybersecurity expert Dr. Andrew Tunnelvision dismissed the controversial CyborgZOSCII encoding system as "cryptographically naive" and insisted its inventor "needs to learn how proper ciphering works" - while apparently never grasping that the system doesn't use cryptography or ciphering at all.
+'''WASHINGTON''' - In an exclusive interview with veteran technology reporter Melissa NoseBetter, leading cybersecurity expert Dr. Andrew Tunnelvision dismissed the controversial CyborgZOSCII encoding system as "cryptographically naive" and insisted its inventor "needs to learn how proper ciphering works" - while apparently never grasping that the system doesn't use encryption or ciphering at all.
 
 The interview, conducted at the prestigious Institute for Advanced Security Theater, revealed a fascinating disconnect between what the ZOSCII system actually does and what cybersecurity experts think it's trying to do.
 

@@ -1,6 +1,6 @@
 == Part B – Mathematical Foundations of Information-Theoretic Security ==
 
-ZOSCII achieves "perfect secrecy"—security that is independent of the computational resources available to an attacker. Unlike cryptographic systems that rely on mathematical problems being "hard enough" to solve, ZOSCII eliminates the mathematical problem entirely.
+ZOSCII achieves "perfect secrecy"—security that is independent of the computational resources available to an attacker. Unlike encryption systems that rely on mathematical problems being "hard enough" to solve, ZOSCII eliminates the mathematical problem entirely.
 
 === The Combinatorial Explosion ===
 
@@ -26,11 +26,11 @@ This number transcends all computational limits. The observable universe contain
 
 === Information-Theoretic vs Computational Security ===
 
-Classical cryptography relies on computational assumptions. AES-256 is secure because it is computationally difficult with current technology. RSA depends on the assumed difficulty of integer factorization. Elliptic curve cryptography relies on the discrete logarithm problem being hard.
+Encryption relies on computational assumptions. AES-256 is secure because it is computationally difficult with current technology. RSA depends on the assumed difficulty of integer factorization. Elliptic curve cryptography relies on the discrete logarithm problem being hard.
 
 ZOSCII makes no computational assumptions and provides informational ambiguity. Given a ZOSCII address sequence, multiple different messages could plausibly be the source, with no way to determine which interpretation is correct without the specific ROM context. The address sequence alone provides no recoverable information about the original content, creating multiple equally valid decodings that make the true source undeterminable.
 
-=== The Advantage Over Cryptography ===
+=== The Advantage Over Encryption ===
 
 Encryption systems transform plaintext into ciphertext using mathematical functions. No matter how complex these functions become, the original information remains embedded within the transformed output—it's simply hidden behind computational barriers.
 
@@ -54,7 +54,7 @@ No plaintext information exists within the address sequence—it exists only in 
 
 === Quantum Computing Resistance ===
 
-Every major cryptographic system faces the quantum computing threat. Shor's algorithm can break RSA, ECC, and other public-key systems. Grover's algorithm reduces the effective security of symmetric encryption by half. The cryptographic community has spent decades developing "post-quantum" algorithms that might resist quantum attacks.
+Every major encryption system faces the quantum computing threat. Shor's algorithm can break RSA, ECC, and other public-key systems. Grover's algorithm reduces the effective security of symmetric encryption by half. The cryptographic community has spent decades developing "post-quantum" algorithms that might resist quantum attacks.
 
 ZOSCII is inherently quantum-proof because there is no mathematical structure to exploit. Quantum computers excel at solving specific mathematical problems—factoring integers, computing discrete logarithms, inverting one-way functions. ZOSCII presents no mathematical problems to solve.
 
@@ -178,11 +178,11 @@ The challenge demonstrates that ZOSCII's security scales with the ambiguity of t
 
 === Information-Theoretic Completeness ===
 
-The mathematical foundations of ZOSCII satisfy the requirements for information-theoretic completeness in ways that computational cryptography cannot approach.
+The mathematical foundations of ZOSCII satisfy the requirements for information-theoretic completeness in ways that encryption cannot approach.
 
 '''Unconditional Security Definition'''
 
-Claude Shannon defined unconditional security as security that holds regardless of the computational power available to an attacker. Computational cryptography relies on assumptions about the difficulty of mathematical problems, making it theoretically vulnerable to sufficient computational power, whereas information-theoretic security makes no such assumptions.
+Claude Shannon defined unconditional security as security that holds regardless of the computational power available to an attacker. Encryption relies on assumptions about the difficulty of mathematical problems, making it theoretically vulnerable to sufficient computational power, whereas information-theoretic security makes no such assumptions.
 
 ZOSCII meets Shannon's definition through structure rather than computation:
 
@@ -218,7 +218,7 @@ The cryptographers' petition reveals their core anxiety: ZOSCII represents a par
 
 The cryptographic establishment has invested decades in developing increasingly complex mathematical constructs. Research careers, tenure decisions, and funding allocations depend on the assumption that security requires mathematical sophistication.
 
-ZOSCII suggests that the most secure systems might be the simplest ones—those that avoid mathematics entirely rather than embracing mathematical complexity. This threatens the entire academic framework built around cryptographic research.
+ZOSCII suggests that the most secure systems might be the simplest ones—those that avoid mathematics entirely rather than embracing mathematical complexity. This threatens the entire academic framework built around encryption research.
 
 '''Traditional Academic Path:'''
 Mathematics → Cryptographic Algorithms → Implementation → Security Analysis → Further Mathematical Complexity
@@ -232,7 +232,7 @@ The ZOSCII path eliminates most of the academic research pipeline, making decade
 
 The cryptographic industry depends on complexity. Complex systems require expert practitioners, specialized software, ongoing maintenance, and regular updates. ZOSCII threatens this economic model by being too simple to monetize effectively.
 
-'''Cryptographic Business Model:'''
+'''Encryption Business Model:'''
 
 *Sell complex software licenses
 *Provide expert consulting services
@@ -248,7 +248,7 @@ The cryptographic industry depends on complexity. Complex systems require expert
 
 '''The Democracy Problem'''
 
-Perhaps most threatening to established interests, ZOSCII democratizes perfect security. Cryptography requires expertise, infrastructure, and resources that limit access to strong security systems. ZOSCII can be implemented by anyone with basic programming knowledge.
+Perhaps most threatening to established interests, ZOSCII democratizes perfect security. Encryption requires expertise, infrastructure, and resources that limit access to strong security systems. ZOSCII can be implemented by anyone with basic programming knowledge.
 
 This democratization effect appears throughout the satirical pieces in this book—from Minister Grant's terror at "weapons of mass democracy" to the fear that vintage computers might provide better security than billion-dollar government systems.
 

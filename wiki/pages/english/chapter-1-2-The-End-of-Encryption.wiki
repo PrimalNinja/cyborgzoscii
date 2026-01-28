@@ -4,7 +4,7 @@
 
 Dr. Tunnelvision's total denial in our opening interview reveals an uncomfortable truth: the cryptographic community has painted itself into a corner. For decades, we've been told that security requires ever-increasing mathematical complexity, longer keys, and more sophisticated algorithms. Yet here we are in 2025, with quantum computers still developing toward the capability to break current encryption standards.
 
-The fundamental flaw isn't in the math—it's in the premise. Cryptography assumes that security comes from making data difficult to decrypt. But "difficult" is relative. What's computationally infeasible today becomes trivial tomorrow as processing power grows exponentially.
+The fundamental flaw isn't in the math—it's in the premise. Encryption assumes that security comes from making data difficult to decrypt. But "difficult" is relative. What's computationally infeasible today becomes trivial tomorrow as processing power grows exponentially.
 
 Consider the progression:
 
@@ -43,6 +43,6 @@ This is security through impossibility, not complexity:
 *No computational assumptions: Security doesn't depend on current computational limits
 *No implementation flaws: The system is too simple to implement incorrectly
 
-As our interview revealed, this approach is so foreign to traditional thinking that even experts like Dr. Tunnelvision literally cannot comprehend it. They keep applying cryptographic standards to a system that deliberately operates outside cryptographic principles entirely.
+As our interview revealed, this approach is so foreign to traditional thinking that even experts like Dr. Tunnelvision literally cannot comprehend it. They keep applying encryption standards to a system that deliberately operates outside encryption principles entirely.
 
 The end of encryption isn't the end of security—it's the beginning of something far more powerful.

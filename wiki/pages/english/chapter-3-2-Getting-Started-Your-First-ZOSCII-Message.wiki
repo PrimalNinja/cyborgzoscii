@@ -203,6 +203,6 @@ The addresses could just as easily decode to:
 
 This is perfect deniability in action—the same technology that made Harold look like a terrorist also makes it impossible to prove what anyone's communications actually contain.
 
-Harold's case perfectly demonstrates why ZOSCII represents a paradigm shift from encryption to pure information theory. Traditional cryptography tries to make data hard to decrypt. ZOSCII eliminates the concept of decryption entirely—without the ROM, the data simply doesn't exist in any meaningful form.
+Harold's case perfectly demonstrates why ZOSCII represents a paradigm shift from encryption to pure information theory. Encryption tries to make data hard to decrypt. ZOSCII eliminates the concept of decryption entirely—without the ROM, the data simply doesn't exist in any meaningful form.
 
 The investigators' "smoking gun" evidence was actually proof of ZOSCII's perfect security: they could make Harold's addresses say anything they wanted them to say.
