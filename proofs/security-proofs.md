@@ -53,6 +53,57 @@ Infosec
 
 These security proofs use information theory concepts that are foundational to multiple fields including machine learning, natural language processing, and cryptography. The mathematical frameworks for entropy, cross-entropy, KL divergence, and mutual information were originally developed by Claude Shannon (1948) and have been extensively validated across diverse applications including modern Large Language Models (LLMs).
 
+**The LLM Connection:**
+
+Large Language Models are fundamentally probabilistic systems. When an LLM generates text, it doesn't deterministically select the "correct" next token—it samples from a probability distribution over possible tokens. Information theory explains why this probabilistic approach works: language itself contains uncertainty (entropy), and modeling this uncertainty requires probability distributions rather than deterministic mappings.
+
+**The "Different City" Principle (Credit: Filiip's LLM Information Theory Work):**
+
+In LLM generation, selecting one wrong token can completely change the trajectory of subsequent outputs. Information theory describes this as **divergence**—once the probability distribution shifts, you're effectively "in a different city" of the probability landscape. One incorrect token selection doesn't just create a small error; it fundamentally changes which region of probability space you're navigating.
+
+ZOSCII weaponizes this same principle for security:
+
+**Address Space as Geography:**
+```
+The 65,536 addresses form a "map"
+Each ROM assigns different "destinations" to these addresses
+Wrong ROM = Every address points to different location
+One wrong ROM = Teleported to completely different message space
+```
+
+**Example:**
+```
+Address sequence: [1247, 3891, 12453]
+
+ROM_A (Intended):
+  1247 → 'H'
+  3891 → 'E'
+  12453 → 'Y'
+  Message: "HEY"
+
+ROM_B (Different "City"):
+  1247 → 'B'
+  3891 → 'Y'
+  12453 → 'E'
+  Message: "BYE"
+
+ROM_C (Completely Different "City"):
+  1247 → '@'
+  3891 → '7'
+  12453 → '!'
+  Message: "@7!"
+```
+
+Without the correct ROM, you're not just "decoding incorrectly"—you're in a completely different message space with no path back to the original. This is not a decryption failure; it's information-theoretic impossibility. Just as an LLM with one wrong token diverges to a completely different generation path, ZOSCII with the wrong ROM diverges to a completely different message—and there's no mathematical way to determine which "city" (ROM) was intended.
+
+**The Parallel:**
+
+The same information-theoretic principles that explain LLM token selection prove ZOSCII's security:
+- **LLMs:** Random selection from probability distribution → Models language uncertainty
+- **ZOSCII:** Random selection from uniform distribution → Creates perfect secrecy (I(M;A)=0)
+
+In both systems, the probabilistic nature is not a limitation—it's the fundamental mechanism that makes them work. For LLMs, probability distributions capture the inherent uncertainty in language. For ZOSCII, random selection from uniform distributions creates mathematical impossibility of decryption without the ROM.
+
 The universality of these proofs across domains (from LLM training to security analysis) demonstrates the fundamental nature of information-theoretic principles. The same mathematics that enables AI systems also proves ZOSCII's security properties.
 
 ---
