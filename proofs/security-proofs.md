@@ -26,6 +26,7 @@ Infosec
    │  └─ Integrity (preventing tampering)
    │
    └─ Tools (techniques/mechanisms)
+      ├─ Cryptography Enablers (Diffie-Hellman (DH), microZOSCII)
       ├─ Encryption (OTP, AES, RSA, XOR-with-key)
       ├─ Digital Signatures
       ├─ Hashing
