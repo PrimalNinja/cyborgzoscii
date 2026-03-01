@@ -1,94 +1,131 @@
-// Cyborg ZOSCII v20250908
-// (c) 2025 Cyborg Unicorn Pty Ltd.
+// Cyborg ZOSCII v20260301
+// (c) 2026 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
 
 using System;
 using System.IO;
-using System.Runtime.InteropServices;
 
 class Program
 {
-    static void Main(string[] arrArgs_a)
+    private const int ZOSCII_ROM_LOAD_MAX = 131072;
+
+    private class RomData
     {
-        int intBittage = 16; // default
-        int intOffset = 0;
+        public byte[] ptrROMData;
+        public long lngROMSize;
+    }
 
-		Console.WriteLine("ZOSCII Decoder");
-		Console.WriteLine("(c) 2025 Cyborg Unicorn Pty Ltd - MIT License");
-
-        if (arrArgs_a.Length >= 1 && arrArgs_a[0] == "-32")
-        {
-            intBittage = 32;
-            intOffset = 1;
-        }
-        else if (arrArgs_a.Length >= 1 && arrArgs_a[0] == "-16")
-        {
-            intBittage = 16;
-            intOffset = 1;
-        }
-
-        if (arrArgs_a.Length != 3 + intOffset)
-        {
-            Console.Error.WriteLine($"Usage: {AppDomain.CurrentDomain.FriendlyName} [-16|-32] <romfile> <encodedinput> <outputdatafile>");
-            Environment.Exit(1);
-        }
-
-        // Read ROM file
-        byte[] pROMData;
+    private static RomData LoadRom(string strFilename_a)
+    {
+        RomData ptrRom = null;
+        
         try
         {
-            pROMData = File.ReadAllBytes(arrArgs_a[0 + intOffset]);
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"Error opening ROM file: {ex.Message}");
-            Environment.Exit(1);
-        }
-
-        long lngROMSize = pROMData.Length;
-        long lngMaxSize = intBittage == 16 ? 65536 : 4294967296L;
-        if (lngROMSize > lngMaxSize)
-        {
-            Array.Resize(ref pROMData, (int)lngMaxSize);
-            lngROMSize = lngMaxSize;
-        }
-
-        // Process input file and write output
-        try
-        {
-            using (FileStream fInput = new FileStream(arrArgs_a[1 + intOffset], FileMode.Open, FileAccess.Read))
-            using (FileStream fOutput = new FileStream(arrArgs_a[2 + intOffset], FileMode.Create, FileAccess.Write))
+            using (FileStream ptrStream = new FileStream(strFilename_a, FileMode.Open, FileAccess.Read))
             {
-                if (intBittage == 16)
+                ptrRom = new RomData();
+                long lngLoad = Math.Min(ptrStream.Length, ZOSCII_ROM_LOAD_MAX);
+                ptrRom.lngROMSize = lngLoad;
+                ptrRom.ptrROMData = new byte[lngLoad];
+                ptrStream.Read(ptrRom.ptrROMData, 0, (int)lngLoad);
+            }
+        }
+        catch
+        {
+            ptrRom = null;
+        }
+        
+        return ptrRom;
+    }
+
+    private static void FreeRom(RomData ptrRom_a)
+    {
+        // In C#, garbage collector handles this, but method kept for consistency
+    }
+
+    private static bool DecodeFile(RomData ptrRom_a, string strInputFile_a, string strOutputFile_a)
+    {
+        bool blnSuccess = false;
+        
+        try
+        {
+            using (FileStream ptrInput = new FileStream(strInputFile_a, FileMode.Open, FileAccess.Read))
+            using (FileStream ptrOutput = new FileStream(strOutputFile_a, FileMode.Create, FileAccess.Write))
+            {
+                long lngInputSize = ptrInput.Length;
+                byte[] arrBuf = new byte[2];
+                long lngSlots = lngInputSize / 2;
+                int intI = 0;
+                
+                if (lngSlots >= 0)
                 {
-                    byte[] arrBuffer = new byte[sizeof(ushort)];
-                    while (fInput.Read(arrBuffer, 0, sizeof(ushort)) == sizeof(ushort))
+                    // Decode each slot
+                    for (intI = 0; intI < lngSlots; intI++)
                     {
-                        ushort intAddress = BitConverter.ToUInt16(arrBuffer, 0);
-                        if (intAddress < lngROMSize)
+                        if (ptrInput.Read(arrBuf, 0, 2) != 2)
                         {
-                            fOutput.WriteByte(pROMData[intAddress]);
+                            break;
+                        }
+                        
+                        ushort intAddr = BitConverter.ToUInt16(arrBuf, 0);
+                        if (intAddr < ptrRom_a.lngROMSize)
+                        {
+                            ptrOutput.WriteByte(ptrRom_a.ptrROMData[intAddr]);
                         }
                     }
-                }
-                else
-                {
-                    byte[] arrBuffer = new byte[sizeof(uint)];
-                    while (fInput.Read(arrBuffer, 0, sizeof(uint)) == sizeof(uint))
+                    
+                    if (intI == lngSlots)
                     {
-                        uint intAddress = BitConverter.ToUInt32(arrBuffer, 0);
-                        if (intAddress < lngROMSize)
-                        {
-                            fOutput.WriteByte(pROMData[intAddress]);
-                        }
+                        blnSuccess = true;
                     }
                 }
             }
         }
-        catch (Exception ex)
+        catch
         {
-            Console.Error.WriteLine($"Error processing files: {ex.Message}");
-            Environment.Exit(1);
+            blnSuccess = false;
         }
+        
+        return blnSuccess;
+    }
+
+    static void Main(string[] strArgs_a)
+    {
+        int intResult = 1;
+        RomData ptrRom = null;
+        bool blnDecodeOk = false;
+        
+        Console.WriteLine("ZOSCII Decoder");
+        Console.WriteLine("(c) 2026 Cyborg Unicorn Pty Ltd v20260301 - MIT License");
+        Console.WriteLine();
+
+        if (strArgs_a.Length == 3)
+        {
+            ptrRom = LoadRom(strArgs_a[0]);
+            if (ptrRom != null)
+            {
+                blnDecodeOk = DecodeFile(ptrRom, strArgs_a[1], strArgs_a[2]);
+                FreeRom(ptrRom);
+                
+                if (blnDecodeOk)
+                {
+                    intResult = 0;
+                }
+                else
+                {
+                    Console.Error.WriteLine("Decode failed");
+                }
+            }
+            else
+            {
+                Console.Error.WriteLine("Failed to load ROM");
+            }
+        }
+        else
+        {
+            Console.Error.WriteLine($"Usage: {AppDomain.CurrentDomain.FriendlyName} <romfile> <encoded> <output>");
+        }
+        
+        Environment.Exit(intResult);
     }
 }

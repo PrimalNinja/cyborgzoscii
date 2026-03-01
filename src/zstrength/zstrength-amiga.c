@@ -1,5 +1,5 @@
-// Cyborg ZOSCII Strength Analyzer v20250908
-// (c) 2025 Cyborg Unicorn Pty Ltd.
+// Cyborg ZOSCII Strength Analyzer v20260301
+// (c) 2026 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
 
 // Amiga Version
@@ -8,192 +8,244 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <math.h>
 
-void print_large_number(double dblExponent_a) 
+typedef struct 
+{
+    uint32_t* ptrAddresses;
+    uint32_t intCount;
+} ByteAddresses;
+
+typedef struct 
+{
+    uint8_t* ptrROMData;
+    long lngROMSize;
+    uint32_t arrROMCounts[256];
+} RomData;
+
+#define ZOSCII_ROM_LOAD_MAX 131072L
+
+static void printLargeNumber(double dblExponent_a) 
 {
     if (dblExponent_a < 3) 
-	{
+    {
         printf("~%.0f permutations", pow(10, dblExponent_a));
     } 
-	else if (dblExponent_a < 6) 
-	{
+    else if (dblExponent_a < 6) 
+    {
         printf("~%.1f thousand permutations", pow(10, dblExponent_a) / 1000.0);
     } 
-	else if (dblExponent_a < 9) 
-	{
+    else if (dblExponent_a < 9) 
+    {
         printf("~%.1f million permutations", pow(10, dblExponent_a) / 1000000.0);
     } 
-	else if (dblExponent_a < 12) 
-	{
+    else if (dblExponent_a < 12) 
+    {
         printf("~%.1f billion permutations", pow(10, dblExponent_a) / 1000000000.0);
     } 
-	else if (dblExponent_a < 15) 
-	{
+    else if (dblExponent_a < 15) 
+    {
         printf("~%.1f trillion permutations", pow(10, dblExponent_a) / 1000000000000.0);
     } 
-	else if (dblExponent_a < 82) 
-	{
+    else if (dblExponent_a < 82) 
+    {
         printf("More than all atoms in the observable universe (10^%.0f permutations)", dblExponent_a);
     } 
-	else if (dblExponent_a < 1000) 
-	{
+    else if (dblExponent_a < 1000) 
+    {
         printf("Incomprehensibly massive (10^%.0f permutations)", dblExponent_a);
     } 
-	else 
-	{
+    else 
+    {
         printf("Astronomically secure (10^%.1fM permutations)", dblExponent_a / 1000000.0);
     }
 }
 
-int main(int intArgC_a, char* parrArgs_a[]) 
+static RomData* loadRom(const char* strFilename_a)
 {
-    int intBittage = 16;  // Default to 16-bit for Amiga compatibility
-    int intOffset = 0;
+    RomData* ptrRom = NULL;
+    FILE* ptrROM = NULL;
     
-	printf("ZOSCII ROM Strength Analyzer\n");
-	printf("(c) 2025 Cyborg Unicorn Pty Ltd - MIT License\n\n");
+    ptrRom = (RomData*)malloc(sizeof(RomData));
+    if (ptrRom != NULL)
+    {
+        // Initialize
+        memset(ptrRom, 0, sizeof(RomData));
+        
+        ptrROM = fopen(strFilename_a, "rb");
+        if (ptrROM != NULL)
+        {
+            fseek(ptrROM, 0, SEEK_END);
+            ptrRom->lngROMSize = ftell(ptrROM);
+            fseek(ptrROM, 0, SEEK_SET);
+            
+            if (ptrRom->lngROMSize > ZOSCII_ROM_LOAD_MAX)
+            {
+                ptrRom->lngROMSize = ZOSCII_ROM_LOAD_MAX;
+            }
+            
+            ptrRom->ptrROMData = (uint8_t*)malloc(ptrRom->lngROMSize);
+            if (ptrRom->ptrROMData != NULL)
+            {
+                fread(ptrRom->ptrROMData, 1, ptrRom->lngROMSize, ptrROM);
+                
+                // Count ROM byte occurrences
+                for (long lngI = 0; lngI < ptrRom->lngROMSize; lngI++)
+                {
+                    ptrRom->arrROMCounts[ptrRom->ptrROMData[lngI]]++;
+                }
+            }
+            else
+            {
+                free(ptrRom);
+                ptrRom = NULL;
+            }
+            
+            fclose(ptrROM);
+        }
+        else
+        {
+            free(ptrRom);
+            ptrRom = NULL;
+        }
+    }
+    
+    return ptrRom;
+}
 
-    // Parse command-line arguments for bit width
-    if (intArgC_a >= 2 && strcmp(parrArgs_a[1], "-32") == 0) 
-	{
-        intBittage = 32;
-        intOffset = 1;
-    } 
-	else if (intArgC_a >= 2 && strcmp(parrArgs_a[1], "-16") == 0) 
-	{
-        intBittage = 16;
-        intOffset = 1;
+static void unloadRom(RomData* ptrRom_a)
+{
+    if (ptrRom_a != NULL)
+    {
+        if (ptrRom_a->ptrROMData != NULL)
+        {
+            free(ptrRom_a->ptrROMData);
+        }
+        free(ptrRom_a);
     }
-    
-    // Validate arguments
-    if (intArgC_a != 3 + intOffset) 
-	{
-        fprintf(stderr, "Usage: %s [-16|-32] <romfile> <inputdatafile>\n", parrArgs_a[0]);
-        return 1;
-    }
-    
-    // Open ROM file
-    FILE* fROM = fopen(parrArgs_a[1 + intOffset], "rb");
-    if (!fROM) 
-	{
-        perror("Error opening ROM file");
-        return 1;
-    }
-    
-    // Get ROM file size
-    fseek(fROM, 0, SEEK_END);
-    long lngROMSize = ftell(fROM);
-    fseek(fROM, 0, SEEK_SET);
-    
-    // Limit ROM size based on bit width
-    long lngMaxSize = (intBittage == 16) ? 65536 : 4294967296L;
-    if (lngROMSize > lngMaxSize) 
-	{
-        lngROMSize = lngMaxSize;
-    }
-    
-    // Allocate memory for ROM data
-    uint8_t* pROMData = malloc(lngROMSize);
-    if (!pROMData) 
-	{
-        fprintf(stderr, "Memory allocation failed for ROM data\n");
-        fclose(fROM);
-        return 1;
-    }
-    
-    fread(pROMData, 1, lngROMSize, fROM);
-    fclose(fROM);
-    
-    // Count ROM byte occurrences
-    uint32_t arrROMCounts[256] = {0};
+}
+
+static bool analyzeFile(const RomData* ptrRom_a, const char* strInputFile_a)
+{
+    bool blnSuccess = false;
+    FILE* ptrInput = NULL;
     uint32_t arrInputCounts[256] = {0};
-    
-    for (long lngI = 0; lngI < lngROMSize; lngI++) 
-	{
-        arrROMCounts[pROMData[lngI]]++;
-    }
-    
-    // Open input file
-    FILE* fInput = fopen(parrArgs_a[2 + intOffset], "rb");
-    if (!fInput) 
-	{
-        perror("Error opening input file");
-        free(pROMData);
-        return 1;
-    }
-    
-    // Count input character occurrences
-    int ch;
     int intInputLength = 0;
     int intCharsUsed = 0;
-    
-    while ((ch = fgetc(fInput)) != EOF) 
-	{
-        uint8_t by = (uint8_t)ch;
-        arrInputCounts[by]++;
-        intInputLength++;
-    }
-    fclose(fInput);
-    
-    // Count characters utilized
-    for (int intI = 0; intI < 256; intI++) 
-	{
-        if (arrInputCounts[intI] > 0) 
-		{
-            intCharsUsed++;
-        }
-    }
-    
-    // Calculate ROM strength metrics
+    int intCh = 0;
     double dblGeneralStrength = 0.0;
     double dblFileStrength = 0.0;
+    double dblUtilisation = 0.0;
     
-    for (int intI = 0; intI < 256; intI++) 
-	{
-        if (arrROMCounts[intI] > 0) 
-		{
-            dblGeneralStrength += log10(arrROMCounts[intI]);
+    ptrInput = fopen(strInputFile_a, "rb");
+    if (ptrInput != NULL)
+    {
+        // Count input character occurrences
+        while ((intCh = fgetc(ptrInput)) != EOF)
+        {
+            uint8_t by = (uint8_t)intCh;
+            arrInputCounts[by]++;
+            intInputLength++;
         }
-        if (arrInputCounts[intI] > 0 && arrROMCounts[intI] > 0) 
-		{
-            dblFileStrength += arrInputCounts[intI] * log10(arrROMCounts[intI]);
+        fclose(ptrInput);
+        
+        // Count characters utilized
+        for (int intI = 0; intI < 256; intI++)
+        {
+            if (arrInputCounts[intI] > 0)
+            {
+                intCharsUsed++;
+            }
         }
+        
+        // Calculate ROM strength metrics
+        for (int intI = 0; intI < 256; intI++)
+        {
+            if (ptrRom_a->arrROMCounts[intI] > 0)
+            {
+                dblGeneralStrength += log10(ptrRom_a->arrROMCounts[intI]);
+            }
+            if (arrInputCounts[intI] > 0 && ptrRom_a->arrROMCounts[intI] > 0)
+            {
+                dblFileStrength += arrInputCounts[intI] * log10(ptrRom_a->arrROMCounts[intI]);
+            }
+        }
+        
+        dblUtilisation = (intCharsUsed / 256.0) * 100.0;
+        
+        printf("ROM Strength Analysis\n");
+        printf("=====================\n\n");
+        
+        printf("Input Information:\n");
+        printf("- Text Length: %d characters\n", intInputLength);
+        printf("- Characters Utilized: %d of 256 (%.1f%%)\n", intCharsUsed, dblUtilisation);
+        printf("\n");
+        
+        printf("General ROM Capacity: ~10^%.0f (", dblGeneralStrength);
+        printLargeNumber(dblGeneralStrength);
+        printf(")\n");
+        
+        printf("This File Security: ~10^%.0f (", dblFileStrength);
+        printLargeNumber(dblFileStrength);
+        printf(")\n\n");
+        
+        printf("Byte Analysis:\n");
+        printf("Byte  Dec  ROM Count  Input Count  Char\n");
+        printf("----  ---  ---------  -----------  ----\n");
+        
+        for (int intI = 0; intI < 256; intI++)
+        {
+            if (ptrRom_a->arrROMCounts[intI] > 0 || arrInputCounts[intI] > 0)
+            {
+                char chDisplay = (intI >= 32 && intI <= 126) ? (char)intI : ' ';
+                printf("0x%02X  %3d  %9u  %11u    %c\n", 
+                       intI, intI, ptrRom_a->arrROMCounts[intI], arrInputCounts[intI], chDisplay);
+            }
+        }
+        
+        blnSuccess = true;
     }
     
-    double dblUtilisation = (intCharsUsed / 256.0) * 100.0;
+    return blnSuccess;
+}
+
+int main(int intArgC_a, char* strArgv_a[])
+{
+    int intResult = 1;
+    RomData* ptrRom = NULL;
+    bool blnAnalyzeOk = false;
     
-    // Output results
-    printf("ROM Strength Analysis (%d-bit)\n", intBittage);
-    printf("===============================\n\n");
-    
-    printf("Input Information:\n");
-    printf("- Text Length: %d characters\n", intInputLength);
-    printf("- Characters Utilized: %d of 256 (%.1f%%)\n", intCharsUsed, dblUtilisation);
-    printf("\n");
-    
-    printf("General ROM Capacity: ~10^%.0f (", dblGeneralStrength);
-    print_large_number(dblGeneralStrength);
-    printf(")\n");
-    
-    printf("This File Security: ~10^%.0f (", dblFileStrength);
-    print_large_number(dblFileStrength);
-    printf(")\n\n");
-    
-    printf("Byte Analysis:\n");
-    printf("Byte  Dec  ROM Count  Input Count  Char\n");
-    printf("----  ---  ---------  -----------  ----\n");
-    
-    for (int intI = 0; intI < 256; intI++) 
-	{
-        if (arrROMCounts[intI] > 0 || arrInputCounts[intI] > 0) 
-		{
-            char chDisplay = (intI >= 32 && intI <= 126) ? intI : ' ';
-            printf("0x%02X  %3d  %9u  %11u    %c\n", 
-                   intI, intI, arrROMCounts[intI], arrInputCounts[intI], chDisplay);
+    printf("ZOSCII ROM Strength Analyzer\n");
+    printf("(c) 2026 Cyborg Unicorn Pty Ltd v20260301 - MIT License\n\n");
+
+    if (intArgC_a == 3)
+    {
+        ptrRom = loadRom(strArgv_a[1]);
+        if (ptrRom != NULL)
+        {
+            blnAnalyzeOk = analyzeFile(ptrRom, strArgv_a[2]);
+            
+            if (blnAnalyzeOk)
+            {
+                intResult = 0;
+            }
+            else
+            {
+                fprintf(stderr, "Analysis failed\n");
+            }
+            
+            unloadRom(ptrRom);
+        }
+        else
+        {
+            perror("Failed to load ROM");
         }
     }
+    else
+    {
+        fprintf(stderr, "Usage: %s <romfile> <inputdatafile>\n", strArgv_a[0]);
+    }
     
-    free(pROMData);
-    return 0;
+    return intResult;
 }

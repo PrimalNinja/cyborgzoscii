@@ -1,5 +1,5 @@
-// Cyborg ZOSCII v20250908
-// (c) 2025 Cyborg Unicorn Pty Ltd.
+// Cyborg ZOSCII v20260301
+// (c) 2026 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
 
 // Amiga Version
@@ -8,166 +8,204 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <time.h>
 
-typedef struct {
-    uint32_t *addresses;
-    uint32_t count;
+#define ZOSCII_ROM_LOAD_MAX 131072L
+
+typedef struct 
+{
+    uint32_t* ptrAddresses;
+    uint32_t intCount;
 } ByteAddresses;
 
-int main(int intArgC_a, char* parrArgs_a[]) 
+typedef struct 
 {
-    int intBittage = 16;  // Default to 16-bit for Amiga compatibility
-    int intOffset = 0;
-    
-	printf("ZOSCII Encoder\n");
-	printf("(c) 2025 Cyborg Unicorn Pty Ltd - MIT License\n\n");
-
-    // Parse command-line arguments for bit width
-    if (intArgC_a >= 2 && strcmp(parrArgs_a[1], "-32") == 0) 
-	{
-        intBittage = 32;
-        intOffset = 1;
-    } 
-	else if (intArgC_a >= 2 && strcmp(parrArgs_a[1], "-16") == 0) 
-	{
-        intBittage = 16;
-        intOffset = 1;
-    }
-    
-    // Validate arguments
-    if (intArgC_a != 4 + intOffset) 
-	{
-        fprintf(stderr, "Usage: %s [-16|-32] <romfile> <inputdatafile> <encodedoutput>\n", parrArgs_a[0]);
-        return 1;
-    }
-    
-    // Seed random number generator
-    srand(time(NULL));
-    
-    // Open ROM file
-    FILE* fROM = fopen(parrArgs_a[1 + intOffset], "rb");
-    if (!fROM) 
-	{
-        perror("Error opening ROM file");
-        return 1;
-    }
-    
-    // Get ROM file size
-    fseek(fROM, 0, SEEK_END);
-    long lngROMSize = ftell(fROM);
-    fseek(fROM, 0, SEEK_SET);
-    
-    // Limit ROM size based on bit width
-    long lngMaxSize = (intBittage == 16) ? 65536 : 4294967296L;
-    if (lngROMSize > lngMaxSize) 
-	{
-        lngROMSize = lngMaxSize;
-    }
-    
-    // Allocate memory for ROM data
-    uint8_t* pROMData = malloc(lngROMSize);
-    if (!pROMData) 
-	{
-        fprintf(stderr, "Memory allocation failed for ROM data\n");
-        fclose(fROM);
-        return 1;
-    }
-    
-    fread(pROMData, 1, lngROMSize, fROM);
-    fclose(fROM);
-    
-    // Build address lookup tables
+    uint8_t* ptrROMData;
+    long lngROMSize;
     ByteAddresses arrLookup[256];
-    uint32_t arrROMCounts[256] = {0};
+} RomData;
+
+static void buildLookupTable(RomData* ptrRom_a)
+{
+    uint32_t arrCounts[256] = {0};
+    long lngROMSize = 0;
+    long lngI = 0;
+    int intI = 0;
+    
+    // Initialize lookup array
+    for (intI = 0; intI < 256; intI++) 
+    {
+        ptrRom_a->arrLookup[intI].ptrAddresses = NULL;
+        ptrRom_a->arrLookup[intI].intCount = 0;
+    }
+    
+    // ROM addresses are 16-bit, so only use first 64KB
+    lngROMSize = ptrRom_a->lngROMSize;
+    if (lngROMSize > 65536L) 
+    {
+        lngROMSize = 65536L;
+    }
     
     // Count occurrences
-    for (long lngI = 0; lngI < lngROMSize; lngI++) 
-	{
-        arrROMCounts[pROMData[lngI]]++;
+    for (lngI = 0; lngI < lngROMSize; lngI++) 
+    {
+        arrCounts[ptrRom_a->ptrROMData[lngI]]++;
     }
     
-    // Allocate address arrays
-    for (int intI = 0; intI < 256; intI++) 
-	{
-        arrLookup[intI].addresses = malloc(arrROMCounts[intI] * sizeof(uint32_t));
-        if (!arrLookup[intI].addresses) 
-		{
-            fprintf(stderr, "Memory allocation failed for lookup table %d\n", intI);
-            free(pROMData);
-            for (int intJ = 0; intJ < intI; intJ++) 
-			{
-                free(arrLookup[intJ].addresses);
-            }
-            return 1;
+    // Allocate memory for each byte value
+    for (intI = 0; intI < 256; intI++) 
+    {
+        if (arrCounts[intI] > 0) 
+        {
+            ptrRom_a->arrLookup[intI].ptrAddresses = (uint32_t*)malloc(arrCounts[intI] * sizeof(uint32_t));
+            ptrRom_a->arrLookup[intI].intCount = 0;
         }
-        arrLookup[intI].count = 0;
     }
     
-    // Populate address arrays
-    for (long lngI = 0; lngI < lngROMSize; lngI++) 
-	{
-        uint8_t by = pROMData[lngI];
-        arrLookup[by].addresses[arrLookup[by].count++] = lngI;
+    // Fill addresses
+    for (lngI = 0; lngI < lngROMSize; lngI++) 
+    {
+        uint8_t by = ptrRom_a->ptrROMData[lngI];
+        ptrRom_a->arrLookup[by].ptrAddresses[ptrRom_a->arrLookup[by].intCount++] = (uint32_t)lngI;
     }
+}
+
+static RomData* loadRom(const char* strFilename_a)
+{
+    RomData* ptrRom = NULL;
+    FILE* ptrROM = NULL;
     
-    // Open input file
-    FILE* fInput = fopen(parrArgs_a[2 + intOffset], "rb");
-    if (!fInput) 
-	{
-        perror("Error opening input file");
-        free(pROMData);
-        for (int intI = 0; intI < 256; intI++) 
-		{
-            free(arrLookup[intI].addresses);
-        }
-        return 1;
-    }
-    
-    // Open output file
-    FILE* fOutput = fopen(parrArgs_a[3 + intOffset], "wb");
-    if (!fOutput) 
-	{
-        perror("Error opening output file");
-        free(pROMData);
-        for (int intI = 0; intI < 256; intI++) 
-		{
-            free(arrLookup[intI].addresses);
-        }
-        fclose(fInput);
-        return 1;
-    }
-    
-    // Process input and write output
-    int c;
-    while ((c = fgetc(fInput)) != EOF) 
-	{
-        uint8_t by = (uint8_t)c;
-        if (arrLookup[by].count > 0) 
-		{
-            uint32_t intRandomIdx = rand() % arrLookup[by].count;
-            uint32_t intAddress = arrLookup[by].addresses[intRandomIdx];
+    ptrROM = fopen(strFilename_a, "rb");
+    if (ptrROM) 
+    {
+        ptrRom = (RomData*)malloc(sizeof(RomData));
+        if (ptrRom) 
+        {
+            fseek(ptrROM, 0, SEEK_END);
+            ptrRom->lngROMSize = ftell(ptrROM);
+            fseek(ptrROM, 0, SEEK_SET);
             
-            if (intBittage == 16) 
-			{
-                uint16_t intAddress16 = (uint16_t)intAddress;
-                fwrite(&intAddress16, sizeof(uint16_t), 1, fOutput);
+            if (ptrRom->lngROMSize > ZOSCII_ROM_LOAD_MAX) 
+            {
+                ptrRom->lngROMSize = ZOSCII_ROM_LOAD_MAX;
+            }
+            
+            ptrRom->ptrROMData = (uint8_t*)malloc(ptrRom->lngROMSize);
+            if (ptrRom->ptrROMData) 
+            {
+                fread(ptrRom->ptrROMData, 1, ptrRom->lngROMSize, ptrROM);
+                
+                // Pre-build lookup table for reuse across multiple encodes
+                buildLookupTable(ptrRom);
             } 
-			else 
-			{
-                fwrite(&intAddress, sizeof(uint32_t), 1, fOutput);
+            else 
+            {
+                free(ptrRom);
+                ptrRom = NULL;
             }
         }
+        fclose(ptrROM);
     }
     
-    // Clean up
-    fclose(fInput);
-    fclose(fOutput);
-    free(pROMData);
-    for (int intI = 0; intI < 256; intI++) 
-	{
-        free(arrLookup[intI].addresses);
+    return ptrRom;
+}
+
+static void unloadRom(RomData* ptrRom_a)
+{
+    int intI = 0;
+    
+    if (ptrRom_a) 
+    {
+        if (ptrRom_a->ptrROMData) 
+        {
+            free(ptrRom_a->ptrROMData);
+        }
+        
+        for (intI = 0; intI < 256; intI++) 
+        {
+            if (ptrRom_a->arrLookup[intI].ptrAddresses) 
+            {
+                free(ptrRom_a->arrLookup[intI].ptrAddresses);
+            }
+        }
+        
+        free(ptrRom_a);
+    }
+}
+
+static bool encodeFile(const RomData* ptrRom_a, const char* strInputFile_a, const char* strOutputFile_a)
+{
+    bool blnSuccess = false;
+    FILE* ptrInput = NULL;
+    FILE* ptrOutput = NULL;
+    int intCh = 0;
+    
+    ptrInput = fopen(strInputFile_a, "rb");
+    if (ptrInput) 
+    {
+        ptrOutput = fopen(strOutputFile_a, "wb");
+        if (ptrOutput) 
+        {
+            // Stream-encode input
+            while ((intCh = fgetc(ptrInput)) != EOF) 
+            {
+                uint8_t by = (uint8_t)intCh;
+                if (ptrRom_a->arrLookup[by].intCount > 0) 
+                {
+                    uint32_t intRandomIdx = rand() % ptrRom_a->arrLookup[by].intCount;
+                    uint16_t intAddress = (uint16_t)ptrRom_a->arrLookup[by].ptrAddresses[intRandomIdx];
+                    fwrite(&intAddress, sizeof(uint16_t), 1, ptrOutput);
+                }
+            }
+            
+            blnSuccess = true;
+            
+            fclose(ptrOutput);
+        }
+        fclose(ptrInput);
     }
     
-    return 0;
+    return blnSuccess;
+}
+
+int main(int intArgC_a, char* strArgv_a[])
+{
+    int intResult = 1;
+    RomData* ptrRom = NULL;
+    bool blnEncodeOk = false;
+    
+    printf("ZOSCII Encoder\n");
+    printf("(c) 2026 Cyborg Unicorn Pty Ltd v20260301 - MIT License\n\n");
+    
+    srand((unsigned int)time(NULL));
+
+    if (intArgC_a == 4) 
+    {
+        ptrRom = loadRom(strArgv_a[1]);
+        if (ptrRom) 
+        {
+            blnEncodeOk = encodeFile(ptrRom, strArgv_a[2], strArgv_a[3]);
+            unloadRom(ptrRom);
+            
+            if (blnEncodeOk) 
+            {
+                intResult = 0;
+            } 
+            else 
+            {
+                fprintf(stderr, "Encode failed\n");
+            }
+        } 
+        else 
+        {
+            perror("Failed to load ROM");
+        }
+    } 
+    else 
+    {
+        fprintf(stderr, "Usage: %s <romfile> <inputdatafile> <encodedoutput>\n", strArgv_a[0]);
+    }
+    
+    return intResult;
 }

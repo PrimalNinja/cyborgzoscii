@@ -1,94 +1,136 @@
 #!/usr/bin/env python3
-# Cyborg ZOSCII v20250805
-# (c) 2025 Cyborg Unicorn Pty Ltd.
+# Cyborg ZOSCII v20260301
+# (c) 2026 Cyborg Unicorn Pty Ltd.
 # This software is released under MIT License.
 
 import sys
 import random
 import struct
+import os
 
-def main():
-    print("ZOSCII Encoder")
-    print("(c) 2025 Cyborg Unicorn Pty Ltd - MIT License\n")
+class ByteAddresses:
+    def __init__(self):
+        self.ptrAddresses = []
+        self.intCount = 0
+
+class RomData:
+    def __init__(self):
+        self.ptrROMData = b''
+        self.lngROMSize = 0
+        self.arrLookup = [ByteAddresses() for _ in range(256)]
+
+ZOSCII_ROM_LOAD_MAX = 131072
+
+def buildLookupTable(ptrRom_a):
+    arrCounts = [0] * 256
+    lngROMSize = 0
     
-    bittage = 16  # default
-    offset = 0
-    
-    if len(sys.argv) >= 2 and sys.argv[1] == "-32":
-        bittage = 32
-        offset = 1
-    elif len(sys.argv) >= 2 and sys.argv[1] == "-16":
-        bittage = 16
-        offset = 1
-    
-    if len(sys.argv) != 4 + offset:
-        print(f"Usage: {sys.argv[0]} [-16|-32] <romfile> <inputdatafile> <encodedoutput>", file=sys.stderr)
-        return 1
-    
-    # Read ROM file
-    try:
-        with open(sys.argv[1 + offset], 'rb') as f:
-            rom_data = f.read()
-    except IOError as e:
-        print(f"Error opening ROM file: {e}", file=sys.stderr)
-        return 1
-    
-    rom_size = len(rom_data)
-    
-    # Check ROM size limit based on bit width
-    max_size = 65536 if bittage == 16 else 4294967296
-    if rom_size > max_size:
-        rom_size = max_size
-        rom_data = rom_data[:rom_size]
-    
-    # Build address lookup tables
-    lookup = [[] for _ in range(256)]
-    rom_counts = [0] * 256
+    # ROM addresses are 16-bit, so only use first 64KB
+    lngROMSize = ptrRom_a.lngROMSize
+    if lngROMSize > 65536:
+        lngROMSize = 65536
     
     # Count occurrences
-    for i in range(rom_size):
-        rom_counts[rom_data[i]] += 1
+    for lngI in range(lngROMSize):
+        arrCounts[ptrRom_a.ptrROMData[lngI]] += 1
     
-    # Allocate address arrays
-    for i in range(256):
-        lookup[i] = [0] * rom_counts[i]
+    # Allocate memory for each byte value
+    for intI in range(256):
+        if arrCounts[intI] > 0:
+            ptrRom_a.arrLookup[intI].ptrAddresses = [0] * arrCounts[intI]
+            ptrRom_a.arrLookup[intI].intCount = 0
     
-    # Populate address arrays
-    counts = [0] * 256
-    for i in range(rom_size):
-        byte = rom_data[i]
-        lookup[byte][counts[byte]] = i
-        counts[byte] += 1
+    # Fill addresses
+    for lngI in range(lngROMSize):
+        by = ptrRom_a.ptrROMData[lngI]
+        ptrRom_a.arrLookup[by].ptrAddresses[ptrRom_a.arrLookup[by].intCount] = lngI
+        ptrRom_a.arrLookup[by].intCount += 1
+
+def loadRom(strFilename_a):
+    ptrRom = None
     
-    # Read input file
-    try:
-        with open(sys.argv[2 + offset], 'rb') as f:
-            input_data = f.read()
-    except IOError as e:
-        print(f"Error opening input file: {e}", file=sys.stderr)
-        return 1
+    if os.path.exists(strFilename_a):
+        try:
+            with open(strFilename_a, 'rb') as ptrFile:
+                arrBuf = ptrFile.read(ZOSCII_ROM_LOAD_MAX)
+                if arrBuf:
+                    ptrRom = RomData()
+                    ptrRom.ptrROMData = arrBuf
+                    ptrRom.lngROMSize = len(arrBuf)
+                    
+                    # Pre-build lookup table for reuse across multiple encodes
+                    buildLookupTable(ptrRom)
+        except IOError:
+            ptrRom = None
     
-    # Open output file
-    try:
-        f_output = open(sys.argv[3 + offset], 'wb')
-    except IOError as e:
-        print(f"Error opening output file: {e}", file=sys.stderr)
-        return 1
+    return ptrRom
+
+def unloadRom(ptrRom_a):
+    # In Python, garbage collector handles this, but method kept for symmetry
+    ptrRom_a.ptrROMData = b''
+    ptrRom_a.lngROMSize = 0
+    ptrRom_a.arrLookup = [ByteAddresses() for _ in range(256)]
+
+def encodeFile(ptrRom_a, strInputFile_a, strOutputFile_a):
+    blnSuccess = False
+    ptrInput = None
+    ptrOutput = None
     
-    # Encode data
-    for byte in input_data:
-        if len(lookup[byte]) > 0:
-            random_idx = random.randint(0, len(lookup[byte]) - 1)
-            address = lookup[byte][random_idx]
+    if os.path.exists(strInputFile_a):
+        try:
+            ptrInput = open(strInputFile_a, 'rb')
+            ptrOutput = open(strOutputFile_a, 'wb')
             
-            if bittage == 16:
-                address16 = address & 0xFFFF
-                f_output.write(struct.pack('<H', address16))
-            else:
-                f_output.write(struct.pack('<I', address))
+            # Stream-encode input
+            while True:
+                intCh = ptrInput.read(1)
+                if not intCh:
+                    break
+                by = intCh[0]
+                if ptrRom_a.arrLookup[by].intCount > 0:
+                    intRandomIdx = random.randint(0, ptrRom_a.arrLookup[by].intCount - 1)
+                    intAddress = ptrRom_a.arrLookup[by].ptrAddresses[intRandomIdx]
+                    ptrOutput.write(struct.pack('<H', intAddress))
+            
+            blnSuccess = True
+            ptrOutput.close()
+            ptrInput.close()
+        except IOError:
+            if ptrOutput:
+                ptrOutput.close()
+            if ptrInput:
+                ptrInput.close()
     
-    f_output.close()
-    return 0
+    return blnSuccess
+
+def main():
+    intResult = 1
+    ptrRom = None
+    blnEncodeOk = False
+    
+    print("ZOSCII Encoder")
+    print("(c) 2026 Cyborg Unicorn Pty Ltd v20260301 - MIT License\n")
+    
+    if len(sys.argv) == 4:
+        random.seed()
+        
+        ptrRom = loadRom(sys.argv[1])
+        if ptrRom:
+            blnEncodeOk = encodeFile(ptrRom, sys.argv[2], sys.argv[3])
+            
+            if blnEncodeOk:
+                intResult = 0
+                print("Encode successful!")
+            else:
+                print("Encode failed", file=sys.stderr)
+            
+            unloadRom(ptrRom)
+        else:
+            print("Failed to load ROM", file=sys.stderr)
+    else:
+        print(f"Usage: {sys.argv[0]} <romfile> <inputdatafile> <encodedoutput>", file=sys.stderr)
+    
+    sys.exit(intResult)
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

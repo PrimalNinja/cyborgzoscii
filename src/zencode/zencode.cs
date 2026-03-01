@@ -1,132 +1,200 @@
-// Cyborg ZOSCII v20250908
-// (c) 2025 Cyborg Unicorn Pty Ltd.
+// Cyborg ZOSCII v20260301
+// (c) 2026 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
-
-// Windows & Linux Version
 
 using System;
 using System.IO;
-using System.Runtime.InteropServices;
 
 struct ByteAddresses
 {
-    public uint[] Addresses;
-    public uint Count;
+    public uint[] ptrAddresses;
+    public uint intCount;
+}
+
+struct RomData
+{
+    public byte[] ptrROMData;
+    public long lngROMSize;
+    public ByteAddresses[] arrLookup;
 }
 
 class Program
 {
-    static void Main(string[] arrArgs_a)
+    private const int ZOSCII_ROM_LOAD_MAX = 131072;
+
+    private static void BuildLookupTable(ref RomData ptrRom_a)
     {
-        int intBittage = 16; // default
-        int intOffset = 0;
-
-		Console.WriteLine("ZOSCII Encoder");
-		Console.WriteLine("(c) 2025 Cyborg Unicorn Pty Ltd - MIT License");
-
-        if (arrArgs_a.Length >= 1 && arrArgs_a[0] == "-32")
-        {
-            intBittage = 32;
-            intOffset = 1;
-        }
-        else if (arrArgs_a.Length >= 1 && arrArgs_a[0] == "-16")
-        {
-            intBittage = 16;
-            intOffset = 1;
-        }
-
-        if (arrArgs_a.Length != 3 + intOffset)
-        {
-            Console.Error.WriteLine($"Usage: {AppDomain.CurrentDomain.FriendlyName} [-16|-32] <romfile> <inputdatafile> <encodedoutput>");
-            Environment.Exit(1);
-        }
-
-        Random objRand = new Random();
-
-        // Read ROM file
-        byte[] pROMData;
-        try
-        {
-            pROMData = File.ReadAllBytes(arrArgs_a[0 + intOffset]);
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"Error opening ROM file: {ex.Message}");
-            Environment.Exit(1);
-        }
-
-        long lngROMSize = pROMData.Length;
-        long lngMaxSize = intBittage == 16 ? 65536 : 4294967296L;
-        if (lngROMSize > lngMaxSize)
-        {
-            Array.Resize(ref pROMData, (int)lngMaxSize);
-            lngROMSize = lngMaxSize;
-        }
-
-        // Build address lookup tables
-        ByteAddresses[] arrLookup = new ByteAddresses[256];
-        uint[] arrROMCounts = new uint[256];
-
-        // Initialize lookup arrays
+        uint[] arrCounts = new uint[256];
+        long lngROMSize = 0;
+        
+        // Initialize lookup array
+        ptrRom_a.arrLookup = new ByteAddresses[256];
         for (int intI = 0; intI < 256; intI++)
         {
-            arrLookup[intI] = new ByteAddresses();
+            ptrRom_a.arrLookup[intI].ptrAddresses = null;
+            ptrRom_a.arrLookup[intI].intCount = 0;
         }
-
+        
+        // ROM addresses are 16-bit, so only use first 64KB
+        lngROMSize = ptrRom_a.lngROMSize;
+        if (lngROMSize > 65536L)
+        {
+            lngROMSize = 65536L;
+        }
+        
         // Count occurrences
         for (long lngI = 0; lngI < lngROMSize; lngI++)
         {
-            arrROMCounts[pROMData[lngI]]++;
+            arrCounts[ptrRom_a.ptrROMData[lngI]]++;
         }
-
-        // Allocate address arrays
+        
+        // Allocate memory for each byte value
         for (int intI = 0; intI < 256; intI++)
         {
-            arrLookup[intI].Addresses = new uint[arrROMCounts[intI]];
-            arrLookup[intI].Count = 0;
+            if (arrCounts[intI] > 0)
+            {
+                ptrRom_a.arrLookup[intI].ptrAddresses = new uint[arrCounts[intI]];
+                ptrRom_a.arrLookup[intI].intCount = 0;
+            }
         }
-
-        // Populate address arrays
+        
+        // Fill addresses
         for (long lngI = 0; lngI < lngROMSize; lngI++)
         {
-            byte by = pROMData[lngI];
-            arrLookup[by].Addresses[arrLookup[by].Count++] = (uint)lngI;
+            byte by = ptrRom_a.ptrROMData[lngI];
+            ptrRom_a.arrLookup[by].ptrAddresses[ptrRom_a.arrLookup[by].intCount++] = (uint)lngI;
         }
+    }
 
-        // Process input file and write output
+    private static RomData LoadRom(string strFilename_a)
+    {
+        RomData ptrRom = new RomData();
+        ptrRom.ptrROMData = null;
+        ptrRom.lngROMSize = 0;
+        ptrRom.arrLookup = null;
+        
         try
         {
-            using (FileStream fInput = new FileStream(arrArgs_a[1 + intOffset], FileMode.Open, FileAccess.Read))
-            using (FileStream fOutput = new FileStream(arrArgs_a[2 + intOffset], FileMode.Create, FileAccess.Write))
+            using (FileStream ptrStream = new FileStream(strFilename_a, FileMode.Open, FileAccess.Read))
             {
-                int ch;
-                while ((ch = fInput.ReadByte()) != -1)
-                {
-                    byte by = (byte)ch;
-                    if (arrLookup[by].Count > 0)
-                    {
-                        uint intRandomIdx = (uint)objRand.Next((int)arrLookup[by].Count);
-                        uint intAddress = arrLookup[by].Addresses[intRandomIdx];
+                long lngLoad = Math.Min(ptrStream.Length, ZOSCII_ROM_LOAD_MAX);
+                ptrRom.lngROMSize = lngLoad;
+                ptrRom.ptrROMData = new byte[lngLoad];
+                ptrStream.Read(ptrRom.ptrROMData, 0, (int)lngLoad);
+                
+                // Pre-build lookup table for reuse across multiple encodes
+                BuildLookupTable(ref ptrRom);
+            }
+        }
+        catch
+        {
+            ptrRom.ptrROMData = null;
+            ptrRom.lngROMSize = 0;
+            ptrRom.arrLookup = null;
+        }
+        
+        return ptrRom;
+    }
 
-                        if (intBittage == 16)
-                        {
-                            ushort intAddress16 = (ushort)intAddress;
-                            byte[] arrBuffer = BitConverter.GetBytes(intAddress16);
-                            fOutput.Write(arrBuffer, 0, sizeof(ushort));
-                        }
-                        else
-                        {
-                            byte[] arrBuffer = BitConverter.GetBytes(intAddress);
-                            fOutput.Write(arrBuffer, 0, sizeof(uint));
-                        }
+    private static void UnloadRom(ref RomData ptrRom_a)
+    {
+        // In C#, garbage collector handles this, but method kept for symmetry
+        ptrRom_a.ptrROMData = null;
+        ptrRom_a.arrLookup = null;
+        ptrRom_a.lngROMSize = 0;
+    }
+
+    private static bool EncodeFile(ref RomData ptrRom_a, string strInputFile_a, string strOutputFile_a)
+    {
+        bool blnSuccess = false;
+        FileStream ptrInput = null;
+        FileStream ptrOutput = null;
+        Random ptrRand = null;
+        int intCh = 0;
+        
+        ptrRand = new Random();
+        
+        try
+        {
+            ptrInput = new FileStream(strInputFile_a, FileMode.Open, FileAccess.Read);
+            
+            try
+            {
+                ptrOutput = new FileStream(strOutputFile_a, FileMode.Create, FileAccess.Write);
+                
+                // Stream-encode input
+                intCh = ptrInput.ReadByte();
+                while (intCh != -1)
+                {
+                    byte by = (byte)intCh;
+                    if (ptrRom_a.arrLookup[by].intCount > 0)
+                    {
+                        uint intRandomIdx = (uint)ptrRand.Next((int)ptrRom_a.arrLookup[by].intCount);
+                        ushort intAddress = (ushort)ptrRom_a.arrLookup[by].ptrAddresses[intRandomIdx];
+                        ptrOutput.Write(BitConverter.GetBytes(intAddress), 0, 2);
                     }
+                    intCh = ptrInput.ReadByte();
+                }
+                
+                blnSuccess = true;
+            }
+            finally
+            {
+                if (ptrOutput != null)
+                {
+                    ptrOutput.Close();
                 }
             }
         }
-        catch (Exception ex)
+        finally
         {
-            Console.Error.WriteLine($"Error processing files: {ex.Message}");
-            Environment.Exit(1);
+            if (ptrInput != null)
+            {
+                ptrInput.Close();
+            }
         }
+        
+        return blnSuccess;
+    }
+
+    static void Main(string[] strArgs_a)
+    {
+        int intResult = 1;
+        RomData ptrRom = new RomData();
+        bool blnEncodeOk = false;
+        
+        Console.WriteLine("ZOSCII Encoder");
+        Console.WriteLine("(c) 2026 Cyborg Unicorn Pty Ltd v20260301 - MIT License");
+        Console.WriteLine();
+
+        if (strArgs_a.Length == 3)
+        {
+            ptrRom = LoadRom(strArgs_a[0]);
+            if (ptrRom.ptrROMData != null)
+            {
+                blnEncodeOk = EncodeFile(ref ptrRom, strArgs_a[1], strArgs_a[2]);
+                
+                if (blnEncodeOk)
+                {
+                    intResult = 0;
+                }
+                else
+                {
+                    Console.Error.WriteLine("Encode failed");
+                }
+                
+                UnloadRom(ref ptrRom);
+            }
+            else
+            {
+                Console.Error.WriteLine("Failed to load ROM");
+            }
+        }
+        else
+        {
+            Console.Error.WriteLine($"Usage: {AppDomain.CurrentDomain.FriendlyName} <romfile> <inputdatafile> <encodedoutput>");
+        }
+        
+        Environment.Exit(intResult);
     }
 }

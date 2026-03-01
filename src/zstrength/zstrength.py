@@ -1,128 +1,162 @@
 #!/usr/bin/env python3
-# Cyborg ZOSCII v20250805
-# (c) 2025 Cyborg Unicorn Pty Ltd.
+# Cyborg ZOSCII v20260301
+# (c) 2026 Cyborg Unicorn Pty Ltd.
 # This software is released under MIT License.
 
 import sys
 import math
+import os
 
-def print_large_number(exponent):
-    if exponent < 3:
-        print(f"~{10**exponent:.0f} permutations", end='')
-    elif exponent < 6:
-        print(f"~{10**exponent / 1000.0:.1f} thousand permutations", end='')
-    elif exponent < 9:
-        print(f"~{10**exponent / 1000000.0:.1f} million permutations", end='')
-    elif exponent < 12:
-        print(f"~{10**exponent / 1000000000.0:.1f} billion permutations", end='')
-    elif exponent < 15:
-        print(f"~{10**exponent / 1000000000000.0:.1f} trillion permutations", end='')
-    elif exponent < 82:
-        print(f"More than all atoms in the observable universe (10^{exponent:.0f} permutations)", end='')
-    elif exponent < 1000:
-        print(f"Incomprehensibly massive (10^{exponent:.0f} permutations)", end='')
+class ByteAddresses:
+    def __init__(self):
+        self.ptrAddresses = []
+        self.intCount = 0
+
+class RomData:
+    def __init__(self):
+        self.ptrROMData = b''
+        self.lngROMSize = 0
+        self.arrROMCounts = [0] * 256
+
+ZOSCII_ROM_LOAD_MAX = 131072
+
+def printLargeNumber(dblExponent_a):
+    if dblExponent_a < 3:
+        print(f"~{10**dblExponent_a:.0f} permutations", end='')
+    elif dblExponent_a < 6:
+        print(f"~{10**dblExponent_a / 1000.0:.1f} thousand permutations", end='')
+    elif dblExponent_a < 9:
+        print(f"~{10**dblExponent_a / 1000000.0:.1f} million permutations", end='')
+    elif dblExponent_a < 12:
+        print(f"~{10**dblExponent_a / 1000000000.0:.1f} billion permutations", end='')
+    elif dblExponent_a < 15:
+        print(f"~{10**dblExponent_a / 1000000000000.0:.1f} trillion permutations", end='')
+    elif dblExponent_a < 82:
+        print(f"More than all atoms in the observable universe (10^{dblExponent_a:.0f} permutations)", end='')
+    elif dblExponent_a < 1000:
+        print(f"Incomprehensibly massive (10^{dblExponent_a:.0f} permutations)", end='')
     else:
-        print(f"Astronomically secure (10^{exponent / 1000000.0:.1f}M permutations)", end='')
+        print(f"Astronomically secure (10^{dblExponent_a / 1000000.0:.1f}M permutations)", end='')
+
+def loadRom(strFilename_a):
+    ptrRom = None
+    
+    if os.path.exists(strFilename_a):
+        try:
+            with open(strFilename_a, 'rb') as ptrFile:
+                arrBuf = ptrFile.read(ZOSCII_ROM_LOAD_MAX)
+                if arrBuf:
+                    ptrRom = RomData()
+                    ptrRom.ptrROMData = arrBuf
+                    ptrRom.lngROMSize = len(arrBuf)
+                    
+                    # Count ROM byte occurrences
+                    for lngI in range(ptrRom.lngROMSize):
+                        ptrRom.arrROMCounts[ptrRom.ptrROMData[lngI]] += 1
+        except IOError:
+            ptrRom = None
+    
+    return ptrRom
+
+def unloadRom(ptrRom_a):
+    # In Python, garbage collector handles this, but method kept for symmetry
+    ptrRom_a.ptrROMData = b''
+    ptrRom_a.lngROMSize = 0
+    ptrRom_a.arrROMCounts = [0] * 256
+
+def analyzeFile(ptrRom_a, strInputFile_a):
+    blnSuccess = False
+    arrInputCounts = [0] * 256
+    intInputLength = 0
+    intCharsUsed = 0
+    dblGeneralStrength = 0.0
+    dblFileStrength = 0.0
+    dblUtilisation = 0.0
+    
+    if os.path.exists(strInputFile_a):
+        try:
+            with open(strInputFile_a, 'rb') as ptrInput:
+                inputData = ptrInput.read()
+            
+            intInputLength = len(inputData)
+            
+            # Count input character occurrences
+            for by in inputData:
+                arrInputCounts[by] += 1
+            
+            # Count characters utilized
+            for intI in range(256):
+                if arrInputCounts[intI] > 0:
+                    intCharsUsed += 1
+            
+            # Calculate ROM strength metrics
+            for intI in range(256):
+                if ptrRom_a.arrROMCounts[intI] > 0:
+                    dblGeneralStrength += math.log10(ptrRom_a.arrROMCounts[intI])
+                if arrInputCounts[intI] > 0 and ptrRom_a.arrROMCounts[intI] > 0:
+                    dblFileStrength += arrInputCounts[intI] * math.log10(ptrRom_a.arrROMCounts[intI])
+            
+            dblUtilisation = (intCharsUsed / 256.0) * 100.0
+            
+            print("ROM Strength Analysis")
+            print("=====================")
+            print()
+            
+            print("Input Information:")
+            print(f"- Text Length: {intInputLength} characters")
+            print(f"- Characters Utilized: {intCharsUsed} of 256 ({dblUtilisation:.1f}%)")
+            print()
+            
+            print(f"General ROM Capacity: ~10^{dblGeneralStrength:.0f} (", end='')
+            printLargeNumber(dblGeneralStrength)
+            print(")")
+            
+            print(f"This File Security: ~10^{dblFileStrength:.0f} (", end='')
+            printLargeNumber(dblFileStrength)
+            print(")")
+            print()
+            
+            print("Byte Analysis:")
+            print("Byte  Dec  ROM Count  Input Count  Char")
+            print("----  ---  ---------  -----------  ----")
+            
+            for intI in range(256):
+                if ptrRom_a.arrROMCounts[intI] > 0 or arrInputCounts[intI] > 0:
+                    chDisplay = chr(intI) if 32 <= intI <= 126 else ' '
+                    print(f"0x{intI:02X}  {intI:3d}  {ptrRom_a.arrROMCounts[intI]:9d}  {arrInputCounts[intI]:11d}    {chDisplay}")
+            
+            blnSuccess = True
+        except IOError:
+            blnSuccess = False
+    
+    return blnSuccess
 
 def main():
+    intResult = 1
+    ptrRom = None
+    blnAnalyzeOk = False
+    
     print("ZOSCII ROM Strength Analyzer")
-    print("(c) 2025 Cyborg Unicorn Pty Ltd - MIT License\n")
-    
-    bittage = 16  # default
-    offset = 0
-    
-    if len(sys.argv) >= 2 and sys.argv[1] == "-32":
-        bittage = 32
-        offset = 1
-    elif len(sys.argv) >= 2 and sys.argv[1] == "-16":
-        bittage = 16
-        offset = 1
-    
-    if len(sys.argv) != 3 + offset:
-        print(f"Usage: {sys.argv[0]} [-16|-32] <romfile> <inputdatafile>", file=sys.stderr)
-        return 1
-    
-    # Read ROM file
-    try:
-        with open(sys.argv[1 + offset], 'rb') as f:
-            rom_data = f.read()
-    except IOError as e:
-        print(f"Error opening ROM file: {e}", file=sys.stderr)
-        return 1
-    
-    rom_size = len(rom_data)
-    
-    # Check ROM size limit based on bit width
-    max_size = 65536 if bittage == 16 else 4294967296
-    if rom_size > max_size:
-        rom_size = max_size
-        rom_data = rom_data[:rom_size]
-    
-    # Count ROM byte occurrences
-    rom_counts = [0] * 256
-    input_counts = [0] * 256
-    
-    for i in range(rom_size):
-        rom_counts[rom_data[i]] += 1
-    
-    # Read input file
-    try:
-        with open(sys.argv[2 + offset], 'rb') as f:
-            input_data = f.read()
-    except IOError as e:
-        print(f"Error opening input file: {e}", file=sys.stderr)
-        return 1
-    
-    # Count input character occurrences
-    input_length = len(input_data)
-    chars_used = 0
-    
-    for byte in input_data:
-        input_counts[byte] += 1
-    
-    # Count characters utilized
-    for i in range(256):
-        if input_counts[i] > 0:
-            chars_used += 1
-    
-    # Calculate ROM strength metrics
-    general_strength = 0.0
-    file_strength = 0.0
-    
-    for i in range(256):
-        if rom_counts[i] > 0:
-            general_strength += math.log10(rom_counts[i])
-        if input_counts[i] > 0 and rom_counts[i] > 0:
-            file_strength += input_counts[i] * math.log10(rom_counts[i])
-    
-    utilisation = (chars_used / 256.0) * 100.0
-    
-    print(f"ROM Strength Analysis ({bittage}-bit)")
-    print("===============================\n")
-    
-    print("Input Information:")
-    print(f"- Text Length: {input_length} characters")
-    print(f"- Characters Utilized: {chars_used} of 256 ({utilisation:.1f}%)")
+    print("(c) 2026 Cyborg Unicorn Pty Ltd v20260301 - MIT License")
     print()
     
-    print(f"General ROM Capacity: ~10^{general_strength:.0f} (", end='')
-    print_large_number(general_strength)
-    print(")")
+    if len(sys.argv) == 3:
+        ptrRom = loadRom(sys.argv[1])
+        if ptrRom:
+            blnAnalyzeOk = analyzeFile(ptrRom, sys.argv[2])
+            
+            if blnAnalyzeOk:
+                intResult = 0
+            else:
+                print("Analysis failed", file=sys.stderr)
+            
+            unloadRom(ptrRom)
+        else:
+            print("Failed to load ROM", file=sys.stderr)
+    else:
+        print(f"Usage: {sys.argv[0]} <romfile> <inputdatafile>", file=sys.stderr)
     
-    print(f"This File Security: ~10^{file_strength:.0f} (", end='')
-    print_large_number(file_strength)
-    print(")\n")
-    
-    print("Byte Analysis:")
-    print("Byte  Dec  ROM Count  Input Count  Char")
-    print("----  ---  ---------  -----------  ----")
-    
-    for i in range(256):
-        if rom_counts[i] > 0 or input_counts[i] > 0:
-            display = chr(i) if 32 <= i <= 126 else ' '
-            print(f"0x{i:02X}  {i:3d}  {rom_counts[i]:9d}  {input_counts[i]:11d}    {display}")
-    
-    return 0
+    sys.exit(intResult)
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

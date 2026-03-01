@@ -1,109 +1,160 @@
-// Cyborg ZOSCII v20250805
-// (c) 2025 Cyborg Unicorn Pty Ltd.
+// Cyborg ZOSCII v20260301
+// (c) 2026 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
 // Windows & Linux Version
 
 package main
 
 import (
-    "encoding/binary"
-    "fmt"
-    "io"
-    "os"
+	"encoding/binary"
+	"fmt"
+	"io"
+	"os"
 )
 
-func main() {
-    fmt.Println("ZOSCII Decoder")
-    fmt.Println("(c) 2025 Cyborg Unicorn Pty Ltd - MIT License\n")
+const (
+	ZOSCII_ROM_LOAD_MAX = 131072
+)
 
-    bittage := 16 // default
-    offset := 0
+type RomData struct {
+	ptrROMData []byte
+	lngROMSize int64
+}
 
-    args := os.Args
+func loadRom(strFilename_a string) (*RomData, error) 
+{
+	var ptrRom *RomData = nil
+	var ptrFile *os.File = nil
+	var err error = nil
+	
+	ptrFile, err = os.Open(strFilename_a)
+	if err == nil 
+	{
+		defer ptrFile.Close()
+		
+		ptrRom = &RomData{}
+		arrBuf := make([]byte, ZOSCII_ROM_LOAD_MAX)
+		var n int = 0
+		
+		n, err = io.ReadFull(ptrFile, arrBuf)
+		if err == nil || err == io.ErrUnexpectedEOF 
+		{
+			ptrRom.ptrROMData = arrBuf[:n]
+			ptrRom.lngROMSize = int64(len(ptrRom.ptrROMData))
+		} 
+		else 
+		{
+			ptrRom = nil
+		}
+	}
+	
+	return ptrRom, err
+}
 
-    if len(args) >= 2 && args[1] == "-32" {
-        bittage = 32
-        offset = 1
-    } else if len(args) >= 2 && args[1] == "-16" {
-        bittage = 16
-        offset = 1
-    }
+func decodeFile(ptrRom_a *RomData, strInputFile_a string, strOutputFile_a string) bool 
+{
+	var blnSuccess bool = false
+	var ptrInput *os.File = nil
+	var ptrOutput *os.File = nil
+	var err error = nil
+	
+	ptrInput, err = os.Open(strInputFile_a)
+	if err == nil 
+	{
+		defer ptrInput.Close()
+		
+		var ptrInputInfo os.FileInfo = nil
+		ptrInputInfo, err = ptrInput.Stat()
+		if err == nil 
+		{
+			lngInputSize := ptrInputInfo.Size()
+			lngSlots := lngInputSize / 2
+			
+			if lngSlots >= 0 
+			{
+				ptrOutput, err = os.Create(strOutputFile_a)
+				if err == nil 
+				{
+					defer ptrOutput.Close()
+					
+					arrAddrBuf := make([]byte, 2)
+					var intI int64 = 0
+					
+					// Decode each slot
+					for intI = 0; intI < lngSlots; intI++ 
+					{
+						_, err = io.ReadFull(ptrInput, arrAddrBuf)
+						if err != nil 
+						{
+							break
+						}
+						
+						intAddr := int64(binary.LittleEndian.Uint16(arrAddrBuf))
+						if intAddr < ptrRom_a.lngROMSize 
+						{
+							_, err = ptrOutput.Write([]byte{ptrRom_a.ptrROMData[intAddr]})
+							if err != nil 
+							{
+								break
+							}
+						}
+					}
+					
+					if err == nil 
+					{
+						blnSuccess = true
+					}
+				}
+			}
+		}
+	}
+	
+	return blnSuccess
+}
 
-    if len(args) != 4+offset {
-        fmt.Fprintf(os.Stderr, "Usage: %s [-16|-32] <romfile> <encodedinput> <outputdatafile>\n", args[0])
-        os.Exit(1)
-    }
+func main() 
+{
+	var intResult int = 1
+	var ptrRom *RomData = nil
+	var err error = nil
+	var blnDecodeOk bool = false
+	
+	fmt.Println("ZOSCII Decoder")
+	fmt.Println("(c) 2026 Cyborg Unicorn Pty Ltd v20260301 - MIT License\n")
 
-    // Read ROM file
-    romData, err := os.ReadFile(args[1+offset])
-    if err != nil {
-        fmt.Fprintf(os.Stderr, "Error opening ROM file: %v\n", err)
-        os.Exit(1)
-    }
-
-    romSize := int64(len(romData))
-
-    // Check ROM size limit based on bit width
-    var maxSize int64
-    if bittage == 16 {
-        maxSize = 65536
-    } else {
-        maxSize = 4294967296
-    }
-
-    if romSize > maxSize {
-        romSize = maxSize
-        romData = romData[:romSize]
-    }
-
-    // Open encoded input file
-    fInput, err := os.Open(args[2+offset])
-    if err != nil {
-        fmt.Fprintf(os.Stderr, "Error opening encoded input file: %v\n", err)
-        os.Exit(1)
-    }
-    defer fInput.Close()
-
-    // Create output file
-    fOutput, err := os.Create(args[3+offset])
-    if err != nil {
-        fmt.Fprintf(os.Stderr, "Error opening output file: %v\n", err)
-        os.Exit(1)
-    }
-    defer fOutput.Close()
-
-    // Decode data
-    if bittage == 16 {
-        var address16 uint16
-        for {
-            err := binary.Read(fInput, binary.LittleEndian, &address16)
-            if err == io.EOF {
-                break
-            }
-            if err != nil {
-                fmt.Fprintf(os.Stderr, "Error reading input: %v\n", err)
-                os.Exit(1)
-            }
-            
-            if int64(address16) < romSize {
-                fOutput.Write([]byte{romData[address16]})
-            }
-        }
-    } else {
-        var address uint32
-        for {
-            err := binary.Read(fInput, binary.LittleEndian, &address)
-            if err == io.EOF {
-                break
-            }
-            if err != nil {
-                fmt.Fprintf(os.Stderr, "Error reading input: %v\n", err)
-                os.Exit(1)
-            }
-            
-            if int64(address) < romSize {
-                fOutput.Write([]byte{romData[address]})
-            }
-        }
-    }
+	strArgs := os.Args
+	if len(strArgs) == 4
+	{
+		ptrRom, err = loadRom(strArgs[1])
+		if err == nil && ptrRom != nil 
+		{
+			blnDecodeOk = decodeFile(ptrRom, strArgs[2], strArgs[3])
+			
+			if blnDecodeOk 
+			{
+				intResult = 0
+			} 
+			else 
+			{
+				fmt.Fprintf(os.Stderr, "Decode failed\n")
+			}
+		} 
+		else 
+		{
+			if err != nil 
+			{
+				fmt.Fprintf(os.Stderr, "Failed to load ROM: %v\n", err)
+			} 
+			else 
+			{
+				fmt.Fprintf(os.Stderr, "Failed to load ROM\n")
+			}
+		}
+	} 
+	else 
+	{
+		fmt.Fprintf(os.Stderr, "Usage: %s <romfile> <encoded> <output>\n", strArgs[0])
+	}
+	
+	os.Exit(intResult)
 }

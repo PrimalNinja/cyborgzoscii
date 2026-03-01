@@ -1,5 +1,5 @@
-// Cyborg ZOSCII Decoder v20250908
-// (c) 2025 Cyborg Unicorn Pty Ltd.
+// Cyborg ZOSCII v20260301
+// (c) 2026 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
 
 // Amiga Version
@@ -9,112 +9,154 @@
 #include <string.h>
 #include <stdint.h>
 
-int main(int intArgC_a, char* parrArgs_a[]) 
-{
-    int intBittage = 16;  // Default to 16-bit for Amiga compatibility
-    int intOffset = 0;
-    
-	printf("ZOSCII Decoder\n");
-	printf("(c) 2025 Cyborg Unicorn Pty Ltd - MIT License\n\n");
+#define ZOSCII_ROM_LOAD_MAX 131072L
 
-    // Parse command-line arguments for bit width
-    if (intArgC_a >= 2 && strcmp(parrArgs_a[1], "-32") == 0) 
-	{
-        intBittage = 32;
-        intOffset = 1;
-    } 
-	else if (intArgC_a >= 2 && strcmp(parrArgs_a[1], "-16") == 0) 
-	{
-        intBittage = 16;
-        intOffset = 1;
-    }
+typedef struct 
+{
+    uint8_t* ptrROMData;
+    long lngROMSize;
+} RomData;
+
+static RomData* loadRom(const char* strFilename_a)
+{
+    RomData* ptrRom = NULL;
+    FILE* ptrROM = NULL;
     
-    // Validate arguments
-    if (intArgC_a != 4 + intOffset) 
-	{
-        fprintf(stderr, "Usage: %s [-16|-32] <romfile> <encodedinput> <outputdatafile>\n", parrArgs_a[0]);
-        return 1;
-    }
-    
-    // Open ROM file
-    FILE* fROM = fopen(parrArgs_a[1 + intOffset], "rb");
-    if (!fROM) 
-	{
-        perror("Error opening ROM file");
-        return 1;
-    }
-    
-    // Get ROM file size
-    fseek(fROM, 0, SEEK_END);
-    long lngROMSize = ftell(fROM);
-    fseek(fROM, 0, SEEK_SET);
-    
-    // Limit ROM size based on bit width
-    long lngMaxSize = (intBittage == 16) ? 65536 : 4294967296L;
-    if (lngROMSize > lngMaxSize) 
-	{
-        lngROMSize = lngMaxSize;
-    }
-    
-    // Allocate memory for ROM data
-    uint8_t* pROMData = malloc(lngROMSize);
-    if (!pROMData) 
-	{
-        fprintf(stderr, "Memory allocation failed for ROM data\n");
-        fclose(fROM);
-        return 1;
-    }
-    
-    fread(pROMData, 1, lngROMSize, fROM);
-    fclose(fROM);
-    
-    // Open encoded input file
-    FILE* fInput = fopen(parrArgs_a[2 + intOffset], "rb");
-    if (!fInput) 
-	{
-        perror("Error opening encoded input file");
-        free(pROMData);
-        return 1;
-    }
-    
-    // Open output file
-    FILE* fOutput = fopen(parrArgs_a[3 + intOffset], "wb");
-    if (!fOutput) 
-	{
-        perror("Error opening output file");
-        free(pROMData);
-        fclose(fInput);
-        return 1;
-    }
-    
-    // Decode input based on bit width
-    if (intBittage == 16) 
-	{
-        uint16_t intAddress;
-        while (fread(&intAddress, sizeof(uint16_t), 1, fInput) == 1) 
-		{
-            if (intAddress < lngROMSize) 
-			{
-                fputc(pROMData[intAddress], fOutput);
+    ptrROM = fopen(strFilename_a, "rb");
+    if (ptrROM != NULL) 
+    {
+        ptrRom = (RomData*)malloc(sizeof(RomData));
+        if (ptrRom != NULL) 
+        {
+            fseek(ptrROM, 0, SEEK_END);
+            ptrRom->lngROMSize = ftell(ptrROM);
+            fseek(ptrROM, 0, SEEK_SET);
+            
+            if (ptrRom->lngROMSize > ZOSCII_ROM_LOAD_MAX) 
+            {
+                ptrRom->lngROMSize = ZOSCII_ROM_LOAD_MAX;
+            }
+            
+            ptrRom->ptrROMData = (uint8_t*)malloc(ptrRom->lngROMSize);
+            if (ptrRom->ptrROMData != NULL) 
+            {
+                fread(ptrRom->ptrROMData, 1, ptrRom->lngROMSize, ptrROM);
+            } 
+            else 
+            {
+                free(ptrRom);
+                ptrRom = NULL;
             }
         }
-    } 
-	else 
-	{
-        uint32_t intAddress;
-        while (fread(&intAddress, sizeof(uint32_t), 1, fInput) == 1) 
-		{
-            if (intAddress < lngROMSize) 
-			{
-                fputc(pROMData[intAddress], fOutput);
-            }
-        }
+        fclose(ptrROM);
     }
     
-    // Clean up
-    fclose(fInput);
-    fclose(fOutput);
-    free(pROMData);
+    return ptrRom;
+}
+
+static void freeRom(RomData* ptrRom_a)
+{
+    if (ptrRom_a != NULL) 
+    {
+        if (ptrRom_a->ptrROMData != NULL) 
+        {
+            free(ptrRom_a->ptrROMData);
+        }
+        free(ptrRom_a);
+    }
+}
+
+static int decodeFile(const RomData* ptrRom_a, const char* strInputFile_a, const char* strOutputFile_a)
+{
+    int intResult = 0;
+    FILE* ptrInput = NULL;
+    FILE* ptrOutput = NULL;
+    uint8_t arrBuf[2];
+    long lngInputSize = 0;
+    long lngSlots = 0;
+    int intI = 0;
     
-    return 0;
+    ptrInput = fopen(strInputFile_a, "rb");
+    if (ptrInput != NULL) 
+    {
+        fseek(ptrInput, 0, SEEK_END);
+        lngInputSize = ftell(ptrInput);
+        fseek(ptrInput, 0, SEEK_SET);
+        
+        lngSlots = lngInputSize / 2;
+        
+        if (lngSlots >= 0) 
+        {
+            ptrOutput = fopen(strOutputFile_a, "wb");
+            if (ptrOutput != NULL) 
+            {
+                // Decode each slot
+                for (intI = 0; intI < (int)lngSlots; intI++) 
+                {
+                    if (fread(arrBuf, 2, 1, ptrInput) != 1) 
+                    {
+                        break;
+                    }
+                    
+                    uint16_t intAddr = (uint16_t)arrBuf[0] | ((uint16_t)arrBuf[1] << 8);
+                    if ((long)intAddr < ptrRom_a->lngROMSize) 
+                    {
+                        if (fputc(ptrRom_a->ptrROMData[(long)intAddr], ptrOutput) == EOF) 
+                        {
+                            break;
+                        }
+                    }
+                }
+                
+                if (intI == (int)lngSlots) 
+                {
+                    intResult = 1;
+                }
+                
+                fclose(ptrOutput);
+            }
+        }
+        fclose(ptrInput);
+    }
+    
+    return intResult;
+}
+
+int main(int intArgC_a, char* strArgv_a[])
+{
+    int intResult = 1;
+    RomData* ptrRom = NULL;
+    int intDecodeOk = 0;
+    
+    printf("ZOSCII Decoder\n");
+    printf("(c) 2026 Cyborg Unicorn Pty Ltd v20260301 - MIT License\n\n");
+
+    if (intArgC_a == 4) 
+    {
+        ptrRom = loadRom(strArgv_a[1]);
+        if (ptrRom != NULL) 
+        {
+            intDecodeOk = decodeFile(ptrRom, strArgv_a[2], strArgv_a[3]);
+            freeRom(ptrRom);
+            
+            if (intDecodeOk != 0) 
+            {
+                intResult = 0;
+            } 
+            else 
+            {
+                fprintf(stderr, "Decode failed\n");
+            }
+        } 
+        else 
+        {
+            perror("Failed to load ROM");
+        }
+    } 
+    else 
+    {
+        fprintf(stderr, "Usage: %s <romfile> <encoded> <output>\n", strArgv_a[0]);
+    }
+    
+    return intResult;
 }

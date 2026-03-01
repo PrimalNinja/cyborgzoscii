@@ -1,81 +1,107 @@
 #!/usr/bin/env python3
-# Cyborg ZOSCII v20250805
-# (c) 2025 Cyborg Unicorn Pty Ltd.
+# Cyborg ZOSCII v20260301
+# (c) 2026 Cyborg Unicorn Pty Ltd.
 # This software is released under MIT License.
 
 import sys
 import struct
+import os
+
+class RomData:
+    def __init__(self):
+        self.ptrROMData = b''
+        self.lngROMSize = 0
+
+ZOSCII_ROM_LOAD_MAX = 131072
+
+def loadRom(strFilename_a):
+    ptrRom = None
+    
+    if os.path.exists(strFilename_a):
+        try:
+            with open(strFilename_a, 'rb') as ptrFile:
+                arrBuf = ptrFile.read(ZOSCII_ROM_LOAD_MAX)
+                if arrBuf:
+                    ptrRom = RomData()
+                    ptrRom.ptrROMData = arrBuf
+                    ptrRom.lngROMSize = len(arrBuf)
+        except IOError:
+            ptrRom = None
+    
+    return ptrRom
+
+def unloadRom(ptrRom_a):
+    # In Python, garbage collector handles this, but method kept for symmetry
+    ptrRom_a.ptrROMData = b''
+    ptrRom_a.lngROMSize = 0
+
+def decodeFile(ptrRom_a, strInputFile_a, strOutputFile_a):
+    blnSuccess = False
+    ptrInput = None
+    ptrOutput = None
+    
+    if os.path.exists(strInputFile_a):
+        try:
+            ptrInput = open(strInputFile_a, 'rb')
+            
+            # Get input file size
+            ptrInput.seek(0, 2)
+            lngInputSize = ptrInput.tell()
+            ptrInput.seek(0, 0)
+            
+            lngSlots = lngInputSize // 2
+            
+            if lngSlots >= 0:
+                ptrOutput = open(strOutputFile_a, 'wb')
+                
+                # Decode each slot
+                for intI in range(lngSlots):
+                    arrBuf = ptrInput.read(2)
+                    if len(arrBuf) != 2:
+                        break
+                    intAddr = struct.unpack('<H', arrBuf)[0]
+                    if intAddr < ptrRom_a.lngROMSize:
+                        ptrOutput.write(bytes([ptrRom_a.ptrROMData[intAddr]]))
+                
+                if lngSlots > 0 and intI == lngSlots - 1:
+                    blnSuccess = True
+                
+                ptrOutput.close()
+            ptrInput.close()
+        except IOError:
+            if ptrOutput:
+                ptrOutput.close()
+            if ptrInput:
+                ptrInput.close()
+    
+    return blnSuccess
 
 def main():
+    intResult = 1
+    ptrRom = None
+    blnDecodeOk = False
+    
     print("ZOSCII Decoder")
-    print("(c) 2025 Cyborg Unicorn Pty Ltd - MIT License\n")
+    print("(c) 2026 Cyborg Unicorn Pty Ltd v20260301 - MIT License\n")
     
-    bittage = 16  # default
-    offset = 0
-    
-    if len(sys.argv) >= 2 and sys.argv[1] == "-32":
-        bittage = 32
-        offset = 1
-    elif len(sys.argv) >= 2 and sys.argv[1] == "-16":
-        bittage = 16
-        offset = 1
-    
-    if len(sys.argv) != 4 + offset:
-        print(f"Usage: {sys.argv[0]} [-16|-32] <romfile> <encodedinput> <outputdatafile>", file=sys.stderr)
-        return 1
-    
-    # Read ROM file
-    try:
-        with open(sys.argv[1 + offset], 'rb') as f:
-            rom_data = f.read()
-    except IOError as e:
-        print(f"Error opening ROM file: {e}", file=sys.stderr)
-        return 1
-    
-    rom_size = len(rom_data)
-    
-    # Check ROM size limit based on bit width
-    max_size = 65536 if bittage == 16 else 4294967296
-    if rom_size > max_size:
-        rom_size = max_size
-        rom_data = rom_data[:rom_size]
-    
-    # Open encoded input file
-    try:
-        f_input = open(sys.argv[2 + offset], 'rb')
-    except IOError as e:
-        print(f"Error opening encoded input file: {e}", file=sys.stderr)
-        return 1
-    
-    # Open output file
-    try:
-        f_output = open(sys.argv[3 + offset], 'wb')
-    except IOError as e:
-        print(f"Error opening output file: {e}", file=sys.stderr)
-        f_input.close()
-        return 1
-    
-    # Decode data
-    if bittage == 16:
-        while True:
-            data = f_input.read(2)
-            if len(data) != 2:
-                break
-            address16 = struct.unpack('<H', data)[0]
-            if address16 < rom_size:
-                f_output.write(bytes([rom_data[address16]]))
+    if len(sys.argv) == 4:
+        ptrRom = loadRom(sys.argv[1])
+        if ptrRom:
+            blnDecodeOk = decodeFile(ptrRom, sys.argv[2], sys.argv[3])
+            
+            if blnDecodeOk:
+                intResult = 0
+                print("Decode successful!")
+            else:
+                print("Decode failed", file=sys.stderr)
+            
+            unloadRom(ptrRom)
+        else:
+            print("Failed to load ROM", file=sys.stderr)
     else:
-        while True:
-            data = f_input.read(4)
-            if len(data) != 4:
-                break
-            address = struct.unpack('<I', data)[0]
-            if address < rom_size:
-                f_output.write(bytes([rom_data[address]]))
+        print(f"Usage: {sys.argv[0]} <romfile> <encoded> <output>", file=sys.stderr)
     
-    f_input.close()
-    f_output.close()
-    return 0
+    sys.exit(intResult)
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

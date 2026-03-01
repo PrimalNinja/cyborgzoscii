@@ -1,5 +1,5 @@
-// Cyborg ZOSCII v20250805
-// (c) 2025 Cyborg Unicorn Pty Ltd.
+// Cyborg ZOSCII v20260301
+// (c) 2026 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
 // Windows & Linux Version
 
@@ -8,95 +8,181 @@ use std::fs::File;
 use std::io::{Read, Write, BufReader, BufWriter};
 use std::process;
 
-fn main() {
+const ZOSCII_ROM_LOAD_MAX: usize = 131072;
+
+struct RomData 
+{
+    ptrROMData: Vec<u8>,
+    lngROMSize: usize,
+}
+
+fn load_rom(strFilename_a: &str) -> Result<RomData, String> 
+{
+    let ptrRom: RomData;
+    let mut ptrFile: File;
+    let mut arrBuf: Vec<u8> = vec![0u8; ZOSCII_ROM_LOAD_MAX];
+    let lngRead: usize;
+    
+    match File::open(strFilename_a) 
+    {
+        Ok(f) => 
+        {
+            ptrFile = f;
+        }
+        Err(e) => 
+        {
+            return Err(format!("Failed to open ROM file: {}", e));
+        }
+    }
+    
+    match ptrFile.read(&mut arrBuf) 
+    {
+        Ok(n) => 
+        {
+            lngRead = n;
+        }
+        Err(e) => 
+        {
+            return Err(format!("Failed to read ROM file: {}", e));
+        }
+    }
+    
+    arrBuf.truncate(lngRead);
+    ptrRom = RomData 
+    {
+        ptrROMData: arrBuf,
+        lngROMSize: lngRead,
+    };
+    
+    return Ok(ptrRom);
+}
+
+fn decode_file(ptrRom_a: &RomData, strInputFile_a: &str, strOutputFile_a: &str) -> bool 
+{
+    let mut blnSuccess: bool = false;
+    let mut ptrInput: BufReader<File>;
+    let mut ptrOutput: BufWriter<File>;
+    let lngInputSize: usize;
+    let mut arrBuf: [u8; 2] = [0u8; 2];
+    
+    // Open input file
+    match File::open(strInputFile_a) 
+    {
+        Ok(f) => 
+        {
+            ptrInput = BufReader::new(f);
+        }
+        Err(_) => 
+        {
+            return false;
+        }
+    }
+    
+    // Get input file size
+    match ptrInput.get_ref().metadata() 
+    {
+        Ok(meta) => 
+        {
+            lngInputSize = meta.len() as usize;
+        }
+        Err(_) => 
+        {
+            return false;
+        }
+    }
+    
+    let lngSlots: usize = lngInputSize / 2;
+    
+    if lngSlots > 0 
+    {
+        // Open output file
+        match File::create(strOutputFile_a) 
+        {
+            Ok(f) => 
+            {
+                ptrOutput = BufWriter::new(f);
+                
+                // Decode each slot
+                for intI in 0..lngSlots 
+                {
+                    match ptrInput.read_exact(&mut arrBuf) 
+                    {
+                        Ok(_) => 
+                        {
+                            let intAddr: usize = u16::from_le_bytes(arrBuf) as usize;
+                            if intAddr < ptrRom_a.lngROMSize 
+                            {
+                                match ptrOutput.write_all(&[ptrRom_a.ptrROMData[intAddr]]) 
+                                {
+                                    Ok(_) => {}
+                                    Err(_) => 
+                                    {
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        Err(_) => 
+                        {
+                            break;
+                        }
+                    }
+                    
+                    if intI == lngSlots - 1 
+                    {
+                        blnSuccess = true;
+                    }
+                }
+            }
+            Err(_) => {}
+        }
+    }
+    
+    return blnSuccess;
+}
+
+fn main() 
+{
+    let intResult: i32;
+    let ptrRom: RomData;
+    let blnDecodeOk: bool;
+    
     println!("ZOSCII Decoder");
-    println!("(c) 2025 Cyborg Unicorn Pty Ltd - MIT License\n");
+    println!("(c) 2026 Cyborg Unicorn Pty Ltd v20260301 - MIT License\n");
 
-    let args: Vec<String> = env::args().collect();
+    let strArgs: Vec<String> = env::args().collect();
     
-    let mut bittage = 16; // default
-    let mut offset = 0;
-
-    if args.len() >= 2 && args[1] == "-32" {
-        bittage = 32;
-        offset = 1;
-    } else if args.len() >= 2 && args[1] == "-16" {
-        bittage = 16;
-        offset = 1;
-    }
-
-    if args.len() != 4 + offset {
-        eprintln!("Usage: {} [-16|-32] <romfile> <encodedinput> <outputdatafile>", args[0]);
-        process::exit(1);
-    }
-
-    // Read ROM file
-    let mut rom_data = std::fs::read(&args[1 + offset])
-        .unwrap_or_else(|err| {
-            eprintln!("Error opening ROM file: {}", err);
-            process::exit(1);
-        });
-
-    let max_size: usize = if bittage == 16 { 65536 } else { 4294967296 };
-    
-    if rom_data.len() > max_size {
-        rom_data.truncate(max_size);
-    }
-
-    let rom_size = rom_data.len();
-
-    // Open encoded input file
-    let input_file = File::open(&args[2 + offset])
-        .unwrap_or_else(|err| {
-            eprintln!("Error opening encoded input file: {}", err);
-            process::exit(1);
-        });
-    
-    let mut reader = BufReader::new(input_file);
-
-    // Create output file
-    let output_file = File::create(&args[3 + offset])
-        .unwrap_or_else(|err| {
-            eprintln!("Error opening output file: {}", err);
-            process::exit(1);
-        });
-
-    let mut writer = BufWriter::new(output_file);
-
-    // Decode data
-    if bittage == 16 {
-        let mut buffer = [0u8; 2];
-        loop {
-            match reader.read_exact(&mut buffer) {
-                Ok(_) => {
-                    let address = u16::from_le_bytes(buffer) as usize;
-                    if address < rom_size {
-                        writer.write_all(&[rom_data[address]]).unwrap();
-                    }
-                }
-                Err(ref e) if e.kind() == std::io::ErrorKind::UnexpectedEof => break,
-                Err(e) => {
-                    eprintln!("Error reading input: {}", e);
-                    process::exit(1);
+    if strArgs.len() == 4
+    {
+        match load_rom(&strArgs[1]) 
+        {
+            Ok(rom) => 
+            {
+                ptrRom = rom;
+                blnDecodeOk = decode_file(&ptrRom, &strArgs[2], &strArgs[3]);
+                
+                if blnDecodeOk 
+                {
+                    intResult = 0;
+                } 
+                else 
+                {
+                    eprintln!("Decode failed");
+                    intResult = 1;
                 }
             }
-        }
-    } else {
-        let mut buffer = [0u8; 4];
-        loop {
-            match reader.read_exact(&mut buffer) {
-                Ok(_) => {
-                    let address = u32::from_le_bytes(buffer) as usize;
-                    if address < rom_size {
-                        writer.write_all(&[rom_data[address]]).unwrap();
-                    }
-                }
-                Err(ref e) if e.kind() == std::io::ErrorKind::UnexpectedEof => break,
-                Err(e) => {
-                    eprintln!("Error reading input: {}", e);
-                    process::exit(1);
-                }
+            Err(e) => 
+            {
+                eprintln!("Failed to load ROM: {}", e);
+                intResult = 1;
             }
         }
+    } 
+    else 
+    {
+        eprintln!("Usage: {} <romfile> <encoded> <output>", strArgs[0]);
+        intResult = 1;
     }
+    
+    process::exit(intResult);
 }

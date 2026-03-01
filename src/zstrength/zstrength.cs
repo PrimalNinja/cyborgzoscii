@@ -1,14 +1,28 @@
-// Cyborg ZOSCII v20250908
-// (c) 2025 Cyborg Unicorn Pty Ltd.
+// Cyborg ZOSCII v20260301
+// (c) 2026 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
 
 using System;
 using System.IO;
-using System.Runtime.InteropServices;
+
+class ByteAddresses
+{
+    public uint[] ptrAddresses;
+    public uint intCount;
+}
+
+class RomData
+{
+    public byte[] ptrROMData;
+    public long lngROMSize;
+    public uint[] arrROMCounts;
+}
 
 class Program
 {
-    static void PrintLargeNumber(double dblExponent_a)
+    private const int ZOSCII_ROM_LOAD_MAX = 131072;
+
+    private static void PrintLargeNumber(double dblExponent_a)
     {
         if (dblExponent_a < 3)
         {
@@ -44,138 +58,173 @@ class Program
         }
     }
 
-    static void Main(string[] arrArgs_a)
+    private static RomData LoadRom(string strFilename_a)
     {
-        int intBittage = 16; // default
-        int intOffset = 0;
-
-		Console.Write("ZOSCII ROM Strength Analyzer");
-		Console.Write("(c) 2025 Cyborg Unicorn Pty Ltd - MIT License");
-
-        if (arrArgs_a.Length >= 1 && arrArgs_a[0] == "-32")
-        {
-            intBittage = 32;
-            intOffset = 1;
-        }
-        else if (arrArgs_a.Length >= 1 && arrArgs_a[0] == "-16")
-        {
-            intBittage = 16;
-            intOffset = 1;
-        }
-
-        if (arrArgs_a.Length != 2 + intOffset)
-        {
-            Console.Error.WriteLine($"Usage: {AppDomain.CurrentDomain.FriendlyName} [-16|-32] <romfile> <inputdatafile>");
-            Environment.Exit(1);
-        }
-
-        // Read ROM file
-        byte[] pROMData;
+        RomData ptrRom = null;
+        
         try
         {
-            pROMData = File.ReadAllBytes(arrArgs_a[0 + intOffset]);
+            using (FileStream ptrStream = new FileStream(strFilename_a, FileMode.Open, FileAccess.Read))
+            {
+                long lngLoad = Math.Min(ptrStream.Length, ZOSCII_ROM_LOAD_MAX);
+                
+                ptrRom = new RomData();
+                ptrRom.lngROMSize = lngLoad;
+                ptrRom.ptrROMData = new byte[lngLoad];
+                ptrRom.arrROMCounts = new uint[256];
+                
+                ptrStream.Read(ptrRom.ptrROMData, 0, (int)lngLoad);
+                
+                // Count ROM byte occurrences
+                for (long lngI = 0; lngI < ptrRom.lngROMSize; lngI++)
+                {
+                    ptrRom.arrROMCounts[ptrRom.ptrROMData[lngI]]++;
+                }
+            }
         }
-        catch (Exception ex)
+        catch
         {
-            Console.Error.WriteLine($"Error opening ROM file: {ex.Message}");
-            Environment.Exit(1);
+            ptrRom = null;
         }
+        
+        return ptrRom;
+    }
 
-        long lngROMSize = pROMData.Length;
-        long lngMaxSize = intBittage == 16 ? 65536 : 4294967296L;
-        if (lngROMSize > lngMaxSize)
-        {
-            Array.Resize(ref pROMData, (int)lngMaxSize);
-            lngROMSize = lngMaxSize;
-        }
+    private static void UnloadRom(RomData ptrRom_a)
+    {
+        // In C#, garbage collector handles this, but method kept for symmetry
+        ptrRom_a.ptrROMData = null;
+        ptrRom_a.arrROMCounts = null;
+        ptrRom_a.lngROMSize = 0;
+    }
 
-        // Count ROM byte occurrences
-        uint[] arrROMCounts = new uint[256];
+    private static bool AnalyzeFile(RomData ptrRom_a, string strInputFile_a)
+    {
+        bool blnSuccess = false;
         uint[] arrInputCounts = new uint[256];
-
-        for (long lngI = 0; lngI < lngROMSize; lngI++)
-        {
-            arrROMCounts[pROMData[lngI]]++;
-        }
-
-        // Count input character occurrences
         int intInputLength = 0;
         int intCharsUsed = 0;
-
+        double dblGeneralStrength = 0.0;
+        double dblFileStrength = 0.0;
+        double dblUtilisation = 0.0;
+        
         try
         {
-            using (FileStream fInput = new FileStream(arrArgs_a[1 + intOffset], FileMode.Open, FileAccess.Read))
+            using (FileStream ptrInput = new FileStream(strInputFile_a, FileMode.Open, FileAccess.Read))
             {
-                int ch;
-                while ((ch = fInput.ReadByte()) != -1)
+                // Count input character occurrences
+                int intCh;
+                while ((intCh = ptrInput.ReadByte()) != -1)
                 {
-                    byte by = (byte)ch;
+                    byte by = (byte)intCh;
                     arrInputCounts[by]++;
                     intInputLength++;
                 }
             }
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"Error opening input file: {ex.Message}");
-            Environment.Exit(1);
-        }
-
-        // Count characters utilized
-        for (int intI = 0; intI < 256; intI++)
-        {
-            if (arrInputCounts[intI] > 0)
+            
+            // Count characters utilized
+            for (int intI = 0; intI < 256; intI++)
             {
-                intCharsUsed++;
+                if (arrInputCounts[intI] > 0)
+                {
+                    intCharsUsed++;
+                }
             }
+            
+            // Calculate ROM strength metrics
+            for (int intI = 0; intI < 256; intI++)
+            {
+                if (ptrRom_a.arrROMCounts[intI] > 0)
+                {
+                    dblGeneralStrength += Math.Log10(ptrRom_a.arrROMCounts[intI]);
+                }
+                if (arrInputCounts[intI] > 0 && ptrRom_a.arrROMCounts[intI] > 0)
+                {
+                    dblFileStrength += arrInputCounts[intI] * Math.Log10(ptrRom_a.arrROMCounts[intI]);
+                }
+            }
+            
+            dblUtilisation = (intCharsUsed / 256.0) * 100.0;
+            
+            Console.WriteLine("ROM Strength Analysis");
+            Console.WriteLine("=====================");
+            Console.WriteLine();
+            
+            Console.WriteLine("Input Information:");
+            Console.WriteLine($"- Text Length: {intInputLength} characters");
+            Console.WriteLine($"- Characters Utilized: {intCharsUsed} of 256 ({dblUtilisation:F1}%)");
+            Console.WriteLine();
+            
+            Console.Write($"General ROM Capacity: ~10^{dblGeneralStrength:F0} (");
+            PrintLargeNumber(dblGeneralStrength);
+            Console.WriteLine(")");
+            
+            Console.Write($"This File Security: ~10^{dblFileStrength:F0} (");
+            PrintLargeNumber(dblFileStrength);
+            Console.WriteLine(")");
+            Console.WriteLine();
+            
+            Console.WriteLine("Byte Analysis:");
+            Console.WriteLine("Byte  Dec  ROM Count  Input Count  Char");
+            Console.WriteLine("----  ---  ---------  -----------  ----");
+            
+            for (int intI = 0; intI < 256; intI++)
+            {
+                if (ptrRom_a.arrROMCounts[intI] > 0 || arrInputCounts[intI] > 0)
+                {
+                    char chDisplay = (intI >= 32 && intI <= 126) ? (char)intI : ' ';
+                    Console.WriteLine($"0x{intI:X2}  {intI,3}  {ptrRom_a.arrROMCounts[intI],9}  {arrInputCounts[intI],11}    {chDisplay}");
+                }
+            }
+            
+            blnSuccess = true;
         }
-
-        // Calculate ROM strength metrics
-        double dblGeneralStrength = 0.0;
-        double dblFileStrength = 0.0;
-
-        for (int intI = 0; intI < 256; intI++)
+        catch
         {
-            if (arrROMCounts[intI] > 0)
-            {
-                dblGeneralStrength += Math.Log10(arrROMCounts[intI]);
-            }
-            if (arrInputCounts[intI] > 0 && arrROMCounts[intI] > 0)
-            {
-                dblFileStrength += arrInputCounts[intI] * Math.Log10(arrROMCounts[intI]);
-            }
+            blnSuccess = false;
         }
+        
+        return blnSuccess;
+    }
 
-        double utilization = (intCharsUsed / 256.0) * 100.0;
-
-        Console.WriteLine($"ROM Strength Analysis ({intBittage}-bit)");
-        Console.WriteLine("===============================");
+    static void Main(string[] strArgs_a)
+    {
+        int intResult = 1;
+        RomData ptrRom = null;
+        bool blnAnalyzeOk = false;
+        
+        Console.WriteLine("ZOSCII ROM Strength Analyzer");
+        Console.WriteLine("(c) 2026 Cyborg Unicorn Pty Ltd v20260301 - MIT License");
         Console.WriteLine();
-        Console.WriteLine("Input Information:");
-        Console.WriteLine($"- Text Length: {intInputLength} characters");
-        Console.WriteLine($"- Characters Utilized: {intCharsUsed} of 256 ({utilization:F1}%)");
-        Console.WriteLine();
 
-        Console.Write($"General ROM Capacity: ~10^{dblGeneralStrength:F0} (");
-        PrintLargeNumber(dblGeneralStrength);
-        Console.WriteLine(")");
-
-        Console.Write($"This File Security: ~10^{dblFileStrength:F0} (");
-        PrintLargeNumber(dblFileStrength);
-        Console.WriteLine(")");
-        Console.WriteLine();
-
-        Console.WriteLine("Byte Analysis:");
-        Console.WriteLine("Byte  Dec  ROM Count  Input Count  Char");
-        Console.WriteLine("----  ---  ---------  -----------  ----");
-
-        for (int intI = 0; intI < 256; intI++)
+        if (strArgs_a.Length == 2)
         {
-            if (arrROMCounts[intI] > 0 || arrInputCounts[intI] > 0)
+            ptrRom = LoadRom(strArgs_a[0]);
+            if (ptrRom != null)
             {
-                char chDisplay = (intI >= 32 && intI <= 126) ? (char)intI : ' ';
-                Console.WriteLine($"0x{intI:X2}  {intI,3}  {arrROMCounts[intI],9}  {arrInputCounts[intI],11}    {chDisplay}");
+                blnAnalyzeOk = AnalyzeFile(ptrRom, strArgs_a[1]);
+                
+                if (blnAnalyzeOk)
+                {
+                    intResult = 0;
+                }
+                else
+                {
+                    Console.Error.WriteLine("Analysis failed");
+                }
+                
+                UnloadRom(ptrRom);
+            }
+            else
+            {
+                Console.Error.WriteLine("Failed to load ROM");
             }
         }
+        else
+        {
+            Console.Error.WriteLine($"Usage: {AppDomain.CurrentDomain.FriendlyName} <romfile> <inputdatafile>");
+        }
+        
+        Environment.Exit(intResult);
     }
 }

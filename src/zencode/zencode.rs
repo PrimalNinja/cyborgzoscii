@@ -1,109 +1,241 @@
-// Cyborg ZOSCII v20250805
-// (c) 2025 Cyborg Unicorn Pty Ltd.
+// Cyborg ZOSCII v20260301
+// (c) 2026 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
 // Windows & Linux Version
 
 use std::env;
 use std::fs::File;
-use std::io::{Read, Write, BufWriter};
+use std::io::{Read, Write, BufReader, BufWriter};
 use std::process;
 use rand::Rng;
 
-struct ByteAddresses {
-    addresses: Vec<u32>,
-    count: u32,
+struct ByteAddresses 
+{
+    ptrAddresses: Vec<u16>,
+    intCount: u32,
 }
 
-fn main() {
-    println!("ZOSCII Encoder");
-    println!("(c) 2025 Cyborg Unicorn Pty Ltd - MIT License\n");
+const ZOSCII_ROM_LOAD_MAX: usize = 131072;
 
-    let args: Vec<String> = env::args().collect();
+struct RomData 
+{
+    ptrROMData: Vec<u8>,
+    lngROMSize: usize,
+    arrLookup: [ByteAddresses; 256],
+}
+
+fn build_lookup_table(ptrRom_a: &mut RomData) 
+{
+    let mut arrCounts: [u32; 256] = [0; 256];
+    let mut lngROMSize: usize;
+    let mut lngI: usize = 0;
+    let mut intI: usize = 0;
     
-    let mut bittage = 16; // default
-    let mut offset = 0;
-
-    if args.len() >= 2 && args[1] == "-32" {
-        bittage = 32;
-        offset = 1;
-    } else if args.len() >= 2 && args[1] == "-16" {
-        bittage = 16;
-        offset = 1;
+    // Initialize lookup array
+    for intI in 0..256 
+    {
+        ptrRom_a.arrLookup[intI].ptrAddresses = Vec::new();
+        ptrRom_a.arrLookup[intI].intCount = 0;
     }
-
-    if args.len() != 4 + offset {
-        eprintln!("Usage: {} [-16|-32] <romfile> <inputdatafile> <encodedoutput>", args[0]);
-        process::exit(1);
-    }
-
-    // Read ROM file
-    let mut rom_data = std::fs::read(&args[1 + offset])
-        .unwrap_or_else(|err| {
-            eprintln!("Error opening ROM file: {}", err);
-            process::exit(1);
-        });
-
-    let max_size: usize = if bittage == 16 { 65536 } else { 4294967296 };
     
-    if rom_data.len() > max_size {
-        rom_data.truncate(max_size);
+    // ROM addresses are 16-bit, so only use first 64KB
+    lngROMSize = ptrRom_a.lngROMSize;
+    if lngROMSize > 65536 
+    {
+        lngROMSize = 65536;
     }
-
-    let rom_size = rom_data.len();
-
-    // Build address lookup tables
-    let mut lookup: [ByteAddresses; 256] = std::array::from_fn(|_| ByteAddresses {
-        addresses: Vec::new(),
-        count: 0,
-    });
-
-    let mut rom_counts = [0u32; 256];
-
+    
     // Count occurrences
-    for &byte in &rom_data {
-        rom_counts[byte as usize] += 1;
+    for lngI in 0..lngROMSize 
+    {
+        arrCounts[ptrRom_a.ptrROMData[lngI] as usize] += 1;
     }
-
-    // Allocate address arrays
-    for i in 0..256 {
-        lookup[i].addresses = Vec::with_capacity(rom_counts[i] as usize);
-    }
-
-    // Populate address arrays
-    for (i, &byte) in rom_data.iter().enumerate() {
-        lookup[byte as usize].addresses.push(i as u32);
-        lookup[byte as usize].count += 1;
-    }
-
-    // Read input file
-    let input_data = std::fs::read(&args[2 + offset])
-        .unwrap_or_else(|err| {
-            eprintln!("Error opening input file: {}", err);
-            process::exit(1);
-        });
-
-    // Create output file
-    let output_file = File::create(&args[3 + offset])
-        .unwrap_or_else(|err| {
-            eprintln!("Error opening output file: {}", err);
-            process::exit(1);
-        });
-
-    let mut writer = BufWriter::new(output_file);
-    let mut rng = rand::thread_rng();
-
-    // Encode data
-    for &byte in &input_data {
-        if lookup[byte as usize].count > 0 {
-            let random_idx = rng.gen_range(0..lookup[byte as usize].count) as usize;
-            let address = lookup[byte as usize].addresses[random_idx];
-
-            if bittage == 16 {
-                let address16 = address as u16;
-                writer.write_all(&address16.to_le_bytes()).unwrap();
-            } else {
-                writer.write_all(&address.to_le_bytes()).unwrap();
-            }
+    
+    // Allocate memory for each byte value
+    for intI in 0..256 
+    {
+        if arrCounts[intI] > 0 
+        {
+            ptrRom_a.arrLookup[intI].ptrAddresses = Vec::with_capacity(arrCounts[intI] as usize);
+            ptrRom_a.arrLookup[intI].intCount = 0;
         }
     }
+    
+    // Fill addresses
+    for lngI in 0..lngROMSize 
+    {
+        let by: u8 = ptrRom_a.ptrROMData[lngI];
+        ptrRom_a.arrLookup[by as usize].ptrAddresses.push(lngI as u16);
+        ptrRom_a.arrLookup[by as usize].intCount += 1;
+    }
+}
+
+fn load_rom(strFilename_a: &str) -> Result<RomData, String> 
+{
+    let mut ptrRom: RomData;
+    let mut ptrFile: File;
+    let mut arrBuf: Vec<u8> = vec![0u8; ZOSCII_ROM_LOAD_MAX];
+    let lngRead: usize;
+    
+    match File::open(strFilename_a) 
+    {
+        Ok(f) => 
+        {
+            ptrFile = f;
+        }
+        Err(e) => 
+        {
+            return Err(format!("Failed to open ROM file: {}", e));
+        }
+    }
+    
+    match ptrFile.read(&mut arrBuf) 
+    {
+        Ok(n) => 
+        {
+            lngRead = n;
+        }
+        Err(e) => 
+        {
+            return Err(format!("Failed to read ROM file: {}", e));
+        }
+    }
+    
+    arrBuf.truncate(lngRead);
+    ptrRom = RomData 
+    {
+        ptrROMData: arrBuf,
+        lngROMSize: lngRead,
+        arrLookup: std::array::from_fn(|_| ByteAddresses 
+        { 
+            ptrAddresses: Vec::new(), 
+            intCount: 0 
+        }),
+    };
+    
+    // Pre-build lookup table for reuse across multiple encodes
+    build_lookup_table(&mut ptrRom);
+    
+    return Ok(ptrRom);
+}
+
+fn unload_rom(ptrRom_a: &mut RomData) 
+{
+    // In Rust, memory is freed when variables go out of scope,
+    // but method kept for symmetry
+    ptrRom_a.ptrROMData.clear();
+    ptrRom_a.lngROMSize = 0;
+    for intI in 0..256 
+    {
+        ptrRom_a.arrLookup[intI].ptrAddresses.clear();
+        ptrRom_a.arrLookup[intI].intCount = 0;
+    }
+}
+
+fn encode_file(ptrRom_a: &RomData, strInputFile_a: &str, strOutputFile_a: &str) -> bool 
+{
+    let mut blnSuccess: bool = false;
+    let mut ptrRand: rand::rngs::ThreadRng;
+    let mut ptrInput: BufReader<File>;
+    let mut ptrOutput: BufWriter<File>;
+    let mut arrBuf: [u8; 1] = [0u8; 1];
+    
+    ptrRand = rand::thread_rng();
+    
+    match File::open(strInputFile_a) 
+    {
+        Ok(f) => 
+        {
+            ptrInput = BufReader::new(f);
+            
+            match File::create(strOutputFile_a) 
+            {
+                Ok(f) => 
+                {
+                    ptrOutput = BufWriter::new(f);
+                    
+                    // Stream-encode input
+                    loop 
+                    {
+                        match ptrInput.read_exact(&mut arrBuf) 
+                        {
+                            Ok(_) => 
+                            {
+                                let by: u8 = arrBuf[0];
+                                if ptrRom_a.arrLookup[by as usize].intCount > 0 
+                                {
+                                    let intIdx: usize = ptrRand.gen_range(
+                                        0..ptrRom_a.arrLookup[by as usize].intCount
+                                    ) as usize;
+                                    let intAddress: u16 = ptrRom_a.arrLookup[by as usize].ptrAddresses[intIdx];
+                                    
+                                    if ptrOutput.write_all(&intAddress.to_le_bytes()).is_err() 
+                                    {
+                                        break;
+                                    }
+                                }
+                            }
+                            Err(ref e) if e.kind() == std::io::ErrorKind::UnexpectedEof => 
+                            {
+                                blnSuccess = true;
+                                break;
+                            }
+                            Err(_) => 
+                            {
+                                break;
+                            }
+                        }
+                    }
+                }
+                Err(_) => {}
+            }
+        }
+        Err(_) => {}
+    }
+    
+    return blnSuccess;
+}
+
+fn main() 
+{
+    let mut intResult: i32 = 1;
+    let mut ptrRom: RomData;
+    let strArgs: Vec<String> = env::args().collect();
+    let blnEncodeOk: bool;
+    
+    println!("ZOSCII Encoder");
+    println!("(c) 2026 Cyborg Unicorn Pty Ltd v20260301 - MIT License\n");
+
+    if strArgs.len() == 4
+    {
+        match load_rom(&strArgs[1]) 
+        {
+            Ok(rom) => 
+            {
+                ptrRom = rom;
+                blnEncodeOk = encode_file(&ptrRom, &strArgs[2], &strArgs[3]);
+                
+                if blnEncodeOk 
+                {
+                    intResult = 0;
+                } 
+                else 
+                {
+                    eprintln!("Encode failed");
+                }
+                
+                unload_rom(&mut ptrRom);
+            }
+            Err(e) => 
+            {
+                eprintln!("Failed to load ROM: {}", e);
+            }
+        }
+    } 
+    else 
+    {
+        eprintln!("Usage: {} <romfile> <inputdatafile> <encodedoutput>", strArgs[0]);
+    }
+    
+    process::exit(intResult);
 }
