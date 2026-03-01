@@ -26,6 +26,7 @@ typedef struct
     uint8_t* ptrROMData;
     long lngROMSize;
     uint32_t arrROMCounts[256];
+    uint32_t arrROMCountsHigh[256];
 } RomData;
 
 #define ZOSCII_ROM_LOAD_MAX 131072L
@@ -94,10 +95,17 @@ static RomData* loadRom(const char* strFilename_a)
             {
                 fread(ptrRom->ptrROMData, 1, ptrRom->lngROMSize, ptrROM);
                 
-                // Count ROM byte occurrences
-                for (long lngI = 0; lngI < ptrRom->lngROMSize; lngI++)
+                // Count ROM byte occurrences - first 64KB (encoding range)
+                long lngLowSize = (ptrRom->lngROMSize > 65536L) ? 65536L : ptrRom->lngROMSize;
+                for (long lngI = 0; lngI < lngLowSize; lngI++)
                 {
                     ptrRom->arrROMCounts[ptrRom->ptrROMData[lngI]]++;
+                }
+                
+                // Count ROM byte occurrences - second 64KB (if present)
+                for (long lngI = 65536L; lngI < ptrRom->lngROMSize; lngI++)
+                {
+                    ptrRom->arrROMCountsHigh[ptrRom->ptrROMData[lngI]]++;
                 }
             }
             else
@@ -195,16 +203,16 @@ static bool analyzeFile(const RomData* ptrRom_a, const char* strInputFile_a)
         printf(")\n\n");
         
         printf("Byte Analysis:\n");
-        printf("Byte  Dec  ROM Count  Input Count  Char\n");
-        printf("----  ---  ---------  -----------  ----\n");
+        printf("Byte  Dec  ROM Lo 64K  ROM Hi 64K  Input Count  Char\n");
+        printf("----  ---  ----------  ----------  -----------  ----\n");
         
         for (int intI = 0; intI < 256; intI++)
         {
-            if (ptrRom_a->arrROMCounts[intI] > 0 || arrInputCounts[intI] > 0)
+            if (ptrRom_a->arrROMCounts[intI] > 0 || ptrRom_a->arrROMCountsHigh[intI] > 0 || arrInputCounts[intI] > 0)
             {
                 char chDisplay = (intI >= 32 && intI <= 126) ? (char)intI : ' ';
-                printf("0x%02X  %3d  %9u  %11u    %c\n", 
-                       intI, intI, ptrRom_a->arrROMCounts[intI], arrInputCounts[intI], chDisplay);
+                printf("0x%02X  %3d  %10u  %10u  %11u    %c\n", 
+                       intI, intI, ptrRom_a->arrROMCounts[intI], ptrRom_a->arrROMCountsHigh[intI], arrInputCounts[intI], chDisplay);
             }
         }
         

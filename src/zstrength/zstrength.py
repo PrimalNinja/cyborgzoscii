@@ -17,6 +17,7 @@ class RomData:
         self.ptrROMData = b''
         self.lngROMSize = 0
         self.arrROMCounts = [0] * 256
+        self.arrROMCountsHigh = [0] * 256
 
 ZOSCII_ROM_LOAD_MAX = 131072
 
@@ -50,9 +51,14 @@ def loadRom(strFilename_a):
                     ptrRom.ptrROMData = arrBuf
                     ptrRom.lngROMSize = len(arrBuf)
                     
-                    # Count ROM byte occurrences
-                    for lngI in range(ptrRom.lngROMSize):
+                    # Count ROM byte occurrences - first 64KB (encoding range)
+                    lngLowSize = min(ptrRom.lngROMSize, 65536)
+                    for lngI in range(lngLowSize):
                         ptrRom.arrROMCounts[ptrRom.ptrROMData[lngI]] += 1
+                    
+                    # Count ROM byte occurrences - second 64KB (if present)
+                    for lngI in range(65536, ptrRom.lngROMSize):
+                        ptrRom.arrROMCountsHigh[ptrRom.ptrROMData[lngI]] += 1
         except IOError:
             ptrRom = None
     
@@ -63,6 +69,7 @@ def unloadRom(ptrRom_a):
     ptrRom_a.ptrROMData = b''
     ptrRom_a.lngROMSize = 0
     ptrRom_a.arrROMCounts = [0] * 256
+    ptrRom_a.arrROMCountsHigh = [0] * 256
 
 def analyzeFile(ptrRom_a, strInputFile_a):
     blnSuccess = False
@@ -117,13 +124,13 @@ def analyzeFile(ptrRom_a, strInputFile_a):
             print()
             
             print("Byte Analysis:")
-            print("Byte  Dec  ROM Count  Input Count  Char")
-            print("----  ---  ---------  -----------  ----")
+            print("Byte  Dec  ROM Lo 64K  ROM Hi 64K  Input Count  Char")
+            print("----  ---  ----------  ----------  -----------  ----")
             
             for intI in range(256):
-                if ptrRom_a.arrROMCounts[intI] > 0 or arrInputCounts[intI] > 0:
+                if ptrRom_a.arrROMCounts[intI] > 0 or ptrRom_a.arrROMCountsHigh[intI] > 0 or arrInputCounts[intI] > 0:
                     chDisplay = chr(intI) if 32 <= intI <= 126 else ' '
-                    print(f"0x{intI:02X}  {intI:3d}  {ptrRom_a.arrROMCounts[intI]:9d}  {arrInputCounts[intI]:11d}    {chDisplay}")
+                    print(f"0x{intI:02X}  {intI:3d}  {ptrRom_a.arrROMCounts[intI]:10d}  {ptrRom_a.arrROMCountsHigh[intI]:10d}  {arrInputCounts[intI]:11d}    {chDisplay}")
             
             blnSuccess = True
         except IOError:

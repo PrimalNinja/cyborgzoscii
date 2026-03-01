@@ -16,6 +16,7 @@ struct RomData {
     ptrROMData: Vec<u8>,
     lngROMSize: usize,
     arrROMCounts: [u32; 256],
+    arrROMCountsHigh: [u32; 256],
 }
 
 const ZOSCII_ROM_LOAD_MAX: usize = 131072;
@@ -53,16 +54,24 @@ fn load_rom(strFilename_a: &str) -> Result<RomData, String> {
             };
             
             let mut arrCounts = [0u32; 256];
+            let mut arrCountsHigh = [0u32; 256];
             
-            // Count ROM byte occurrences
-            for i in 0..lngLoad {
+            // Count ROM byte occurrences - first 64KB (encoding range)
+            let lngLowLoad = if lngLoad > 65536 { 65536 } else { lngLoad };
+            for i in 0..lngLowLoad {
                 arrCounts[arrBuf[i] as usize] += 1;
+            }
+            
+            // Count ROM byte occurrences - second 64KB (if present)
+            for i in 65536..lngLoad {
+                arrCountsHigh[arrBuf[i] as usize] += 1;
             }
             
             ptrRom = RomData {
                 ptrROMData: arrBuf[..lngLoad].to_vec(),
                 lngROMSize: lngLoad,
                 arrROMCounts: arrCounts,
+                arrROMCountsHigh: arrCountsHigh,
             };
             
             Ok(ptrRom)
@@ -80,6 +89,7 @@ fn unload_rom(ptrRom_a: &mut RomData) {
     ptrRom_a.lngROMSize = 0;
     for i in 0..256 {
         ptrRom_a.arrROMCounts[i] = 0;
+        ptrRom_a.arrROMCountsHigh[i] = 0;
     }
 }
 
@@ -139,18 +149,18 @@ fn analyze_file(ptrRom_a: &RomData, strInputFile_a: &str) -> bool {
             println!();
             
             println!("Byte Analysis:");
-            println!("Byte  Dec  ROM Count  Input Count  Char");
-            println!("----  ---  ---------  -----------  ----");
+            println!("Byte  Dec  ROM Lo 64K  ROM Hi 64K  Input Count  Char");
+            println!("----  ---  ----------  ----------  -----------  ----");
             
             for i in 0..256 {
-                if ptrRom_a.arrROMCounts[i] > 0 || arrInputCounts[i] > 0 {
+                if ptrRom_a.arrROMCounts[i] > 0 || ptrRom_a.arrROMCountsHigh[i] > 0 || arrInputCounts[i] > 0 {
                     let display = if i >= 32 && i <= 126 {
                         i as u8 as char
                     } else {
                         ' '
                     };
-                    println!("0x{:02X}  {:3}  {:9}  {:11}    {}",
-                        i, i, ptrRom_a.arrROMCounts[i], arrInputCounts[i], display);
+                    println!("0x{:02X}  {:3}  {:10}  {:10}  {:11}    {}",
+                        i, i, ptrRom_a.arrROMCounts[i], ptrRom_a.arrROMCountsHigh[i], arrInputCounts[i], display);
                 }
             }
             

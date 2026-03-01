@@ -14,10 +14,12 @@ class RomData
     public $ptrROMData = '';
     public $lngROMSize = 0;
     public $arrROMCounts = array();
+    public $arrROMCountsHigh = array();
     
     public function __construct() 
     {
         $this->arrROMCounts = array_fill(0, 256, 0);
+        $this->arrROMCountsHigh = array_fill(0, 256, 0);
     }
 }
 
@@ -76,11 +78,19 @@ function loadRom($strFilename_a)
                 $ptrRom->lngROMSize = ZOSCII_ROM_LOAD_MAX;
             }
             
-            // Count ROM byte occurrences
-            for ($lngI = 0; $lngI < $ptrRom->lngROMSize; $lngI++) 
+            // Count ROM byte occurrences - first 64KB (encoding range)
+            $lngLowSize = min($ptrRom->lngROMSize, 65536);
+            for ($lngI = 0; $lngI < $lngLowSize; $lngI++) 
             {
                 $byte = ord($ptrRom->ptrROMData[$lngI]);
                 $ptrRom->arrROMCounts[$byte]++;
+            }
+            
+            // Count ROM byte occurrences - second 64KB (if present)
+            for ($lngI = 65536; $lngI < $ptrRom->lngROMSize; $lngI++) 
+            {
+                $byte = ord($ptrRom->ptrROMData[$lngI]);
+                $ptrRom->arrROMCountsHigh[$byte]++;
             }
         } 
         else 
@@ -98,6 +108,7 @@ function unloadRom($ptrRom_a)
     $ptrRom_a->ptrROMData = '';
     $ptrRom_a->lngROMSize = 0;
     $ptrRom_a->arrROMCounts = array_fill(0, 256, 0);
+    $ptrRom_a->arrROMCountsHigh = array_fill(0, 256, 0);
 }
 
 function analyzeFile($ptrRom_a, $strInputFile_a) 
@@ -165,16 +176,16 @@ function analyzeFile($ptrRom_a, $strInputFile_a)
             echo ")\n\n";
             
             echo "Byte Analysis:\n";
-            echo "Byte  Dec  ROM Count  Input Count  Char\n";
-            echo "----  ---  ---------  -----------  ----\n";
+            echo "Byte  Dec  ROM Lo 64K  ROM Hi 64K  Input Count  Char\n";
+            echo "----  ---  ----------  ----------  -----------  ----\n";
             
             for ($intI = 0; $intI < 256; $intI++) 
             {
-                if ($ptrRom_a->arrROMCounts[$intI] > 0 || $arrInputCounts[$intI] > 0) 
+                if ($ptrRom_a->arrROMCounts[$intI] > 0 || $ptrRom_a->arrROMCountsHigh[$intI] > 0 || $arrInputCounts[$intI] > 0) 
                 {
                     $chDisplay = ($intI >= 32 && $intI <= 126) ? chr($intI) : ' ';
-                    printf("0x%02X  %3d  %9u  %11u    %c\n", 
-                           $intI, $intI, $ptrRom_a->arrROMCounts[$intI], $arrInputCounts[$intI], $chDisplay);
+                    printf("0x%02X  %3d  %10u  %10u  %11u    %c\n", 
+                           $intI, $intI, $ptrRom_a->arrROMCounts[$intI], $ptrRom_a->arrROMCountsHigh[$intI], $arrInputCounts[$intI], $chDisplay);
                 }
             }
             

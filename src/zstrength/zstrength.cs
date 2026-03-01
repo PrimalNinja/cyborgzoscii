@@ -16,6 +16,7 @@ class RomData
     public byte[] ptrROMData;
     public long lngROMSize;
     public uint[] arrROMCounts;
+    public uint[] arrROMCountsHigh;
 }
 
 class Program
@@ -72,13 +73,21 @@ class Program
                 ptrRom.lngROMSize = lngLoad;
                 ptrRom.ptrROMData = new byte[lngLoad];
                 ptrRom.arrROMCounts = new uint[256];
+                ptrRom.arrROMCountsHigh = new uint[256];
                 
                 ptrStream.Read(ptrRom.ptrROMData, 0, (int)lngLoad);
                 
-                // Count ROM byte occurrences
-                for (long lngI = 0; lngI < ptrRom.lngROMSize; lngI++)
+                // Count ROM byte occurrences - first 64KB (encoding range)
+                long lngLowSize = Math.Min(ptrRom.lngROMSize, 65536L);
+                for (long lngI = 0; lngI < lngLowSize; lngI++)
                 {
                     ptrRom.arrROMCounts[ptrRom.ptrROMData[lngI]]++;
+                }
+                
+                // Count ROM byte occurrences - second 64KB (if present)
+                for (long lngI = 65536L; lngI < ptrRom.lngROMSize; lngI++)
+                {
+                    ptrRom.arrROMCountsHigh[ptrRom.ptrROMData[lngI]]++;
                 }
             }
         }
@@ -95,6 +104,7 @@ class Program
         // In C#, garbage collector handles this, but method kept for symmetry
         ptrRom_a.ptrROMData = null;
         ptrRom_a.arrROMCounts = null;
+        ptrRom_a.arrROMCountsHigh = null;
         ptrRom_a.lngROMSize = 0;
     }
 
@@ -165,15 +175,15 @@ class Program
             Console.WriteLine();
             
             Console.WriteLine("Byte Analysis:");
-            Console.WriteLine("Byte  Dec  ROM Count  Input Count  Char");
-            Console.WriteLine("----  ---  ---------  -----------  ----");
+            Console.WriteLine("Byte  Dec  ROM Lo 64K  ROM Hi 64K  Input Count  Char");
+            Console.WriteLine("----  ---  ----------  ----------  -----------  ----");
             
             for (int intI = 0; intI < 256; intI++)
             {
-                if (ptrRom_a.arrROMCounts[intI] > 0 || arrInputCounts[intI] > 0)
+                if (ptrRom_a.arrROMCounts[intI] > 0 || ptrRom_a.arrROMCountsHigh[intI] > 0 || arrInputCounts[intI] > 0)
                 {
                     char chDisplay = (intI >= 32 && intI <= 126) ? (char)intI : ' ';
-                    Console.WriteLine($"0x{intI:X2}  {intI,3}  {ptrRom_a.arrROMCounts[intI],9}  {arrInputCounts[intI],11}    {chDisplay}");
+                    Console.WriteLine($"0x{intI:X2}  {intI,3}  {ptrRom_a.arrROMCounts[intI],10}  {ptrRom_a.arrROMCountsHigh[intI],10}  {arrInputCounts[intI],11}    {chDisplay}");
                 }
             }
             

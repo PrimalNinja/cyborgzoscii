@@ -19,7 +19,8 @@ type ByteAddresses struct {
 type RomData struct {
     ptrROMData   []byte
     lngROMSize   int64
-    arrROMCounts [256]uint32
+    arrROMCounts   [256]uint32
+    arrROMCountsHigh [256]uint32
 }
 
 const ZOSCII_ROM_LOAD_MAX = 131072
@@ -61,9 +62,18 @@ func loadRom(strFilename_a string) (*RomData, error) {
             lngROMSize: lngSize,
         }
         
-        // Count ROM byte occurrences
-        for lngI := int64(0); lngI < lngSize; lngI++ {
+        // Count ROM byte occurrences - first 64KB (encoding range)
+        lngLowSize := lngSize
+        if lngLowSize > 65536 {
+            lngLowSize = 65536
+        }
+        for lngI := int64(0); lngI < lngLowSize; lngI++ {
             ptrRom.arrROMCounts[ptrRom.ptrROMData[lngI]]++
+        }
+        
+        // Count ROM byte occurrences - second 64KB (if present)
+        for lngI := int64(65536); lngI < lngSize; lngI++ {
+            ptrRom.arrROMCountsHigh[ptrRom.ptrROMData[lngI]]++
         }
     }
     
@@ -76,6 +86,7 @@ func unloadRom(ptrRom_a *RomData) {
     ptrRom_a.lngROMSize = 0
     for intI := 0; intI < 256; intI++ {
         ptrRom_a.arrROMCounts[intI] = 0
+        ptrRom_a.arrROMCountsHigh[intI] = 0
     }
 }
 
@@ -135,19 +146,19 @@ func analyzeFile(ptrRom_a *RomData, strInputFile_a string) bool {
         fmt.Println()
         
         fmt.Println("Byte Analysis:")
-        fmt.Println("Byte  Dec  ROM Count  Input Count  Char")
-        fmt.Println("----  ---  ---------  -----------  ----")
+        fmt.Println("Byte  Dec  ROM Lo 64K  ROM Hi 64K  Input Count  Char")
+        fmt.Println("----  ---  ----------  ----------  -----------  ----")
         
         for intI := 0; intI < 256; intI++ {
-            if ptrRom_a.arrROMCounts[intI] > 0 || arrInputCounts[intI] > 0 {
+            if ptrRom_a.arrROMCounts[intI] > 0 || ptrRom_a.arrROMCountsHigh[intI] > 0 || arrInputCounts[intI] > 0 {
                 var chDisplay rune
                 if intI >= 32 && intI <= 126 {
                     chDisplay = rune(intI)
                 } else {
                     chDisplay = ' '
                 }
-                fmt.Printf("0x%02X  %3d  %9d  %11d    %c\n",
-                    intI, intI, ptrRom_a.arrROMCounts[intI], arrInputCounts[intI], chDisplay)
+                fmt.Printf("0x%02X  %3d  %10d  %10d  %11d    %c\n",
+                    intI, intI, ptrRom_a.arrROMCounts[intI], ptrRom_a.arrROMCountsHigh[intI], arrInputCounts[intI], chDisplay)
             }
         }
         
