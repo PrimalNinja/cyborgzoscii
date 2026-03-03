@@ -1,4 +1,4 @@
-// Cyborg ZOSCII v20260301
+// Cyborg ZOSCII v20260303
 // (c) 2026 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
 // Windows & Linux Version
@@ -7,7 +7,11 @@ use std::env;
 use std::fs::File;
 use std::io::{Read, Write, BufReader, BufWriter};
 use std::process;
-use rand::Rng;
+use rand::{Rng, SeedableRng};
+use rand_chacha::ChaCha8Rng;
+use std::sync::Mutex;
+use std::time::{SystemTime, UNIX_EPOCH};
+use lazy_static::lazy_static;
 
 struct ByteAddresses 
 {
@@ -22,6 +26,11 @@ struct RomData
     ptrROMData: Vec<u8>,
     lngROMSize: usize,
     arrLookup: [ByteAddresses; 256],
+}
+
+lazy_static! 
+{
+    static ref GLOBAL_RNG: Mutex<ChaCha8Rng> = Mutex::new(ChaCha8Rng::seed_from_u64(0));
 }
 
 fn build_lookup_table(ptrRom_a: &mut RomData) 
@@ -68,6 +77,21 @@ fn build_lookup_table(ptrRom_a: &mut RomData)
         ptrRom_a.arrLookup[by as usize].ptrAddresses.push(lngI as u16);
         ptrRom_a.arrLookup[by as usize].intCount += 1;
     }
+	
+	// Seed rand based on ROM content
+	let mut intRomHash: u64 = 0;
+	for lngI in 0..ptrRom_a.lngROMSize 
+	{
+		intRomHash = intRomHash.wrapping_mul(33).wrapping_add(ptrRom_a.ptrROMData[lngI] as u64);
+	}
+
+	let time = SystemTime::now()
+		.duration_since(UNIX_EPOCH)
+		.unwrap()
+		.as_micros() as u64;
+	intRomHash ^= time;
+
+	*GLOBAL_RNG.lock().unwrap() = ChaCha8Rng::seed_from_u64(intRomHash);
 }
 
 fn load_rom(strFilename_a: &str) -> Result<RomData, String> 
@@ -135,12 +159,9 @@ fn unload_rom(ptrRom_a: &mut RomData)
 fn encode_file(ptrRom_a: &RomData, strInputFile_a: &str, strOutputFile_a: &str) -> bool 
 {
     let mut blnSuccess: bool = false;
-    let mut ptrRand: rand::rngs::ThreadRng;
     let mut ptrInput: BufReader<File>;
     let mut ptrOutput: BufWriter<File>;
     let mut arrBuf: [u8; 1] = [0u8; 1];
-    
-    ptrRand = rand::thread_rng();
     
     match File::open(strInputFile_a) 
     {
@@ -154,7 +175,6 @@ fn encode_file(ptrRom_a: &RomData, strInputFile_a: &str, strOutputFile_a: &str) 
                 {
                     ptrOutput = BufWriter::new(f);
                     
-                    // Stream-encode input
                     loop 
                     {
                         match ptrInput.read_exact(&mut arrBuf) 
@@ -164,7 +184,7 @@ fn encode_file(ptrRom_a: &RomData, strInputFile_a: &str, strOutputFile_a: &str) 
                                 let by: u8 = arrBuf[0];
                                 if ptrRom_a.arrLookup[by as usize].intCount > 0 
                                 {
-                                    let intIdx: usize = ptrRand.gen_range(
+                                    let intIdx: usize = GLOBAL_RNG.lock().unwrap().gen_range(
                                         0..ptrRom_a.arrLookup[by as usize].intCount
                                     ) as usize;
                                     let intAddress: u16 = ptrRom_a.arrLookup[by as usize].ptrAddresses[intIdx];
@@ -203,8 +223,8 @@ fn main()
     let strArgs: Vec<String> = env::args().collect();
     let blnEncodeOk: bool;
     
-    println!("ZOSCII Encoder");
-    println!("(c) 2026 Cyborg Unicorn Pty Ltd v20260301 - MIT License\n");
+    println!("ZOSCII Encoder v20260303");
+    println!("(c) 2026 Cyborg Unicorn Pty Ltd - MIT License\n");
 
     if strArgs.len() == 4
     {

@@ -1,4 +1,4 @@
-// Cyborg ZOSCII v20260301
+// Cyborg ZOSCII v20260303
 // (c) 2026 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
 // Windows & Linux Version
@@ -30,6 +30,8 @@ type RomData struct
 	lngROMSize int64
 	arrLookup  [256]ByteAddresses
 }
+
+var globalRand *rand.Rand
 
 func buildLookupTable(ptrRom_a *RomData) 
 {
@@ -75,32 +77,53 @@ func buildLookupTable(ptrRom_a *RomData)
 		ptrRom_a.arrLookup[by].ptrAddresses = append(ptrRom_a.arrLookup[by].ptrAddresses, uint16(lngI))
 		ptrRom_a.arrLookup[by].intCount++
 	}
+	
+	// Seed rand based on ROM content
+	var intRomHash uint64 = 0
+	for lngI = 0; lngI < ptrRom_a.lngROMSize; lngI++ 
+	{
+		intRomHash = intRomHash*33 + uint64(ptrRom_a.ptrROMData[lngI])
+	}
+
+	intRomHash ^= uint64(time.Now().UnixNano())
+
+	globalRand = rand.New(rand.NewSource(int64(intRomHash)))	
 }
 
 func loadRom(strFilename_a string) (*RomData, error) 
 {
 	var ptrRom *RomData = nil
 	var ptrFile *os.File = nil
+	var info os.FileInfo = nil
 	var err error = nil
+	var lngSize int64 = 0
 	
 	ptrFile, err = os.Open(strFilename_a)
 	if err == nil 
 	{
 		defer ptrFile.Close()
 		
-		var arrBuf []byte = make([]byte, ZOSCII_ROM_LOAD_MAX)
-		var n int = 0
-		
-		n, err = io.ReadFull(ptrFile, arrBuf)
-		if err == nil || err == io.ErrUnexpectedEOF 
+		info, err = ptrFile.Stat()
+		if err == nil 
 		{
-			ptrRom = &RomData{}
-			ptrRom.ptrROMData = arrBuf[:n]
-			ptrRom.lngROMSize = int64(len(ptrRom.ptrROMData))
+			lngSize = info.Size()
+			if lngSize > ZOSCII_ROM_LOAD_MAX 
+			{
+				lngSize = ZOSCII_ROM_LOAD_MAX
+			}
 			
-			// Pre-build lookup table for reuse across multiple encodes
-			buildLookupTable(ptrRom)
-		} 
+			var arrBuf []byte = make([]byte, lngSize)
+			_, err = io.ReadFull(ptrFile, arrBuf)
+			if err == nil 
+			{
+				ptrRom = &RomData{}
+				ptrRom.ptrROMData = arrBuf
+				ptrRom.lngROMSize = lngSize
+				
+				// Pre-build lookup table for reuse across multiple encodes
+				buildLookupTable(ptrRom)
+			}
+		}
 	}
 	
 	return ptrRom, err
@@ -148,7 +171,7 @@ func encodeFile(ptrRom_a *RomData, strInputFile_a string, strOutputFile_a string
 				var by byte = arrBuf[0]
 				if ptrRom_a.arrLookup[by].intCount > 0 
 				{
-					var intRandomIdx int = rand.Intn(int(ptrRom_a.arrLookup[by].intCount))
+					var intRandomIdx int = globalRand.Intn(int(ptrRom_a.arrLookup[by].intCount))
 					var intAddress uint16 = ptrRom_a.arrLookup[by].ptrAddresses[intRandomIdx]
 					binary.Write(ptrOutput, binary.LittleEndian, intAddress)
 				}
@@ -168,14 +191,12 @@ func main()
 	var err error = nil
 	var blnEncodeOk bool = false
 	
-	fmt.Println("ZOSCII Encoder")
-	fmt.Println("(c) 2026 Cyborg Unicorn Pty Ltd v20260301 - MIT License\n")
+	fmt.Println("ZOSCII Encoder v20260303")
+	fmt.Println("(c) 2026 Cyborg Unicorn Pty Ltd - MIT License\n")
 
 	strArgs := os.Args
 	if len(strArgs) == 4
 	{
-		rand.Seed(time.Now().UnixNano())
-		
 		ptrRom, err = loadRom(strArgs[1])
 		if err == nil && ptrRom != nil 
 		{

@@ -1,4 +1,4 @@
-// Cyborg ZOSCII v20260301
+// Cyborg ZOSCII v20260303
 // (c) 2026 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
 
@@ -22,6 +22,8 @@ class Program
 {
     private const int ZOSCII_ROM_LOAD_MAX = 131072;
 
+	private static Random ptrRand;
+	
     private static void BuildLookupTable(ref RomData ptrRom_a)
     {
         uint[] arrCounts = new uint[256];
@@ -64,6 +66,18 @@ class Program
             byte by = ptrRom_a.ptrROMData[lngI];
             ptrRom_a.arrLookup[by].ptrAddresses[ptrRom_a.arrLookup[by].intCount++] = (uint)lngI;
         }
+		
+		// Seed Random based on ROM content
+		uint romHash = 0;
+		for (long lngI = 0; lngI < ptrRom_a.lngROMSize; lngI++)
+		{
+			romHash = (romHash * 33) + ptrRom_a.ptrROMData[lngI];
+		}
+		
+		/* XOR with current time for per-run uniqueness */
+		romHash ^= (uint)Environment.TickCount;
+		
+		ptrRand = new Random((int)romHash);
     }
 
     private static RomData LoadRom(string strFilename_a)
@@ -109,10 +123,7 @@ class Program
         bool blnSuccess = false;
         FileStream ptrInput = null;
         FileStream ptrOutput = null;
-        Random ptrRand = null;
         int intCh = 0;
-        
-        ptrRand = new Random();
         
         try
         {
@@ -163,8 +174,8 @@ class Program
         RomData ptrRom = new RomData();
         bool blnEncodeOk = false;
         
-        Console.WriteLine("ZOSCII Encoder");
-        Console.WriteLine("(c) 2026 Cyborg Unicorn Pty Ltd v20260301 - MIT License");
+        Console.WriteLine("ZOSCII Encoder v20260303");
+        Console.WriteLine("(c) 2026 Cyborg Unicorn Pty Ltd - MIT License");
         Console.WriteLine();
 
         if (strArgs_a.Length == 3)

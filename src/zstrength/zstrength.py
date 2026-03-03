@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Cyborg ZOSCII v20260301
+# Cyborg ZOSCII v20260303
 # (c) 2026 Cyborg Unicorn Pty Ltd.
 # This software is released under MIT License.
 
@@ -143,8 +143,8 @@ def main():
     ptrRom = None
     blnAnalyzeOk = False
     
-    print("ZOSCII ROM Strength Analyzer")
-    print("(c) 2026 Cyborg Unicorn Pty Ltd v20260301 - MIT License")
+    print("ZOSCII ROM Strength Analyzer v20260303")
+    print("(c) 2026 Cyborg Unicorn Pty Ltd - MIT License")
     print()
     
     if len(sys.argv) == 3:

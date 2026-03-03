@@ -1,5 +1,5 @@
 <?php
-// Cyborg ZOSCII Strength Analyzer v20260301
+// Cyborg ZOSCII Strength Analyzer v20260303
 // (c) 2026 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
 
@@ -68,29 +68,36 @@ function loadRom($strFilename_a)
     if (file_exists($strFilename_a)) 
     {
         $ptrRom = new RomData();
-        $ptrRom->ptrROMData = file_get_contents($strFilename_a);
-        if ($ptrRom->ptrROMData !== false) 
+        
+        $ptrFile = fopen($strFilename_a, 'rb');
+        if ($ptrFile) 
         {
-            $ptrRom->lngROMSize = strlen($ptrRom->ptrROMData);
-            if ($ptrRom->lngROMSize > ZOSCII_ROM_LOAD_MAX) 
-            {
-                $ptrRom->ptrROMData = substr($ptrRom->ptrROMData, 0, ZOSCII_ROM_LOAD_MAX);
-                $ptrRom->lngROMSize = ZOSCII_ROM_LOAD_MAX;
-            }
+            $data = fread($ptrFile, ZOSCII_ROM_LOAD_MAX);
+            fclose($ptrFile);
             
-            // Count ROM byte occurrences - first 64KB (encoding range)
-            $lngLowSize = min($ptrRom->lngROMSize, 65536);
-            for ($lngI = 0; $lngI < $lngLowSize; $lngI++) 
+            if ($data !== false) 
             {
-                $byte = ord($ptrRom->ptrROMData[$lngI]);
-                $ptrRom->arrROMCounts[$byte]++;
-            }
-            
-            // Count ROM byte occurrences - second 64KB (if present)
-            for ($lngI = 65536; $lngI < $ptrRom->lngROMSize; $lngI++) 
+                $ptrRom->ptrROMData = $data;
+                $ptrRom->lngROMSize = strlen($data);
+                
+                // Count ROM byte occurrences - first 64KB (encoding range)
+                $lngLowSize = min($ptrRom->lngROMSize, 65536);
+                for ($lngI = 0; $lngI < $lngLowSize; $lngI++) 
+                {
+                    $byte = ord($ptrRom->ptrROMData[$lngI]);
+                    $ptrRom->arrROMCounts[$byte]++;
+                }
+                
+                // Count ROM byte occurrences - second 64KB (if present)
+                for ($lngI = 65536; $lngI < $ptrRom->lngROMSize; $lngI++) 
+                {
+                    $byte = ord($ptrRom->ptrROMData[$lngI]);
+                    $ptrRom->arrROMCountsHigh[$byte]++;
+                }
+            } 
+            else 
             {
-                $byte = ord($ptrRom->ptrROMData[$lngI]);
-                $ptrRom->arrROMCountsHigh[$byte]++;
+                $ptrRom = null;
             }
         } 
         else 
@@ -123,73 +130,79 @@ function analyzeFile($ptrRom_a, $strInputFile_a)
     
     if (file_exists($strInputFile_a)) 
     {
-        $inputData = file_get_contents($strInputFile_a);
-        if ($inputData !== false) 
+        $ptrFile = fopen($strInputFile_a, 'rb');
+        if ($ptrFile) 
         {
-            $intInputLength = strlen($inputData);
+            $inputData = fread($ptrFile, filesize($strInputFile_a));
+            fclose($ptrFile);
             
-            // Count input character occurrences
-            for ($lngI = 0; $lngI < $intInputLength; $lngI++) 
+            if ($inputData !== false) 
             {
-                $byte = ord($inputData[$lngI]);
-                $arrInputCounts[$byte]++;
-            }
-            
-            // Count characters utilized
-            for ($intI = 0; $intI < 256; $intI++) 
-            {
-                if ($arrInputCounts[$intI] > 0) 
+                $intInputLength = strlen($inputData);
+                
+                // Count input character occurrences
+                for ($lngI = 0; $lngI < $intInputLength; $lngI++) 
                 {
-                    $intCharsUsed++;
+                    $byte = ord($inputData[$lngI]);
+                    $arrInputCounts[$byte]++;
                 }
-            }
-            
-            // Calculate ROM strength metrics
-            for ($intI = 0; $intI < 256; $intI++) 
-            {
-                if ($ptrRom_a->arrROMCounts[$intI] > 0) 
+                
+                // Count characters utilized
+                for ($intI = 0; $intI < 256; $intI++) 
                 {
-                    $dblGeneralStrength += log10($ptrRom_a->arrROMCounts[$intI]);
+                    if ($arrInputCounts[$intI] > 0) 
+                    {
+                        $intCharsUsed++;
+                    }
                 }
-                if ($arrInputCounts[$intI] > 0 && $ptrRom_a->arrROMCounts[$intI] > 0) 
+                
+                // Calculate ROM strength metrics
+                for ($intI = 0; $intI < 256; $intI++) 
                 {
-                    $dblFileStrength += $arrInputCounts[$intI] * log10($ptrRom_a->arrROMCounts[$intI]);
+                    if ($ptrRom_a->arrROMCounts[$intI] > 0) 
+                    {
+                        $dblGeneralStrength += log10($ptrRom_a->arrROMCounts[$intI]);
+                    }
+                    if ($arrInputCounts[$intI] > 0 && $ptrRom_a->arrROMCounts[$intI] > 0) 
+                    {
+                        $dblFileStrength += $arrInputCounts[$intI] * log10($ptrRom_a->arrROMCounts[$intI]);
+                    }
                 }
-            }
-            
-            $dblUtilisation = ($intCharsUsed / 256.0) * 100.0;
-            
-            echo "ROM Strength Analysis\n";
-            echo "=====================\n\n";
-            
-            echo "Input Information:\n";
-            echo "- Text Length: $intInputLength characters\n";
-            echo "- Characters Utilized: $intCharsUsed of 256 (" . number_format($dblUtilisation, 1) . "%)\n";
-            echo "\n";
-            
-            echo "General ROM Capacity: ~10^" . number_format($dblGeneralStrength, 0) . " (";
-            printLargeNumber($dblGeneralStrength);
-            echo ")\n";
-            
-            echo "This File Security: ~10^" . number_format($dblFileStrength, 0) . " (";
-            printLargeNumber($dblFileStrength);
-            echo ")\n\n";
-            
-            echo "Byte Analysis:\n";
-            echo "Byte  Dec  ROM Lo 64K  ROM Hi 64K  Input Count  Char\n";
-            echo "----  ---  ----------  ----------  -----------  ----\n";
-            
-            for ($intI = 0; $intI < 256; $intI++) 
-            {
-                if ($ptrRom_a->arrROMCounts[$intI] > 0 || $ptrRom_a->arrROMCountsHigh[$intI] > 0 || $arrInputCounts[$intI] > 0) 
+                
+                $dblUtilisation = ($intCharsUsed / 256.0) * 100.0;
+                
+                echo "ROM Strength Analysis\n";
+                echo "=====================\n\n";
+                
+                echo "Input Information:\n";
+                echo "- Text Length: $intInputLength characters\n";
+                echo "- Characters Utilized: $intCharsUsed of 256 (" . number_format($dblUtilisation, 1) . "%)\n";
+                echo "\n";
+                
+                echo "General ROM Capacity: ~10^" . number_format($dblGeneralStrength, 0) . " (";
+                printLargeNumber($dblGeneralStrength);
+                echo ")\n";
+                
+                echo "This File Security: ~10^" . number_format($dblFileStrength, 0) . " (";
+                printLargeNumber($dblFileStrength);
+                echo ")\n\n";
+                
+                echo "Byte Analysis:\n";
+                echo "Byte  Dec  ROM Lo 64K  ROM Hi 64K  Input Count  Char\n";
+                echo "----  ---  ----------  ----------  -----------  ----\n";
+                
+                for ($intI = 0; $intI < 256; $intI++) 
                 {
-                    $chDisplay = ($intI >= 32 && $intI <= 126) ? chr($intI) : ' ';
-                    printf("0x%02X  %3d  %10u  %10u  %11u    %c\n", 
-                           $intI, $intI, $ptrRom_a->arrROMCounts[$intI], $ptrRom_a->arrROMCountsHigh[$intI], $arrInputCounts[$intI], $chDisplay);
+                    if ($ptrRom_a->arrROMCounts[$intI] > 0 || $ptrRom_a->arrROMCountsHigh[$intI] > 0 || $arrInputCounts[$intI] > 0) 
+                    {
+                        $chDisplay = ($intI >= 32 && $intI <= 126) ? chr($intI) : ' ';
+                        printf("0x%02X  %3d  %10u  %10u  %11u    %c\n", 
+                               $intI, $intI, $ptrRom_a->arrROMCounts[$intI], $ptrRom_a->arrROMCountsHigh[$intI], $arrInputCounts[$intI], $chDisplay);
+                    }
                 }
+                
+                $blnSuccess = true;
             }
-            
-            $blnSuccess = true;
         }
     }
     
@@ -203,8 +216,8 @@ function main()
     $ptrRom = null;
     $blnAnalyzeOk = false;
     
-    echo "ZOSCII ROM Strength Analyzer\n";
-    echo "(c) 2026 Cyborg Unicorn Pty Ltd v20260301 - MIT License\n\n";
+    echo "ZOSCII ROM Strength Analyzer v20260303\n";
+    echo "(c) 2026 Cyborg Unicorn Pty Ltd - MIT License\n\n";
     
     // Test harness - hardcoded filenames for testing
     $strRomFile = 'rom.bin';

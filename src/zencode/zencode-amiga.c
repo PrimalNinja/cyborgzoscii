@@ -1,4 +1,4 @@
-// Cyborg ZOSCII v20260301
+// Cyborg ZOSCII v20260303
 // (c) 2026 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
 
@@ -25,6 +25,28 @@ typedef struct
     long lngROMSize;
     ByteAddresses arrLookup[256];
 } RomData;
+
+static void leWrite(const void* ptrData_a, size_t intSize_a, size_t intCount_a, FILE* ptrFile_a)
+{
+    size_t lngI = 0;
+    const uint8_t* ptrSrc = (const uint8_t*)ptrData_a;
+    
+    for (lngI = 0; lngI < intCount_a; lngI++)
+    {
+        if (intSize_a == 2)
+        {
+            uint16_t intValue = *(const uint16_t*)(ptrSrc + (lngI * intSize_a));
+            uint8_t arrBytes[2];
+            arrBytes[0] = (uint8_t)(intValue & 0xFF);
+            arrBytes[1] = (uint8_t)(intValue >> 8);
+            fwrite(arrBytes, 1, 2, ptrFile_a);
+        }
+        else
+        {
+            fwrite(ptrSrc + (lngI * intSize_a), intSize_a, 1, ptrFile_a);
+        }
+    }
+}
 
 static void buildLookupTable(RomData* ptrRom_a)
 {
@@ -69,6 +91,17 @@ static void buildLookupTable(RomData* ptrRom_a)
         uint8_t by = ptrRom_a->ptrROMData[lngI];
         ptrRom_a->arrLookup[by].ptrAddresses[ptrRom_a->arrLookup[by].intCount++] = (uint32_t)lngI;
     }
+
+	// seed rand based on ROM
+    uint32_t intRomHash = 0;
+    for (lngI = 0; lngI < ptrRom_a->lngROMSize; lngI++) 
+    {
+        intRomHash = (intRomHash * 33) + ptrRom_a->ptrROMData[lngI];
+    }
+    
+    intRomHash ^= (uint32_t)time(NULL);
+    
+    srand(intRomHash);
 }
 
 static RomData* loadRom(const char* strFilename_a)
@@ -155,7 +188,7 @@ static bool encodeFile(const RomData* ptrRom_a, const char* strInputFile_a, cons
                 {
                     uint32_t intRandomIdx = rand() % ptrRom_a->arrLookup[by].intCount;
                     uint16_t intAddress = (uint16_t)ptrRom_a->arrLookup[by].ptrAddresses[intRandomIdx];
-                    fwrite(&intAddress, sizeof(uint16_t), 1, ptrOutput);
+                    leWrite(&intAddress, sizeof(uint16_t), 1, ptrOutput);
                 }
             }
             
@@ -175,11 +208,9 @@ int main(int intArgC_a, char* strArgv_a[])
     RomData* ptrRom = NULL;
     bool blnEncodeOk = false;
     
-    printf("ZOSCII Encoder\n");
-    printf("(c) 2026 Cyborg Unicorn Pty Ltd v20260301 - MIT License\n\n");
+    printf("ZOSCII Encoder v20260303\n");
+    printf("(c) 2026 Cyborg Unicorn Pty Ltd - MIT License\n\n");
     
-    srand((unsigned int)time(NULL));
-
     if (intArgC_a == 4) 
     {
         ptrRom = loadRom(strArgv_a[1]);

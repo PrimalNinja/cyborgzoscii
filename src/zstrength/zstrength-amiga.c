@@ -1,4 +1,4 @@
-// Cyborg ZOSCII Strength Analyzer v20260301
+// Cyborg ZOSCII Strength Analyzer v20260303
 // (c) 2026 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
 
@@ -224,8 +224,8 @@ int main(int intArgC_a, char* strArgv_a[])
     RomData* ptrRom = NULL;
     bool blnAnalyzeOk = false;
     
-    printf("ZOSCII ROM Strength Analyzer\n");
-    printf("(c) 2026 Cyborg Unicorn Pty Ltd v20260301 - MIT License\n\n");
+    printf("ZOSCII ROM Strength Analyzer v20260303\n");
+    printf("(c) 2026 Cyborg Unicorn Pty Ltd - MIT License\n\n");
 
     if (intArgC_a == 3)
     {

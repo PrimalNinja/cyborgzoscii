@@ -1,5 +1,5 @@
 <?php
-// Cyborg ZOSCII v20260301
+// Cyborg ZOSCII v20260303
 // (c) 2026 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
 
@@ -63,6 +63,17 @@ function buildLookupTable($ptrRom_a)
         $ptrRom_a->arrLookup[$by]->ptrAddresses[] = $lngI;
         $ptrRom_a->arrLookup[$by]->intCount++;
     }
+
+	// Seed rand based on ROM content
+	$intRomHash = 0;
+	for ($lngI = 0; $lngI < $ptrRom_a->lngROMSize; $lngI++) 
+	{
+		$intRomHash = ($intRomHash * 33) + ord($ptrRom_a->ptrROMData[$lngI]);
+	}
+
+	$intRomHash ^= (int)(microtime(true) * 1000000);
+
+	srand($intRomHash);
 }
 
 function loadRom($strFilename_a) 
@@ -72,18 +83,23 @@ function loadRom($strFilename_a)
     if (file_exists($strFilename_a)) 
     {
         $ptrRom = new RomData();
-        $ptrRom->ptrROMData = file_get_contents($strFilename_a);
-        if ($ptrRom->ptrROMData !== false) 
+        
+        $ptrFile = fopen($strFilename_a, 'rb');
+        if ($ptrFile) 
         {
-            $ptrRom->lngROMSize = strlen($ptrRom->ptrROMData);
-            if ($ptrRom->lngROMSize > ZOSCII_ROM_LOAD_MAX) 
-            {
-                $ptrRom->ptrROMData = substr($ptrRom->ptrROMData, 0, ZOSCII_ROM_LOAD_MAX);
-                $ptrRom->lngROMSize = ZOSCII_ROM_LOAD_MAX;
-            }
+            $data = fread($ptrFile, ZOSCII_ROM_LOAD_MAX);
+            fclose($ptrFile);
             
-            // Pre-build lookup table for reuse across multiple encodes
-            buildLookupTable($ptrRom);
+            if ($data !== false) 
+            {
+                $ptrRom->ptrROMData = $data;
+                $ptrRom->lngROMSize = strlen($data);
+                buildLookupTable($ptrRom);
+            } 
+            else 
+            {
+                $ptrRom = null;
+            }
         } 
         else 
         {
@@ -151,8 +167,8 @@ function main()
     $ptrRom = null;
     $blnEncodeOk = false;
     
-    echo "ZOSCII Encoder\n";
-    echo "(c) 2026 Cyborg Unicorn Pty Ltd v20260301 - MIT License\n\n";
+    echo "ZOSCII Encoder v20260303\n";
+    echo "(c) 2026 Cyborg Unicorn Pty Ltd - MIT License\n\n";
     
     // Test harness - hardcoded filenames for testing
     $strRomFile = 'rom.bin';
@@ -163,8 +179,6 @@ function main()
     echo "  ROM file: {$strRomFile}\n";
     echo "  Input file: {$strInputFile}\n";
     echo "  Output file: {$strOutputFile}\n\n";
-    
-    srand(time());
     
     if (file_exists($strRomFile)) 
     {

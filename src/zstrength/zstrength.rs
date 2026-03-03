@@ -1,18 +1,21 @@
-// Cyborg ZOSCII v20260301
+// Cyborg ZOSCII v20260303
 // (c) 2026 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
 // Windows & Linux Version
 
 use std::env;
 use std::process;
-use std::fs;
+use std::fs::File;
+use std::io::Read;
 
-struct ByteAddresses {
+struct ByteAddresses 
+{
     ptrAddresses: Vec<u16>,
     intCount: u32,
 }
 
-struct RomData {
+struct RomData 
+{
     ptrROMData: Vec<u8>,
     lngROMSize: usize,
     arrROMCounts: [u32; 256],
@@ -21,79 +24,124 @@ struct RomData {
 
 const ZOSCII_ROM_LOAD_MAX: usize = 131072;
 
-fn print_large_number(dblExponent_a: f64) {
-    if dblExponent_a < 3.0 {
+fn print_large_number(dblExponent_a: f64) 
+{
+    if dblExponent_a < 3.0 
+	{
         print!("~{:.0} permutations", 10_f64.powf(dblExponent_a));
-    } else if dblExponent_a < 6.0 {
+    } 
+	else if dblExponent_a < 6.0 
+	{
         print!("~{:.1} thousand permutations", 10_f64.powf(dblExponent_a) / 1000.0);
-    } else if dblExponent_a < 9.0 {
+    } 
+	else if dblExponent_a < 9.0 
+	{
         print!("~{:.1} million permutations", 10_f64.powf(dblExponent_a) / 1000000.0);
-    } else if dblExponent_a < 12.0 {
+    } 
+	else if dblExponent_a < 12.0 
+	{
         print!("~{:.1} billion permutations", 10_f64.powf(dblExponent_a) / 1000000000.0);
-    } else if dblExponent_a < 15.0 {
+    } 
+	else if dblExponent_a < 15.0 
+	{
         print!("~{:.1} trillion permutations", 10_f64.powf(dblExponent_a) / 1000000000000.0);
-    } else if dblExponent_a < 82.0 {
+    } 
+	else if dblExponent_a < 82.0 
+	{
         print!("More than all atoms in the observable universe (10^{:.0} permutations)", dblExponent_a);
-    } else if dblExponent_a < 1000.0 {
+    } 
+	else if dblExponent_a < 1000.0 
+	{
         print!("Incomprehensibly massive (10^{:.0} permutations)", dblExponent_a);
-    } else {
+    } 
+	else 
+	{
         print!("Astronomically secure (10^{:.1}M permutations)", dblExponent_a / 1000000.0);
     }
 }
 
-fn load_rom(strFilename_a: &str) -> Result<RomData, String> {
+fn load_rom(strFilename_a: &str) -> Result<RomData, String> 
+{
     let mut ptrRom: RomData;
+    let mut ptrFile: File;
     
-    match fs::read(strFilename_a) {
-        Ok(arrBuf) => {
-            let lngSize = arrBuf.len();
-            let lngLoad = if lngSize > ZOSCII_ROM_LOAD_MAX {
-                ZOSCII_ROM_LOAD_MAX
-            } else {
-                lngSize
-            };
-            
-            let mut arrCounts = [0u32; 256];
-            let mut arrCountsHigh = [0u32; 256];
-            
-            // Count ROM byte occurrences - first 64KB (encoding range)
-            let lngLowLoad = if lngLoad > 65536 { 65536 } else { lngLoad };
-            for i in 0..lngLowLoad {
-                arrCounts[arrBuf[i] as usize] += 1;
-            }
-            
-            // Count ROM byte occurrences - second 64KB (if present)
-            for i in 65536..lngLoad {
-                arrCountsHigh[arrBuf[i] as usize] += 1;
-            }
-            
-            ptrRom = RomData {
-                ptrROMData: arrBuf[..lngLoad].to_vec(),
-                lngROMSize: lngLoad,
-                arrROMCounts: arrCounts,
-                arrROMCountsHigh: arrCountsHigh,
-            };
-            
-            Ok(ptrRom)
+    match File::open(strFilename_a) 
+    {
+        Ok(f) => 
+        {
+            ptrFile = f;
         }
-        Err(e) => {
-            Err(format!("Failed to load ROM file: {}", e))
+        Err(e) => 
+        {
+            return Err(format!("Failed to open ROM file: {}", e));
         }
     }
+    
+    let lngSize = match ptrFile.metadata() 
+    {
+        Ok(meta) => 
+        {
+            let lngLen = meta.len() as usize;
+            if lngLen > ZOSCII_ROM_LOAD_MAX { ZOSCII_ROM_LOAD_MAX } else { lngLen }
+        }
+        Err(e) => 
+        {
+            return Err(format!("Failed to get ROM file size: {}", e));
+        }
+    };
+    
+    let mut arrBuf: Vec<u8> = vec![0u8; lngSize];
+    match ptrFile.read_exact(&mut arrBuf) 
+    {
+        Ok(_) => {}
+        Err(e) => 
+        {
+            return Err(format!("Failed to read ROM file: {}", e));
+        }
+    }
+    
+    let mut arrCounts = [0u32; 256];
+    let mut arrCountsHigh = [0u32; 256];
+    
+    // Count ROM byte occurrences - first 64KB (encoding range)
+    let lngLowLoad = if lngSize > 65536 { 65536 } else { lngSize };
+    for i in 0..lngLowLoad 
+    {
+        arrCounts[arrBuf[i] as usize] += 1;
+    }
+    
+    // Count ROM byte occurrences - second 64KB (if present)
+    for i in 65536..lngSize 
+    {
+        arrCountsHigh[arrBuf[i] as usize] += 1;
+    }
+    
+    ptrRom = RomData 
+    {
+        ptrROMData: arrBuf,
+        lngROMSize: lngSize,
+        arrROMCounts: arrCounts,
+        arrROMCountsHigh: arrCountsHigh,
+    };
+    
+    Ok(ptrRom)
 }
 
-fn unload_rom(ptrRom_a: &mut RomData) {
+fn unload_rom(ptrRom_a: &mut RomData) 
+{
     // In Rust, memory is freed when variables go out of scope,
     // but method kept for symmetry
     ptrRom_a.ptrROMData.clear();
     ptrRom_a.lngROMSize = 0;
-    for i in 0..256 {
+    for i in 0..256 
+	{
         ptrRom_a.arrROMCounts[i] = 0;
         ptrRom_a.arrROMCountsHigh[i] = 0;
     }
 }
 
-fn analyze_file(ptrRom_a: &RomData, strInputFile_a: &str) -> bool {
+fn analyze_file(ptrRom_a: &RomData, strInputFile_a: &str) -> bool 
+{
     let mut blnSuccess = false;
     let mut arrInputCounts = [0u32; 256];
     let mut intInputLength = 0;
@@ -102,28 +150,36 @@ fn analyze_file(ptrRom_a: &RomData, strInputFile_a: &str) -> bool {
     let mut dblFileStrength = 0.0;
     let dblUtilisation: f64;
     
-    match fs::read(strInputFile_a) {
-        Ok(inputData) => {
+    match fs::read(strInputFile_a) 
+	{
+        Ok(inputData) => 
+		{
             intInputLength = inputData.len();
             
             // Count input character occurrences
-            for &by in &inputData {
+            for &by in &inputData 
+			{
                 arrInputCounts[by as usize] += 1;
             }
             
             // Count characters utilized
-            for i in 0..256 {
-                if arrInputCounts[i] > 0 {
+            for i in 0..256 
+			{
+                if arrInputCounts[i] > 0 
+				{
                     intCharsUsed += 1;
                 }
             }
             
             // Calculate ROM strength metrics
-            for i in 0..256 {
-                if ptrRom_a.arrROMCounts[i] > 0 {
+            for i in 0..256 
+			{
+                if ptrRom_a.arrROMCounts[i] > 0 
+				{
                     dblGeneralStrength += (ptrRom_a.arrROMCounts[i] as f64).log10();
                 }
-                if arrInputCounts[i] > 0 && ptrRom_a.arrROMCounts[i] > 0 {
+                if arrInputCounts[i] > 0 && ptrRom_a.arrROMCounts[i] > 0 
+				{
                     dblFileStrength += (arrInputCounts[i] as f64) * (ptrRom_a.arrROMCounts[i] as f64).log10();
                 }
             }
@@ -152,11 +208,16 @@ fn analyze_file(ptrRom_a: &RomData, strInputFile_a: &str) -> bool {
             println!("Byte  Dec  ROM Lo 64K  ROM Hi 64K  Input Count  Char");
             println!("----  ---  ----------  ----------  -----------  ----");
             
-            for i in 0..256 {
-                if ptrRom_a.arrROMCounts[i] > 0 || ptrRom_a.arrROMCountsHigh[i] > 0 || arrInputCounts[i] > 0 {
-                    let display = if i >= 32 && i <= 126 {
+            for i in 0..256 
+			{
+                if ptrRom_a.arrROMCounts[i] > 0 || ptrRom_a.arrROMCountsHigh[i] > 0 || arrInputCounts[i] > 0 
+				{
+                    let display = if i >= 32 && i <= 126 
+					{
                         i as u8 as char
-                    } else {
+                    } 
+					else 
+					{
                         ' '
                     };
                     println!("0x{:02X}  {:3}  {:10}  {:10}  {:11}    {}",
@@ -166,7 +227,8 @@ fn analyze_file(ptrRom_a: &RomData, strInputFile_a: &str) -> bool {
             
             blnSuccess = true;
         }
-        Err(_) => {
+        Err(_) => 
+		{
             blnSuccess = false;
         }
     }
@@ -174,36 +236,46 @@ fn analyze_file(ptrRom_a: &RomData, strInputFile_a: &str) -> bool {
     blnSuccess
 }
 
-fn main() {
+fn main() 
+{
     let mut intResult: i32 = 1;
     let mut ptrRom: RomData;
     let blnAnalyzeOk: bool;
     
-    println!("ZOSCII ROM Strength Analyzer");
-    println!("(c) 2026 Cyborg Unicorn Pty Ltd v20260301 - MIT License");
+    println!("ZOSCII ROM Strength Analyzer v20260303");
+    println!("(c) 2026 Cyborg Unicorn Pty Ltd - MIT License");
     println!();
 
     let strArgs: Vec<String> = env::args().collect();
     
-    if strArgs.len() == 3 {
-        match load_rom(&strArgs[1]) {
-            Ok(rom) => {
+    if strArgs.len() == 3 
+	{
+        match load_rom(&strArgs[1]) 
+		{
+            Ok(rom) => 
+			{
                 ptrRom = rom;
                 blnAnalyzeOk = analyze_file(&ptrRom, &strArgs[2]);
                 
-                if blnAnalyzeOk {
+                if blnAnalyzeOk 
+				{
                     intResult = 0;
-                } else {
+                } 
+				else 
+				{
                     eprintln!("Analysis failed");
                 }
                 
                 unload_rom(&mut ptrRom);
             }
-            Err(e) => {
+            Err(e) => 
+			{
                 eprintln!("Failed to load ROM: {}", e);
             }
         }
-    } else {
+    } 
+	else 
+	{
         eprintln!("Usage: {} <romfile> <inputdatafile>", strArgs[0]);
     }
     

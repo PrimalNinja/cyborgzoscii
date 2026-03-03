@@ -1,4 +1,4 @@
-// Cyborg ZOSCII v20260301
+// Cyborg ZOSCII v20260303
 // (c) 2026 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
 // Windows & Linux Version
@@ -147,8 +147,8 @@ fn main()
     let ptrRom: RomData;
     let blnDecodeOk: bool;
     
-    println!("ZOSCII Decoder");
-    println!("(c) 2026 Cyborg Unicorn Pty Ltd v20260301 - MIT License\n");
+    println!("ZOSCII Decoder v20260303");
+    println!("(c) 2026 Cyborg Unicorn Pty Ltd - MIT License\n");
 
     let strArgs: Vec<String> = env::args().collect();
     

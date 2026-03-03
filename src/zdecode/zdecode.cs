@@ -1,4 +1,4 @@
-// Cyborg ZOSCII v20260301
+// Cyborg ZOSCII v20260303
 // (c) 2026 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
 
@@ -95,8 +95,8 @@ class Program
         RomData ptrRom = null;
         bool blnDecodeOk = false;
         
-        Console.WriteLine("ZOSCII Decoder");
-        Console.WriteLine("(c) 2026 Cyborg Unicorn Pty Ltd v20260301 - MIT License");
+        Console.WriteLine("ZOSCII Decoder v20260303");
+        Console.WriteLine("(c) 2026 Cyborg Unicorn Pty Ltd - MIT License");
         Console.WriteLine();
 
         if (strArgs_a.Length == 3)

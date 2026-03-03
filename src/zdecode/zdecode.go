@@ -1,4 +1,4 @@
-// Cyborg ZOSCII v20260301
+// Cyborg ZOSCII v20260303
 // (c) 2026 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
 // Windows & Linux Version
@@ -25,26 +25,32 @@ func loadRom(strFilename_a string) (*RomData, error)
 {
 	var ptrRom *RomData = nil
 	var ptrFile *os.File = nil
+	var info os.FileInfo = nil
 	var err error = nil
+	var lngSize int64 = 0
 	
 	ptrFile, err = os.Open(strFilename_a)
 	if err == nil 
 	{
 		defer ptrFile.Close()
 		
-		ptrRom = &RomData{}
-		arrBuf := make([]byte, ZOSCII_ROM_LOAD_MAX)
-		var n int = 0
-		
-		n, err = io.ReadFull(ptrFile, arrBuf)
-		if err == nil || err == io.ErrUnexpectedEOF 
+		info, err = ptrFile.Stat()
+		if err == nil 
 		{
-			ptrRom.ptrROMData = arrBuf[:n]
-			ptrRom.lngROMSize = int64(len(ptrRom.ptrROMData))
-		} 
-		else 
-		{
-			ptrRom = nil
+			lngSize = info.Size()
+			if lngSize > ZOSCII_ROM_LOAD_MAX 
+			{
+				lngSize = ZOSCII_ROM_LOAD_MAX
+			}
+			
+			var arrBuf []byte = make([]byte, lngSize)
+			_, err = io.ReadFull(ptrFile, arrBuf)
+			if err == nil 
+			{
+				ptrRom = &RomData{}
+				ptrRom.ptrROMData = arrBuf
+				ptrRom.lngROMSize = lngSize
+			}
 		}
 	}
 	
@@ -119,8 +125,8 @@ func main()
 	var err error = nil
 	var blnDecodeOk bool = false
 	
-	fmt.Println("ZOSCII Decoder")
-	fmt.Println("(c) 2026 Cyborg Unicorn Pty Ltd v20260301 - MIT License\n")
+	fmt.Println("ZOSCII Decoder v20260303")
+	fmt.Println("(c) 2026 Cyborg Unicorn Pty Ltd - MIT License\n")
 
 	strArgs := os.Args
 	if len(strArgs) == 4

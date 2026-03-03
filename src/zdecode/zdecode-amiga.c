@@ -1,4 +1,4 @@
-// Cyborg ZOSCII v20260301
+// Cyborg ZOSCII v20260303
 // (c) 2026 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
 
@@ -128,8 +128,8 @@ int main(int intArgC_a, char* strArgv_a[])
     RomData* ptrRom = NULL;
     int intDecodeOk = 0;
     
-    printf("ZOSCII Decoder\n");
-    printf("(c) 2026 Cyborg Unicorn Pty Ltd v20260301 - MIT License\n\n");
+    printf("ZOSCII Decoder v20260303\n");
+    printf("(c) 2026 Cyborg Unicorn Pty Ltd - MIT License\n\n");
 
     if (intArgC_a == 4) 
     {

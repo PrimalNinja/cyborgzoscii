@@ -1,4 +1,4 @@
-// Cyborg ZOSCII v20260301
+// Cyborg ZOSCII v20260303
 // (c) 2026 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
 
@@ -203,8 +203,8 @@ class Program
         RomData ptrRom = null;
         bool blnAnalyzeOk = false;
         
-        Console.WriteLine("ZOSCII ROM Strength Analyzer");
-        Console.WriteLine("(c) 2026 Cyborg Unicorn Pty Ltd v20260301 - MIT License");
+        Console.WriteLine("ZOSCII ROM Strength Analyzer v20260303");
+        Console.WriteLine("(c) 2026 Cyborg Unicorn Pty Ltd - MIT License");
         Console.WriteLine();
 
         if (strArgs_a.Length == 2)

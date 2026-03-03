@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Cyborg ZOSCII v20260301
+# Cyborg ZOSCII v20260303
 # (c) 2026 Cyborg Unicorn Pty Ltd.
 # This software is released under MIT License.
 
@@ -81,8 +81,8 @@ def main():
     ptrRom = None
     blnDecodeOk = False
     
-    print("ZOSCII Decoder")
-    print("(c) 2026 Cyborg Unicorn Pty Ltd v20260301 - MIT License\n")
+    print("ZOSCII Decoder v20260303")
+    print("(c) 2026 Cyborg Unicorn Pty Ltd - MIT License\n")
     
     if len(sys.argv) == 4:
         ptrRom = loadRom(sys.argv[1])

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Cyborg ZOSCII v20260301
+# Cyborg ZOSCII v20260303
 # (c) 2026 Cyborg Unicorn Pty Ltd.
 # This software is released under MIT License.
 
@@ -45,6 +45,15 @@ def buildLookupTable(ptrRom_a):
         by = ptrRom_a.ptrROMData[lngI]
         ptrRom_a.arrLookup[by].ptrAddresses[ptrRom_a.arrLookup[by].intCount] = lngI
         ptrRom_a.arrLookup[by].intCount += 1
+
+    # Seed random based on ROM content
+    intRomHash = 0
+    for lngI in range(ptrRom_a.lngROMSize):
+        intRomHash = (intRomHash * 33) + ptrRom_a.ptrROMData[lngI]
+
+    intRomHash ^= int(time.time() * 1000000)
+
+    random.seed(intRomHash)
 
 def loadRom(strFilename_a):
     ptrRom = None
@@ -108,12 +117,10 @@ def main():
     ptrRom = None
     blnEncodeOk = False
     
-    print("ZOSCII Encoder")
-    print("(c) 2026 Cyborg Unicorn Pty Ltd v20260301 - MIT License\n")
+    print("ZOSCII Encoder v20260303")
+    print("(c) 2026 Cyborg Unicorn Pty Ltd - MIT License\n")
     
     if len(sys.argv) == 4:
-        random.seed()
-        
         ptrRom = loadRom(sys.argv[1])
         if ptrRom:
             blnEncodeOk = encodeFile(ptrRom, sys.argv[2], sys.argv[3])
