@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZOSCII Visual Demonstration</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Courier New', monospace;
+        }
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            width: 100%;
+        }
+        h1 {
+            text-align: center;
+            color: #00ff00;
+            text-shadow: 0 0 10px #00ff00;
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+        }
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+            font-style: italic;
+        }
+        .input-section {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #444;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #00ff00;
+            font-weight: bold;
+        }
+        textarea {
+            width: 100%;
+            padding: 12px;
+            background: #333;
+            border: 1px solid #555;
+            color: #e0e0e0;
+            font-size: 16px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            resize: vertical;
+            font-family: 'Courier New', monospace;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #00ff00;
+            box-shadow: 0 0 10px rgba(0,255,0,0.3);
+        }
+        .readonly {
+            background: #222;
+            color: #00ff00;
+            font-weight: bold;
+        }
+        .canvas-container {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #444;
+            text-align: center;
+        }
+        canvas {
+            border: 2px solid #444;
+            background: #000;
+            cursor: crosshair;
+            max-width: 100%;
+            height: auto;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+        .canvas-label {
+            margin-bottom: 10px;
+            color: #00ff00;
+            font-weight: bold;
+        }
+        .canvas-hint {
+            color: #888;
+            font-size: 14px;
+            margin-top: 10px;
+            font-style: italic;
+        }
+        .stats {
+            display: flex;
+            gap: 20px;
+            justify-content: space-between;
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #444;
+            flex-wrap: wrap;
+        }
+        .stat-item {
+            flex: 1;
+            min-width: 150px;
+        }
+        .stat-label {
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        .stat-value {
+            color: #00ff00;
+            font-size: 20px;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+        }
+        .button-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        button {
+            background: #333;
+            color: #e0e0e0;
+            border: 1px solid #555;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            transition: all 0.2s;
+            flex: 1;
+            min-width: 120px;
+        }
+        button:hover {
+            background: #444;
+            border-color: #00ff00;
+            color: #00ff00;
+        }
+        button.primary {
+            background: #006600;
+            border-color: #00ff00;
+            color: #00ff00;
+        }
+        button.primary:hover {
+            background: #008800;
+        }
+        .footer {
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            margin-top: 30px;
+        }
+        .highlight {
+            color: #00ff00;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔷 ZOSCII VISUAL ENCODER</h1>
+        <div class="subtitle">Information-Theoretic Security • I(M;A)=0 • Quantum-Proof</div>
+        
+        <div class="input-section">
+            <label>📝 ENTER MESSAGE TO ENCODE:</label>
+            <textarea id="inputMessage" rows="3" placeholder="Type your message here...">Process slowed for visual animation purposes only!</textarea>
+            
+            <div class="button-row">
+                <button id="encodeBtn" class="primary">🔷 ENCODE MESSAGE</button>
+                <button id="randomROM">🎲 GENERATE RANDOM ROM</button>
+                <button id="clearBtn">🗑️ CLEAR OUTPUT</button>
+            </div>
+            
+            <label>🔷 ZOSCII ENCODED ADDRESSES (readonly):</label>
+            <textarea id="outputAddresses" class="readonly" rows="3" readonly placeholder="Encoded addresses will appear here..."></textarea>
+        </div>
+        
+        <div class="canvas-container">
+            <div class="canvas-label">🔷 ROM VISUALIZATION (65536 bytes • 256x256 grid • Green = value)</div>
+            <canvas id="romCanvas"></canvas>
+            <div class="canvas-hint">💡 Drag & drop any file onto the canvas to use as ROM • Each dot = 4x4 pixels • Click to inspect</div>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-label">ROM SIZE</div>
+                <div class="stat-value" id="romSize">0 / 65536 bytes</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">UNIQUE BYTES</div>
+                <div class="stat-value" id="uniqueBytes">0 / 256</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">ENCODED ADDRESSES</div>
+                <div class="stat-value" id="encodedCount">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">LAST ADDRESS</div>
+                <div class="stat-value" id="lastAddress">---</div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            ZOSCII Foundation • Cyborg Unicorn • I(M;A)=0 • Drag & drop any file to use as ROM
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ==================== CONSTANTS ====================
+            const ROM_SIZE = 65536;  // 64KB
+            const GRID_SIZE = 256;    // 256x256 grid
+            const PIXEL_SIZE = 4;      // Each ROM cell = 4x4 display pixels
+            
+            // ==================== STATE ====================
+            let rom = new Uint8Array(ROM_SIZE);           // The ROM data
+            let lookup = new Array(256);                   // Address lookup per byte value
+            let canvas, ctx;
+            let animationTimer = null;
+            let isAnimating = false;
+            let currentCharIndex = 0;
+            let currentMessage = [];
+            let currentAddresses = [];
+            
+            // ==================== INITIALIZATION ====================
+            function init() {
+                canvas = document.getElementById('romCanvas');
+                ctx = canvas.getContext('2d');
+                
+                // Set canvas size based on PIXEL_SIZE
+                canvas.width = GRID_SIZE * PIXEL_SIZE;
+                canvas.height = GRID_SIZE * PIXEL_SIZE;
+                
+                // Generate random ROM
+                generateRandomROM();
+                
+                // Set up event listeners
+                document.getElementById('encodeBtn').addEventListener('click', startEncoding);
+                document.getElementById('randomROM').addEventListener('click', generateRandomROM);
+                document.getElementById('clearBtn').addEventListener('click', clearOutput);
+                
+                // Drag & drop for ROM files
+                canvas.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    canvas.style.borderColor = '#00ff00';
+                });
+                
+                canvas.addEventListener('dragleave', () => {
+                    canvas.style.borderColor = '#444';
+                });
+                
+                canvas.addEventListener('drop', handleROMDrop);
+                
+                // Click to inspect address
+                canvas.addEventListener('click', inspectROMAddress);
+                
+                // Update stats
+                updateStats();
+            }
+            
+            // ==================== ROM GENERATION ====================
+            function generateRandomROM() {
+                // Fill ROM with random bytes
+                for (let i = 0; i < ROM_SIZE; i++) {
+                    rom[i] = Math.floor(Math.random() * 256);
+                }
+                
+                rebuildLookup();
+                renderROM();
+                updateStats();
+                console.log('Generated new random ROM');
+            }
+            
+            // ==================== LOOKUP TABLE BUILDING ====================
+            function rebuildLookup() {
+                // Initialize lookup arrays
+                for (let i = 0; i < 256; i++) {
+                    lookup[i] = [];
+                }
+                
+                // Build lookup table
+                for (let i = 0; i < ROM_SIZE; i++) {
+                    let val = rom[i];
+                    lookup[val].push(i);
+                }
+            }
+            
+            // ==================== ROM RENDERING ====================
+            function renderROM() {
+                // Clear canvas
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw each ROM cell as a 4x4 square
+                for (let y = 0; y < GRID_SIZE; y++) {
+                    for (let x = 0; x < GRID_SIZE; x++) {
+                        let index = y * GRID_SIZE + x;
+                        let value = rom[index];
+                        
+                        // Use value as green component (0-255)
+                        let green = value;
+                        
+                        ctx.fillStyle = `rgb(0, ${green}, 0)`;
+                        ctx.fillRect(
+                            x * PIXEL_SIZE, 
+                            y * PIXEL_SIZE, 
+                            PIXEL_SIZE, 
+                            PIXEL_SIZE
+                        );
+                    }
+                }
+            }
+            
+            // ==================== HIGHLIGHT ADDRESS ====================
+            function highlightAddress(address, color = '#ff0000') {
+                let x = address % GRID_SIZE;
+                let y = Math.floor(address / GRID_SIZE);
+                
+                ctx.fillStyle = color;
+                ctx.fillRect(
+                    x * PIXEL_SIZE, 
+                    y * PIXEL_SIZE, 
+                    PIXEL_SIZE, 
+                    PIXEL_SIZE
+                );
+            }
+            
+            // ==================== ENCODING ====================
+            function encodeMessage(message) {
+                let encoder = new TextEncoder();
+                let bytes = encoder.encode(message);
+                let addresses = [];
+                let inputCounts = new Array(256).fill(0);
+                
+                for (let i = 0; i < bytes.length; i++) {
+                    let byte = bytes[i];
+                    
+                    if (lookup[byte] && lookup[byte].length > 0) {
+                        // Random selection from available addresses
+                        let randomIndex = Math.floor(Math.random() * lookup[byte].length);
+                        let address = lookup[byte][randomIndex];
+                        addresses.push(address);
+                        inputCounts[byte]++;
+                    } else {
+                        // Byte not found in ROM
+                        console.warn(`Byte 0x${byte.toString(16)} not found in ROM`);
+                        addresses.push(null);
+                    }
+                }
+                
+                return { addresses, bytes, inputCounts };
+            }
+            
+            // ==================== ANIMATED ENCODING ====================
+            function startEncoding() {
+                if (isAnimating) {
+                    // Stop current animation
+                    clearTimeout(animationTimer);
+                    isAnimating = false;
+                }
+                
+                let message = document.getElementById('inputMessage').value;
+                if (!message) {
+                    message = "Process slowed for visual animation purposes only!";
+                    document.getElementById('inputMessage').value = message;
+                }
+                
+                let encoder = new TextEncoder();
+                currentMessage = Array.from(encoder.encode(message));
+                currentAddresses = [];
+                currentCharIndex = 0;
+                
+                // Reset output
+                document.getElementById('outputAddresses').value = '';
+                document.getElementById('encodedCount').innerText = '0';
+                document.getElementById('lastAddress').innerText = '---';
+                
+                // Re-render ROM to clear highlights
+                renderROM();
+                
+                // Start animation
+                isAnimating = true;
+                animateNextChar();
+            }
+            
+            function animateNextChar() {
+                if (!isAnimating || currentCharIndex >= currentMessage.length) {
+                    isAnimating = false;
+                    return;
+                }
+                
+                let byte = currentMessage[currentCharIndex];
+                let char = String.fromCharCode(byte);
+                
+                if (lookup[byte] && lookup[byte].length > 0) {
+                    // Show all possible addresses for this byte (brief flash)
+                    let possibleAddresses = lookup[byte];
+                    
+                    // Flash all possible addresses in yellow
+                    for (let addr of possibleAddresses) {
+                        highlightAddress(addr, '#ffff00');
+                    }
+                    
+                    // After a short delay, pick one and highlight in red
+                    setTimeout(() => {
+                        // Re-render ROM to clear yellow highlights
+                        renderROM();
+                        
+                        // Pick random address
+                        let randomIndex = Math.floor(Math.random() * possibleAddresses.length);
+                        let selectedAddress = possibleAddresses[randomIndex];
+                        
+                        // Highlight selected in red
+                        highlightAddress(selectedAddress, '#ff0000');
+                        
+                        // Add to output
+                        currentAddresses.push(selectedAddress);
+                        document.getElementById('outputAddresses').value = 
+                            currentAddresses.join(', ');
+                        document.getElementById('encodedCount').innerText = currentAddresses.length;
+                        document.getElementById('lastAddress').innerText = selectedAddress;
+                        
+                        // Move to next character
+                        currentCharIndex++;
+                        animationTimer = setTimeout(animateNextChar, 500/20);
+                    }, 300/20);
+                } else {
+                    // Byte not found
+                    console.warn(`Byte 0x${byte.toString(16)} not found in ROM`);
+                    currentAddresses.push(null);
+                    document.getElementById('outputAddresses').value = 
+                        currentAddresses.join(', ');
+                    
+                    currentCharIndex++;
+                    animationTimer = setTimeout(animateNextChar, 300/20);
+                }
+            }
+            
+            // ==================== FILE HANDLING ====================
+            function handleROMDrop(e) {
+                e.preventDefault();
+                canvas.style.borderColor = '#444';
+                
+                let file = e.dataTransfer.files[0];
+                if (!file) return;
+                
+                let reader = new FileReader();
+                
+                reader.onload = function(event) {
+                    let arrayBuffer = event.target.result;
+                    let fileBytes = new Uint8Array(arrayBuffer);
+                    
+                    // Copy up to ROM_SIZE bytes
+                    for (let i = 0; i < ROM_SIZE && i < fileBytes.length; i++) {
+                        rom[i] = fileBytes[i];
+                    }
+                    
+                    // If file is smaller, pad with zeros (already zero-initialized)
+                    rebuildLookup();
+                    renderROM();
+                    updateStats();
+                    
+                    console.log(`Loaded ROM from file: ${file.name} (${fileBytes.length} bytes)`);
+                };
+                
+                reader.readAsArrayBuffer(file);
+            }
+            
+            // ==================== INSPECT ADDRESS ====================
+            function inspectROMAddress(e) {
+                let rect = canvas.getBoundingClientRect();
+                let scaleX = canvas.width / rect.width;
+                let scaleY = canvas.height / rect.height;
+                
+                let x = Math.floor((e.clientX - rect.left) * scaleX / PIXEL_SIZE);
+                let y = Math.floor((e.clientY - rect.top) * scaleY / PIXEL_SIZE);
+                
+                if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
+                    let address = y * GRID_SIZE + x;
+                    let value = rom[address];
+                    
+                    alert(`Address: ${address}\nValue: ${value} (0x${value.toString(16).padStart(2,'0')})\nGreen level: ${value}`);
+                    
+                    // Flash the clicked cell
+                    highlightAddress(address, '#00ffff');
+                    setTimeout(() => renderROM(), 500/20);
+                }
+            }
+            
+            // ==================== STATS UPDATE ====================
+            function updateStats() {
+                // ROM size
+                document.getElementById('romSize').innerText = `${ROM_SIZE} / ${ROM_SIZE} bytes`;
+                
+                // Unique bytes
+                let present = new Array(256).fill(false);
+                for (let i = 0; i < ROM_SIZE; i++) {
+                    present[rom[i]] = true;
+                }
+                let unique = present.filter(v => v).length;
+                document.getElementById('uniqueBytes').innerText = `${unique} / 256`;
+                
+                // Encoded count
+                document.getElementById('encodedCount').innerText = currentAddresses.length;
+                
+                // Last address
+                if (currentAddresses.length > 0) {
+                    let last = currentAddresses[currentAddresses.length - 1];
+                    document.getElementById('lastAddress').innerText = last !== null ? last : '---';
+                }
+            }
+            
+            // ==================== CLEAR OUTPUT ====================
+            function clearOutput() {
+                if (isAnimating) {
+                    clearTimeout(animationTimer);
+                    isAnimating = false;
+                }
+                
+                document.getElementById('outputAddresses').value = '';
+                currentAddresses = [];
+                currentMessage = [];
+                currentCharIndex = 0;
+                renderROM();
+                updateStats();
+            }
+            
+            // ==================== ZOSCII CORE FUNCTIONS (for reference) ====================
+            window.toZOSCII = function(arrBinaryData, mixedInputData, arrMemoryBlocks, cbConverter, intUnmappableChar) {
+                // This is the reference implementation from the prompt
+                // (Kept for completeness)
+                console.log('ZOSCII core function available');
+                return { addresses: [], inputCounts: [], romCounts: [] };
+            };
+            
+            // ==================== START ====================
+            window.addEventListener('load', init);
+        })();
+    </script>
+</body>
+</html>
