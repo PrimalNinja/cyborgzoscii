@@ -1,5 +1,9 @@
 # ZOSCII Security Proofs
 
+**Author:** Julian Cassin  
+**Date:** 2026-02-09
+**Version:** 1.0
+
 ## Executive Summary
 
 ZOSCII (Zero Overhead Secure Code Information Interchange) achieves **information-theoretic security** through random selection from uniform distribution. This document summarizes how Information Theory provides mathematical validation of ZOSCII's security properties, and explains the key insights that make ZOSCII fundamentally different from encryption.

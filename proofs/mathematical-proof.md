@@ -1,5 +1,9 @@
 # ZOSCII Mathematical Proof for I(M; A)=0
 
+**Author:** Julian Cassin  
+**Date:** 2026-02-09
+**Version:** 1.0
+
 ## What does I(M; A)=0 mean?
 
 In information theory terms:
