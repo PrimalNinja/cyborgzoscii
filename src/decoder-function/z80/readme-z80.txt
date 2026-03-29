@@ -94,7 +94,7 @@ loop:	pop hl		; hl = start of string
 		or l
 		jr z, loope
 		ld a, (hl)
-		call char_out
+		;call char_out goes here
 		jr loop
 		
 loope:	ret		
