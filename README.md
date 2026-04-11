@@ -22,6 +22,7 @@ CyborgZOSCII is an alternative to ASCII/PETSCII that uses direct ROM addressing 
 - ZOSCII CHAT, secure chat client and server
 - ZOSCII MQ, message queue system for ZOSCII with replication and tools
 - ZOSCII TRUMPETBLOWER, publicly open secure whistleblower platform
+- ZOSCII TRUMPETBLOWER MQ, publicly open secure whistleblower platform (for ZOSCII MQ)
 
 ## Browser Tools
 
