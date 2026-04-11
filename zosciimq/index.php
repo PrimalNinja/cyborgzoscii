@@ -12,7 +12,7 @@
 define('ALLOW_FETCH', 'TRUE');
 define('ALLOW_GET', 'FALSE');
 define('ALLOW_IDENTIFY', 'FALSE');
-define('ALLOW_PUBLISH', 'FALSE');
+define('ALLOW_PUBLISH', 'TRUE');
 define('ALLOW_RETRIEVE', 'FALSE');
 define('ALLOW_SCAN', 'FALSE');
 define('ALLOW_STORE', 'FALSE');
@@ -161,7 +161,7 @@ function handleFetch($strQueueName_a, $strAfterName_a, $intOffset_a, $intLength_
 					$strNextMessagePath = $strFullPath;
 					break;
 				}
-				if ($strName === $strAfterName_a) 
+				if ($strName >= $strAfterName_a) 
 				{
 					// Found the pointer; the next iteration's file will be the message to return.
 					$blnFoundAfter = true;
