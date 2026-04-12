@@ -575,7 +575,14 @@ switch ($strAction)
 	case 'publish':
 		if (ALLOW_PUBLISH === 'TRUE')
 		{
-			handlePublish($strQueueName, $strNonce, $intRetentionDays, $binMessage);
+			if (in_array($strQueueName, $arrPublishBlocks))
+			{
+				sendJSONResponse("", "Invalid action '" . $strAction . "' for provided queue.", "", []);
+			}
+			else
+			{
+				handlePublish($strQueueName, $strNonce, $intRetentionDays, $binMessage);
+			}
 		}
 		break;
 		

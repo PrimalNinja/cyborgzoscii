@@ -51,6 +51,9 @@ namespace CyborgUnicorn.ZosciiMQ
         public const bool ALLOW_STORE = false;
         
         public const string FILE_ERRORLOG = "./zosciimq.log";
+    
+		// Blocked channels (cannot publish)
+		public static readonly string[] PUBLISH_BLOCKS = new string[] { "cyborgunicorn" };
     }
     
     public class Utils
@@ -506,7 +509,14 @@ namespace CyborgUnicorn.ZosciiMQ
         public static void HandlePublish(HttpListenerResponse response, string strQueueName, string strNonce, 
                                         int intRetentionDays, byte[] binMessage)
         {
-            // Format RRRR, e.g., 3 becomes 0003
+			// Check if channel is blocked
+			if (Config.PUBLISH_BLOCKS.Contains(strQueueName))
+			{
+				Utils.SendJSONResponse(response, "", $"Invalid action 'publish' for provided queue.", "", new object[0]);
+				return;
+			}
+			
+			// Format RRRR, e.g., 3 becomes 0003
             string strRetentionDays = intRetentionDays.ToString("D4");
             
             if (binMessage == null || binMessage.Length == 0)

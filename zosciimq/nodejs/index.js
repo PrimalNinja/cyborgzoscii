@@ -23,6 +23,9 @@ const rename = promisify(fs.rename);
 const CONFIG = {
     DEBUG: false,
     LOG_OUTPUT: false,
+
+	// Blocked channels (cannot publish)
+    PUBLISH_BLOCKS: ['cyborgunicorn'],
     
     LOCAL_URL: 'http://localhost/zosciimq/index.php',
     FOLDER_PERMISSIONS: 0o755,
@@ -734,9 +737,13 @@ async function handleRequest(req, res) {
             break;
             
         case 'publish':
-            if (CONFIG.ALLOW_PUBLISH) {
-                await Handlers.handlePublish(res, strQueueName, strNonce, intRetentionDays, binMessage);
-            }
+			if (CONFIG.ALLOW_PUBLISH) {
+				if (CONFIG.PUBLISH_BLOCKS.includes(strQueueName)) {
+					Utils.sendJSONResponse(res, "", "Invalid action '" + strAction + "' for provided queue.", "", []);
+				} else {
+					await Handlers.handlePublish(res, strQueueName, strNonce, intRetentionDays, binMessage);
+				}
+			}
             break;
             
         case 'retrieve':

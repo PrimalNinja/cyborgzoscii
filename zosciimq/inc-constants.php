@@ -18,3 +18,5 @@ define('LOCK_TIMEFRAME', 5);	// in seconds to keep the lock
 
 define('NONCE_TIMEFRAME', 5);	// minimum minutes to keep NONCE
 
+// list of channels blocked from publishing
+$arrPublishBlocks = ['cyborgunicorn'];
