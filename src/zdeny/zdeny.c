@@ -28,9 +28,9 @@ typedef struct
 
 static bool loadMessageFile(const char* strFilename_a, uint8_t** ptrMessageOut_a, int* intLengthOut_a)
 {
-    FILE* ptrFile = NULL;
+    long intSize = 0;
     uint8_t* ptrBuffer = NULL;
-    long lngSize = 0;
+    FILE* ptrFile = NULL;
     
     ptrFile = fopen(strFilename_a, "rb");
     if (!ptrFile)
@@ -40,17 +40,17 @@ static bool loadMessageFile(const char* strFilename_a, uint8_t** ptrMessageOut_a
     }
     
     fseek(ptrFile, 0, SEEK_END);
-    lngSize = ftell(ptrFile);
+    intSize = ftell(ptrFile);
     fseek(ptrFile, 0, SEEK_SET);
     
-    if (lngSize <= 0)
+    if (intSize <= 0)
     {
         fprintf(stderr, "Error: Message file is empty\n");
         fclose(ptrFile);
         return false;
     }
     
-    ptrBuffer = (uint8_t*)malloc(lngSize);
+    ptrBuffer = (uint8_t*)malloc(intSize);
     if (!ptrBuffer)
     {
         fprintf(stderr, "Error: Failed to allocate memory for message\n");
@@ -58,35 +58,35 @@ static bool loadMessageFile(const char* strFilename_a, uint8_t** ptrMessageOut_a
         return false;
     }
     
-    fread(ptrBuffer, 1, lngSize, ptrFile);
+    fread(ptrBuffer, 1, intSize, ptrFile);
     fclose(ptrFile);
     
     *ptrMessageOut_a = ptrBuffer;
-    *intLengthOut_a = (int)lngSize;
+    *intLengthOut_a = (int)intSize;
     
     return true;
 }
 
-static bool createDeniabilityRom(const char* strTemplateRom_a,
+static bool createDeniabilityROM(const char* strTemplateROM_a,
                                   const char* strEncodedFile_a,
                                   const char* strMessageFile_a,
-                                  const char* strOutputRom_a)
+                                  const char* strOutputROM_a)
 {
-    bool blnSuccess = false;
-    FILE* ptrEncoded = NULL;
-    FILE* ptrTemplate = NULL;
-    FILE* ptrOutput = NULL;
-    uint8_t* ptrRom = NULL;
-    uint8_t* ptrMessage = NULL;
-    AddressMapping* arrMapping = NULL;
     uint16_t* arrAddresses = NULL;
-    long lngEncodedSize = 0;
-    long lngTemplateSize = 0;
+    AddressMapping* arrMapping = NULL;
+    bool blnSuccess = false;
     int intAddressCount = 0;
+    int intConflicts = 0;
+    long intEncodedSize = 0;
+    int intI = 0;
     int intMsgLen = 0;
     int intMapped = 0;
-    int intConflicts = 0;
-    int intI = 0;
+    long intTemplateSize = 0;
+    FILE* ptrEncoded = NULL;
+    uint8_t* ptrMessage = NULL;
+    FILE* ptrOutput = NULL;
+    uint8_t* ptrROMData = NULL;
+    FILE* ptrTemplate = NULL;
     
     // Load the desired message from file
     if (!loadMessageFile(strMessageFile_a, &ptrMessage, &intMsgLen))
@@ -97,7 +97,7 @@ static bool createDeniabilityRom(const char* strTemplateRom_a,
     printf("Loaded message: %d bytes from %s\n", intMsgLen, strMessageFile_a);
     
     // Open template ROM (real image file)
-    ptrTemplate = fopen(strTemplateRom_a, "rb");
+    ptrTemplate = fopen(strTemplateROM_a, "rb");
     if (!ptrTemplate)
     {
         perror("Failed to open template ROM");
@@ -107,14 +107,14 @@ static bool createDeniabilityRom(const char* strTemplateRom_a,
     
     // Get template size
     fseek(ptrTemplate, 0, SEEK_END);
-    lngTemplateSize = ftell(ptrTemplate);
+    intTemplateSize = ftell(ptrTemplate);
     fseek(ptrTemplate, 0, SEEK_SET);
     
-    printf("Template ROM: %s (%ld bytes)\n", strTemplateRom_a, lngTemplateSize);
+    printf("Template ROM: %s (%ld bytes)\n", strTemplateROM_a, intTemplateSize);
     
     // Allocate ROM (64KB)
-    ptrRom = (uint8_t*)malloc(ZOSCII_ROM_SIZE);
-    if (!ptrRom)
+    ptrROMData = (uint8_t*)malloc(ZOSCII_ROM_SIZE);
+    if (!ptrROMData)
     {
         fprintf(stderr, "Error: Failed to allocate memory for ROM\n");
         fclose(ptrTemplate);
@@ -123,7 +123,7 @@ static bool createDeniabilityRom(const char* strTemplateRom_a,
     }
     
     // Copy template ROM into our ROM buffer (up to 64KB)
-    size_t szRead = fread(ptrRom, 1, ZOSCII_ROM_SIZE, ptrTemplate);
+    size_t szRead = fread(ptrROMData, 1, ZOSCII_ROM_SIZE, ptrTemplate);
     fclose(ptrTemplate);
     
     // If template is smaller than 64KB, pad by repeating the pattern
@@ -132,7 +132,7 @@ static bool createDeniabilityRom(const char* strTemplateRom_a,
         printf("Template smaller than 64KB (%zu bytes), repeating pattern for padding\n", szRead);
         for (size_t i = szRead; i < ZOSCII_ROM_SIZE; i++)
         {
-            ptrRom[i] = ptrRom[i % szRead];
+            ptrROMData[i] = ptrROMData[i % szRead];
         }
     }
     
@@ -141,28 +141,28 @@ static bool createDeniabilityRom(const char* strTemplateRom_a,
     if (!ptrEncoded)
     {
         perror("Failed to open encoded file");
-        free(ptrRom);
+        free(ptrROMData);
         free(ptrMessage);
         return false;
     }
     
     // Get encoded file size and calculate number of addresses
     fseek(ptrEncoded, 0, SEEK_END);
-    lngEncodedSize = ftell(ptrEncoded);
+    intEncodedSize = ftell(ptrEncoded);
     fseek(ptrEncoded, 0, SEEK_SET);
     
     // Each address is 2 bytes (16-bit)
-    intAddressCount = (int)(lngEncodedSize / 2);
+    intAddressCount = (int)(intEncodedSize / 2);
     if (intAddressCount <= 0)
     {
         fprintf(stderr, "Error: Encoded file is empty or corrupt\n");
         fclose(ptrEncoded);
-        free(ptrRom);
+        free(ptrROMData);
         free(ptrMessage);
         return false;
     }
     
-    printf("Encoded file: %s (%ld bytes, %d addresses)\n", strEncodedFile_a, lngEncodedSize, intAddressCount);
+    printf("Encoded file: %s (%ld bytes, %d addresses)\n", strEncodedFile_a, intEncodedSize, intAddressCount);
     
     // Allocate memory for addresses
     arrAddresses = (uint16_t*)malloc(intAddressCount * sizeof(uint16_t));
@@ -170,7 +170,7 @@ static bool createDeniabilityRom(const char* strTemplateRom_a,
     {
         fprintf(stderr, "Error: Failed to allocate memory for addresses\n");
         fclose(ptrEncoded);
-        free(ptrRom);
+        free(ptrROMData);
         free(ptrMessage);
         return false;
     }
@@ -184,7 +184,7 @@ static bool createDeniabilityRom(const char* strTemplateRom_a,
         {
             fprintf(stderr, "Error: Failed to read address %d\n", intI);
             free(arrAddresses);
-            free(ptrRom);
+            free(ptrROMData);
             free(ptrMessage);
             fclose(ptrEncoded);
             return false;
@@ -207,7 +207,7 @@ static bool createDeniabilityRom(const char* strTemplateRom_a,
     {
         fprintf(stderr, "Error: Failed to allocate mapping table\n");
         free(arrAddresses);
-        free(ptrRom);
+        free(ptrROMData);
         free(ptrMessage);
         return false;
     }
@@ -248,7 +248,7 @@ static bool createDeniabilityRom(const char* strTemplateRom_a,
         }
         else
         {
-            ptrRom[intAddr] = byDesired;
+            ptrROMData[intAddr] = byDesired;
             arrMapping[intAddr].blnSet = true;
             arrMapping[intAddr].byValue = byDesired;
             intMapped++;
@@ -256,28 +256,28 @@ static bool createDeniabilityRom(const char* strTemplateRom_a,
     }
     
     // Write ROM to output file
-    ptrOutput = fopen(strOutputRom_a, "wb");
+    ptrOutput = fopen(strOutputROM_a, "wb");
     if (!ptrOutput)
     {
         perror("Failed to create output ROM file");
-        free(ptrRom);
+        free(ptrROMData);
         free(arrAddresses);
         free(ptrMessage);
         free(arrMapping);
         return false;
     }
     
-    fwrite(ptrRom, 1, ZOSCII_ROM_SIZE, ptrOutput);
+    fwrite(ptrROMData, 1, ZOSCII_ROM_SIZE, ptrOutput);
     fclose(ptrOutput);
     
     // Report statistics
     printf("\n");
     printf("ZOSCII Plausible Deniability ROM Created\n");
     printf("=========================================\n");
-    printf("Template ROM:      %s\n", strTemplateRom_a);
+    printf("Template ROM:      %s\n", strTemplateROM_a);
     printf("Encoded file:      %s\n", strEncodedFile_a);
     printf("Message file:      %s (%d bytes)\n", strMessageFile_a, intMsgLen);
-    printf("Output ROM:        %s\n", strOutputRom_a);
+    printf("Output ROM:        %s\n", strOutputROM_a);
     printf("ROM size:          %d bytes (64KB)\n", ZOSCII_ROM_SIZE);
     printf("Addresses mapped:  %d\n", intMapped);
     printf("Conflicts skipped: %d\n", intConflicts);
@@ -290,16 +290,16 @@ static bool createDeniabilityRom(const char* strTemplateRom_a,
     }
     
     printf("\nVerification:\n");
-    printf("  zdecode \"%s\" \"%s\" > decoded.txt\n", strOutputRom_a, strEncodedFile_a);
+    printf("  zdecode \"%s\" \"%s\" > decoded.txt\n", strOutputROM_a, strEncodedFile_a);
     printf("\n");
     printf("Security Note:\n");
-    printf("  This ROM is based on a real image (%s).\n", strTemplateRom_a);
+    printf("  This ROM is based on a real image (%s).\n", strTemplateROM_a);
     printf("  Only %d bytes were changed. The rest is identical to the original photo.\n", intMapped);
     printf("  Forensic analysis cannot distinguish this from a genuine ROM.\n");
     
     blnSuccess = true;
     
-    free(ptrRom);
+    free(ptrROMData);
     free(arrAddresses);
     free(ptrMessage);
     free(arrMapping);
@@ -309,8 +309,8 @@ static bool createDeniabilityRom(const char* strTemplateRom_a,
 
 int main(int intArgC_a, char* strArgv_a[])
 {
-    int intResult = 1;
     bool blnOk = false;
+    int intResult = 1;
     
 #ifdef _WIN32
     _setmode(_fileno(stdin), _O_BINARY);
@@ -323,7 +323,7 @@ int main(int intArgC_a, char* strArgv_a[])
 
     if (intArgC_a == 5)
     {
-        blnOk = createDeniabilityRom(strArgv_a[1], strArgv_a[2], strArgv_a[3], strArgv_a[4]);
+        blnOk = createDeniabilityROM(strArgv_a[1], strArgv_a[2], strArgv_a[3], strArgv_a[4]);
         
         if (blnOk)
         {

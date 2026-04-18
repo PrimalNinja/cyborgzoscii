@@ -1,4 +1,4 @@
-// Cyborg ZOSCII v20260303
+// Cyborg ZOSCII v20260418
 // (c) 2026 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
 
@@ -27,7 +27,7 @@ typedef struct
     long lngROMSize;
     uint32_t arrROMCounts[256];
     uint32_t arrROMCountsHigh[256];
-} RomData;
+} ROMData;
 
 #define ZOSCII_ROM_LOAD_MAX 131072L
 
@@ -67,88 +67,89 @@ static void printLargeNumber(double dblExponent_a)
     }
 }
 
-static RomData* loadRom(const char* strFilename_a)
+static ROMData* loadROM(const char* strFilename_a)
 {
-    RomData* ptrRom = NULL;
-    FILE* ptrROM = NULL;
+    ROMData* ptrROMData = NULL;
+    FILE* ptrROMFile = NULL;
     
-    ptrRom = (RomData*)malloc(sizeof(RomData));
-    if (ptrRom)
+    ptrROMData = (ROMData*)malloc(sizeof(ROMData));
+    if (ptrROMData)
     {
         // Initialize
-        memset(ptrRom, 0, sizeof(RomData));
+        memset(ptrROMData, 0, sizeof(ROMData));
         
-        ptrROM = fopen(strFilename_a, "rb");
-        if (ptrROM)
+        ptrROMFile = fopen(strFilename_a, "rb");
+        if (ptrROMFile)
         {
-            fseek(ptrROM, 0, SEEK_END);
-            ptrRom->lngROMSize = ftell(ptrROM);
-            fseek(ptrROM, 0, SEEK_SET);
+            fseek(ptrROMFile, 0, SEEK_END);
+            ptrROMData->lngROMSize = ftell(ptrROMFile);
+            fseek(ptrROMFile, 0, SEEK_SET);
             
-            if (ptrRom->lngROMSize > ZOSCII_ROM_LOAD_MAX)
+            if (ptrROMData->lngROMSize > ZOSCII_ROM_LOAD_MAX)
             {
-                ptrRom->lngROMSize = ZOSCII_ROM_LOAD_MAX;
+                ptrROMData->lngROMSize = ZOSCII_ROM_LOAD_MAX;
             }
             
-            ptrRom->ptrROMData = (uint8_t*)malloc(ptrRom->lngROMSize);
-            if (ptrRom->ptrROMData)
+            ptrROMData->ptrROMData = (uint8_t*)malloc(ptrROMData->lngROMSize);
+            if (ptrROMData->ptrROMData)
             {
-                fread(ptrRom->ptrROMData, 1, ptrRom->lngROMSize, ptrROM);
+                fread(ptrROMData->ptrROMData, 1, ptrROMData->lngROMSize, ptrROMFile);
                 
                 // Count ROM byte occurrences - first 64KB (encoding range)
-                long lngLowSize = (ptrRom->lngROMSize > 65536L) ? 65536L : ptrRom->lngROMSize;
+                long lngLowSize = (ptrROMData->lngROMSize > 65536L) ? 65536L : ptrROMData->lngROMSize;
                 for (long lngI = 0; lngI < lngLowSize; lngI++)
                 {
-                    ptrRom->arrROMCounts[ptrRom->ptrROMData[lngI]]++;
+                    ptrROMData->arrROMCounts[ptrROMData->ptrROMData[lngI]]++;
                 }
                 
                 // Count ROM byte occurrences - second 64KB (if present)
-                for (long lngI = 65536L; lngI < ptrRom->lngROMSize; lngI++)
+                for (long lngI = 65536L; lngI < ptrROMData->lngROMSize; lngI++)
                 {
-                    ptrRom->arrROMCountsHigh[ptrRom->ptrROMData[lngI]]++;
+                    ptrROMData->arrROMCountsHigh[ptrROMData->ptrROMData[lngI]]++;
                 }
             }
             else
             {
-                free(ptrRom);
-                ptrRom = NULL;
+                free(ptrROMData);
+                ptrROMData = NULL;
             }
             
-            fclose(ptrROM);
+            fclose(ptrROMFile);
         }
         else
         {
-            free(ptrRom);
-            ptrRom = NULL;
+            free(ptrROMData);
+            ptrROMData = NULL;
         }
     }
     
-    return ptrRom;
+    return ptrROMData;
 }
 
-static void unloadRom(RomData* ptrRom_a)
+static void unloadROM(ROMData* ptrROMData_a)
 {
-    if (ptrRom_a)
+    if (ptrROMData_a)
     {
-        if (ptrRom_a->ptrROMData)
+        if (ptrROMData_a->ptrROMData)
         {
-            free(ptrRom_a->ptrROMData);
+            free(ptrROMData_a->ptrROMData);
         }
-        free(ptrRom_a);
+        
+        free(ptrROMData_a);
     }
 }
 
-static bool analyzeFile(const RomData* ptrRom_a, const char* strInputFile_a)
+static bool analyzeFile(const ROMData* ptrROMData_a, const char* strInputFile_a)
 {
-    bool blnSuccess = false;
-    FILE* ptrInput = NULL;
     uint32_t arrInputCounts[256] = {0};
-    int intInputLength = 0;
-    int intCharsUsed = 0;
-    int intCh = 0;
-    double dblGeneralStrength = 0.0;
+    bool blnSuccess = false;
     double dblFileStrength = 0.0;
+    double dblGeneralStrength = 0.0;
     double dblUtilisation = 0.0;
+    int intCh = 0;
+    int intCharsUsed = 0;
+    int intInputLength = 0;
+    FILE* ptrInput = NULL;
     
     ptrInput = fopen(strInputFile_a, "rb");
     if (ptrInput)
@@ -174,13 +175,13 @@ static bool analyzeFile(const RomData* ptrRom_a, const char* strInputFile_a)
         // Calculate ROM strength metrics
         for (int intI = 0; intI < 256; intI++)
         {
-            if (ptrRom_a->arrROMCounts[intI] > 0)
+            if (ptrROMData_a->arrROMCounts[intI] > 0)
             {
-                dblGeneralStrength += log10(ptrRom_a->arrROMCounts[intI]);
+                dblGeneralStrength += log10(ptrROMData_a->arrROMCounts[intI]);
             }
-            if (arrInputCounts[intI] > 0 && ptrRom_a->arrROMCounts[intI] > 0)
+            if (arrInputCounts[intI] > 0 && ptrROMData_a->arrROMCounts[intI] > 0)
             {
-                dblFileStrength += arrInputCounts[intI] * log10(ptrRom_a->arrROMCounts[intI]);
+                dblFileStrength += arrInputCounts[intI] * log10(ptrROMData_a->arrROMCounts[intI]);
             }
         }
         
@@ -208,11 +209,11 @@ static bool analyzeFile(const RomData* ptrRom_a, const char* strInputFile_a)
         
         for (int intI = 0; intI < 256; intI++)
         {
-            if (ptrRom_a->arrROMCounts[intI] > 0 || ptrRom_a->arrROMCountsHigh[intI] > 0 || arrInputCounts[intI] > 0)
+            if (ptrROMData_a->arrROMCounts[intI] > 0 || ptrROMData_a->arrROMCountsHigh[intI] > 0 || arrInputCounts[intI] > 0)
             {
                 char chDisplay = (intI >= 32 && intI <= 126) ? (char)intI : ' ';
                 printf("0x%02X  %3d  %10u  %10u  %11u    %c\n", 
-                       intI, intI, ptrRom_a->arrROMCounts[intI], ptrRom_a->arrROMCountsHigh[intI], arrInputCounts[intI], chDisplay);
+                       intI, intI, ptrROMData_a->arrROMCounts[intI], ptrROMData_a->arrROMCountsHigh[intI], arrInputCounts[intI], chDisplay);
             }
         }
         
@@ -224,24 +225,24 @@ static bool analyzeFile(const RomData* ptrRom_a, const char* strInputFile_a)
 
 int main(int intArgC_a, char* strArgv_a[])
 {
-    int intResult = 1;
-    RomData* ptrRom = NULL;
     bool blnAnalyzeOk = false;
+    int intResult = 1;
+    ROMData* ptrROMData = NULL;
     
 #ifdef _WIN32
     _setmode(_fileno(stdin), _O_BINARY);
     _setmode(_fileno(stdout), _O_BINARY);
 #endif
 
-    printf("ZOSCII ROM Strength Analyzer v20260303\n");
+    printf("ZOSCII ROM Strength Analyzer v20260418\n");
     printf("(c) 2026 Cyborg Unicorn Pty Ltd - MIT License\n\n");
 
     if (intArgC_a == 3)
     {
-        ptrRom = loadRom(strArgv_a[1]);
-        if (ptrRom)
+        ptrROMData = loadROM(strArgv_a[1]);
+        if (ptrROMData)
         {
-            blnAnalyzeOk = analyzeFile(ptrRom, strArgv_a[2]);
+            blnAnalyzeOk = analyzeFile(ptrROMData, strArgv_a[2]);
             
             if (blnAnalyzeOk)
             {
@@ -252,7 +253,7 @@ int main(int intArgC_a, char* strArgv_a[])
                 fprintf(stderr, "Analysis failed\n");
             }
             
-            unloadRom(ptrRom);
+            unloadROM(ptrROMData);
         }
         else
         {

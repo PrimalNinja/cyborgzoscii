@@ -1,4 +1,4 @@
-// Cyborg ZOSCII v20260303
+// Cyborg ZOSCII v20260418
 // (c) 2026 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
 
@@ -26,35 +26,31 @@ typedef struct
     uint8_t* ptrROMData;
     long lngROMSize;
     ByteAddresses arrLookup[256];
-} RomData;
+} ROMData;
 
 #define ZOSCII_ROM_LOAD_MAX 131072L
 
-static void buildLookupTable(RomData* ptrRom_a)
+static void buildLookupTable(ROMData* ptrROMData_a)
 {
     uint32_t arrCounts[256] = {0};
-    long lngROMSize = 0;
-    long lngI = 0;
+    long intHeaderSize = 0;
     int intI = 0;
+    long intJ = 0;
     
     // Initialize lookup array
     for (intI = 0; intI < 256; intI++)
     {
-        ptrRom_a->arrLookup[intI].ptrAddresses = NULL;
-        ptrRom_a->arrLookup[intI].intCount = 0;
+        ptrROMData_a->arrLookup[intI].ptrAddresses = NULL;
+        ptrROMData_a->arrLookup[intI].intCount = 0;
     }
     
-    // ROM addresses are 16-bit, so only use first 64KB
-    lngROMSize = ptrRom_a->lngROMSize;
-    if (lngROMSize > 65536L)
-    {
-        lngROMSize = 65536L;
-    }
+    // Header addresses must be within the first 64KB (16-bit addresses)
+    intHeaderSize = (ptrROMData_a->lngROMSize > 65536L) ? 65536L : ptrROMData_a->lngROMSize;
     
     // Count occurrences
-    for (lngI = 0; lngI < lngROMSize; lngI++)
+    for (intJ = 0; intJ < intHeaderSize; intJ++)
     {
-        arrCounts[ptrRom_a->ptrROMData[lngI]]++;
+        arrCounts[ptrROMData_a->ptrROMData[intJ]]++;
     }
     
     // Allocate memory for each byte value
@@ -62,109 +58,109 @@ static void buildLookupTable(RomData* ptrRom_a)
     {
         if (arrCounts[intI] > 0)
         {
-            ptrRom_a->arrLookup[intI].ptrAddresses = 
+            ptrROMData_a->arrLookup[intI].ptrAddresses = 
                 (uint32_t*)malloc(arrCounts[intI] * sizeof(uint32_t));
-            ptrRom_a->arrLookup[intI].intCount = 0;
+            ptrROMData_a->arrLookup[intI].intCount = 0;
         }
     }
     
     // Fill addresses
-    for (lngI = 0; lngI < lngROMSize; lngI++)
+    for (intJ = 0; intJ < intHeaderSize; intJ++)
     {
-        uint8_t by = ptrRom_a->ptrROMData[lngI];
-        ptrRom_a->arrLookup[by].ptrAddresses[ptrRom_a->arrLookup[by].intCount++] = (uint32_t)lngI;
+        uint8_t by = ptrROMData_a->ptrROMData[intJ];
+        ptrROMData_a->arrLookup[by].ptrAddresses[ptrROMData_a->arrLookup[by].intCount++] = (uint32_t)intJ;
     }
 
     // Seed rand based on ROM content
-    uint32_t intRomHash = 0;
-    for (lngI = 0; lngI < ptrRom_a->lngROMSize; lngI++)
+    uint32_t intROMHash = 0;
+    for (intJ = 0; intJ < ptrROMData_a->lngROMSize; intJ++)
     {
-        intRomHash = (intRomHash * 33) + ptrRom_a->ptrROMData[lngI];
+        intROMHash = (intROMHash * 33) + ptrROMData_a->ptrROMData[intJ];
     }
     
-    intRomHash ^= (uint32_t)time(NULL);
+    intROMHash ^= (uint32_t)time(NULL);
     
-    srand(intRomHash);
+    srand(intROMHash);
 }
 
-static RomData* loadRom(const char* strFilename_a)
+static ROMData* loadROM(const char* strFilename_a)
 {
-    RomData* ptrRom = NULL;
-    FILE* ptrROM = NULL;
+    ROMData* ptrROMData = NULL;
+    FILE* ptrROMFile = NULL;
     
-    ptrRom = (RomData*)malloc(sizeof(RomData));
-    if (ptrRom)
+    ptrROMData = (ROMData*)malloc(sizeof(ROMData));
+    if (ptrROMData)
     {
         // Initialize
-        memset(ptrRom, 0, sizeof(RomData));
+        memset(ptrROMData, 0, sizeof(ROMData));
         
-        ptrROM = fopen(strFilename_a, "rb");
-        if (ptrROM)
+        ptrROMFile = fopen(strFilename_a, "rb");
+        if (ptrROMFile)
         {
-            fseek(ptrROM, 0, SEEK_END);
-            ptrRom->lngROMSize = ftell(ptrROM);
-            fseek(ptrROM, 0, SEEK_SET);
+            fseek(ptrROMFile, 0, SEEK_END);
+            ptrROMData->lngROMSize = ftell(ptrROMFile);
+            fseek(ptrROMFile, 0, SEEK_SET);
             
-            if (ptrRom->lngROMSize > ZOSCII_ROM_LOAD_MAX)
+            if (ptrROMData->lngROMSize > ZOSCII_ROM_LOAD_MAX)
             {
-                ptrRom->lngROMSize = ZOSCII_ROM_LOAD_MAX;
+                ptrROMData->lngROMSize = ZOSCII_ROM_LOAD_MAX;
             }
             
-            ptrRom->ptrROMData = (uint8_t*)malloc(ptrRom->lngROMSize);
-            if (ptrRom->ptrROMData)
+            ptrROMData->ptrROMData = (uint8_t*)malloc(ptrROMData->lngROMSize);
+            if (ptrROMData->ptrROMData)
             {
-                fread(ptrRom->ptrROMData, 1, ptrRom->lngROMSize, ptrROM);
-                
+                fread(ptrROMData->ptrROMData, 1, ptrROMData->lngROMSize, ptrROMFile);
+
                 // Pre-build lookup table for reuse across multiple encodes
-                buildLookupTable(ptrRom);
+                buildLookupTable(ptrROMData);
             }
             else
             {
-                free(ptrRom);
-                ptrRom = NULL;
+                free(ptrROMData);
+                ptrROMData = NULL;
             }
             
-            fclose(ptrROM);
+            fclose(ptrROMFile);
         }
         else
         {
-            free(ptrRom);
-            ptrRom = NULL;
+            free(ptrROMData);
+            ptrROMData = NULL;
         }
     }
     
-    return ptrRom;
+    return ptrROMData;
 }
 
-static void unloadRom(RomData* ptrRom_a)
+static void unloadROM(ROMData* ptrROMData_a)
 {
     int intI = 0;
-    
-    if (ptrRom_a)
+
+    if (ptrROMData_a)
     {
-        if (ptrRom_a->ptrROMData)
+        if (ptrROMData_a->ptrROMData)
         {
-            free(ptrRom_a->ptrROMData);
+            free(ptrROMData_a->ptrROMData);
         }
-        
+
         for (intI = 0; intI < 256; intI++)
         {
-            if (ptrRom_a->arrLookup[intI].ptrAddresses)
+            if (ptrROMData_a->arrLookup[intI].ptrAddresses)
             {
-                free(ptrRom_a->arrLookup[intI].ptrAddresses);
+                free(ptrROMData_a->arrLookup[intI].ptrAddresses);
             }
         }
-        
-        free(ptrRom_a);
+
+        free(ptrROMData_a);
     }
 }
 
-static bool encodeFile(const RomData* ptrRom_a, const char* strInputFile_a, const char* strOutputFile_a)
+static bool encodeFile(const ROMData* ptrROMData_a, const char* strInputFile_a, const char* strOutputFile_a)
 {
     bool blnSuccess = false;
+    int intCh = 0;
     FILE* ptrInput = NULL;
     FILE* ptrOutput = NULL;
-    int intCh = 0;
     
     ptrInput = fopen(strInputFile_a, "rb");
     if (ptrInput)
@@ -176,10 +172,10 @@ static bool encodeFile(const RomData* ptrRom_a, const char* strInputFile_a, cons
             while ((intCh = fgetc(ptrInput)) != EOF)
             {
                 uint8_t by = (uint8_t)intCh;
-                if (ptrRom_a->arrLookup[by].intCount > 0)
+                if (ptrROMData_a->arrLookup[by].intCount > 0)
                 {
-                    uint32_t intRandomIdx = rand() % ptrRom_a->arrLookup[by].intCount;
-                    uint16_t intAddress = (uint16_t)ptrRom_a->arrLookup[by].ptrAddresses[intRandomIdx];
+                    uint32_t intRandomIdx = rand() % ptrROMData_a->arrLookup[by].intCount;
+                    uint16_t intAddress = (uint16_t)ptrROMData_a->arrLookup[by].ptrAddresses[intRandomIdx];
                     fwrite(&intAddress, sizeof(uint16_t), 1, ptrOutput);
                 }
             }
@@ -195,24 +191,24 @@ static bool encodeFile(const RomData* ptrRom_a, const char* strInputFile_a, cons
 
 int main(int intArgC_a, char* strArgv_a[])
 {
-    int intResult = 1;
-    RomData* ptrRom = NULL;
     bool blnEncodeOk = false;
+    int intResult = 1;
+    ROMData* ptrROMData = NULL;
     
 #ifdef _WIN32
     _setmode(_fileno(stdin), _O_BINARY);
     _setmode(_fileno(stdout), _O_BINARY);
 #endif
 
-    printf("ZOSCII Encoder v20260303\n");
+    printf("ZOSCII Encoder v20260418\n");
     printf("(c) 2026 Cyborg Unicorn Pty Ltd - MIT License\n\n");
 
     if (intArgC_a == 4)
     {
-        ptrRom = loadRom(strArgv_a[1]);
-        if (ptrRom)
+        ptrROMData = loadROM(strArgv_a[1]);
+        if (ptrROMData)
         {
-            blnEncodeOk = encodeFile(ptrRom, strArgv_a[2], strArgv_a[3]);
+            blnEncodeOk = encodeFile(ptrROMData, strArgv_a[2], strArgv_a[3]);
             
             if (blnEncodeOk)
             {
@@ -223,7 +219,7 @@ int main(int intArgC_a, char* strArgv_a[])
                 fprintf(stderr, "Encode failed\n");
             }
             
-            unloadRom(ptrRom);
+            unloadROM(ptrROMData);
         }
         else
         {
