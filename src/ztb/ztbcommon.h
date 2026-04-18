@@ -32,6 +32,7 @@
 #define MIN_PAYLOAD_SIZE 512
 #define NULL_GUID "00000000-0000-0000-0000-000000000000"
 #define ROM_ENTRY_SIZE 1024
+#define CRC32_PREFIX_SIZE 4
 
 // --- Block Header Structure ---
 typedef struct {
@@ -40,7 +41,6 @@ typedef struct {
     char trunk_id[GUID_LEN];
     uint32_t payload_len;
     uint32_t padded_len;
-    uint32_t checksum;                 // CRC32 checksum of padded payload
     uint64_t timestamp;
     uint8_t is_branch;                 // 1 = branch, 0 = trunk
 } ZTB_BlockHeader;
@@ -53,7 +53,6 @@ typedef struct {
     char trunk_id[GUID_LEN];
     char filename[FILENAME_MAX];
     uint8_t is_branch;
-    uint32_t checksum;
     uint32_t padded_len;
     uint64_t timestamp;
 } BlockInfo;

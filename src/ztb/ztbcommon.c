@@ -448,34 +448,40 @@ static int try_decode_block1(const uint8_t *byRom_a, const char *strFilename_a,
     if (f)
     {
         fseek(f, 0, SEEK_END);
-        size_t intEncodedLen = ftell(f);
+        size_t intFileLen = ftell(f);
         fseek(f, 0, SEEK_SET);
-        uint8_t *byEncoded = malloc(intEncodedLen);
-        if (byEncoded)
+
+        if (intFileLen > CRC32_PREFIX_SIZE)
         {
-            if (fread(byEncoded, 1, intEncodedLen, f) == intEncodedLen)
+            uint8_t arrStoredCrc[CRC32_PREFIX_SIZE];
+            if (fread(arrStoredCrc, 1, CRC32_PREFIX_SIZE, f) == CRC32_PREFIX_SIZE)
             {
-                size_t intDecodedLen;
-                uint8_t *byDecoded = zoscii_decode_block(byRom_a, byEncoded,
-                                                          intEncodedLen, &intDecodedLen);
-                if (byDecoded && intDecodedLen >= sizeof(ZTB_BlockHeader))
+                uint32_t intStoredCrc = arrStoredCrc[0] | (arrStoredCrc[1] << 8) |
+                                        (arrStoredCrc[2] << 16) | (arrStoredCrc[3] << 24);
+
+                size_t intEncodedLen = intFileLen - CRC32_PREFIX_SIZE;
+                uint8_t *byEncoded = malloc(intEncodedLen);
+                if (byEncoded)
                 {
-                    ZTB_BlockHeader *objHeader = (ZTB_BlockHeader*)byDecoded;
-                    size_t intPayloadSpace = intDecodedLen - sizeof(ZTB_BlockHeader);
-                    if (objHeader->padded_len <= intPayloadSpace)
+                    if (fread(byEncoded, 1, intEncodedLen, f) == intEncodedLen)
                     {
-                        uint8_t *byPayload = byDecoded + sizeof(ZTB_BlockHeader);
-                        uint32_t intCalcCrc = calculate_checksum(byPayload, objHeader->padded_len);
-                        if (intCalcCrc == objHeader->checksum)
+                        uint32_t intCalcCrc = calculate_checksum(byEncoded, intEncodedLen);
+                        if (intCalcCrc == intStoredCrc)
                         {
-                            memcpy(objHeaderOut_a, objHeader, sizeof(ZTB_BlockHeader));
-                            intValid = 1;
+                            size_t intDecodedLen;
+                            uint8_t *byDecoded = zoscii_decode_block(byRom_a, byEncoded,
+                                                                      intEncodedLen, &intDecodedLen);
+                            if (byDecoded && intDecodedLen >= sizeof(ZTB_BlockHeader))
+                            {
+                                memcpy(objHeaderOut_a, byDecoded, sizeof(ZTB_BlockHeader));
+                                intValid = 1;
+                                free(byDecoded);
+                            }
                         }
                     }
-                    free(byDecoded);
+                    free(byEncoded);
                 }
             }
-            free(byEncoded);
         }
         fclose(f);
     }

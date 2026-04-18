@@ -411,13 +411,14 @@ Sales_0010_C2D1A670-3456-6789-ABCD-EF0123456789.ztb
 ### Block Structure (Before Encoding)
 
 ```c
+uint32_t checksum;          // CRC32 checksum of header + padded payload stored before header
+
 [ZTB_BlockHeader]           // 132 bytes
   char block_id[37];        // This block's GUID
   char prev_block_id[37];   // Previous block's GUID (or NULL_GUID for first)
   char trunk_id[37];        // Parent trunk ID (or NULL_GUID if not branch)
   uint32_t payload_len;     // Original payload length
   uint32_t padded_len;      // Padded payload length (min 512 bytes)
-  uint32_t checksum;        // CRC32 checksum of padded payload
   uint64_t timestamp;       // Unix timestamp
   uint8_t is_branch;        // 0=trunk, 1=branch, 2=checkpoint
 

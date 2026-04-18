@@ -30,15 +30,15 @@ int main(int argc, char *argv[])
 
     if (intResult == 0)
     {
-        // Seed RNG from genesis ROM content
-        uint8_t *bySeedRom = load_rom_and_seed_rng(strGenesisRomFile_a);
-        if (bySeedRom) { free(bySeedRom); }
-
         const char *strGenesisRomFile_a = argv[1];
         const char *strTrunkId_a = argv[2];
         const char *strNewBranchId_a = argv[3];
         const char *strFlag_a = argv[4];
         const char *strDataSource_a = argv[5];
+
+        // Seed RNG from genesis ROM content
+        uint8_t *bySeedRom = load_rom_and_seed_rng(strGenesisRomFile_a);
+        if (bySeedRom) { free(bySeedRom); }
 
         size_t intPayloadLen = 0;
         size_t intPaddedLen = 0;
@@ -202,13 +202,11 @@ int main(int argc, char *argv[])
             objHeader.trunk_id[GUID_LEN - 1] = '\0';
             objHeader.payload_len = intPayloadLen;
             objHeader.padded_len = intPaddedLen;
-            objHeader.checksum = calculate_checksum(byPaddedPayload, intPaddedLen);
             objHeader.timestamp = time(NULL);
             objHeader.is_branch = 1;
 
             printf("Branch Block ID: %s\n", objHeader.block_id);
             printf("Anchored to trunk block: %s\n", objHeader.prev_block_id);
-            printf("CRC32: 0x%08X\n", objHeader.checksum);
 
             // --- 7. Create complete raw block ---
             size_t intRawBlockLen = sizeof(ZTB_BlockHeader) + intPaddedLen;
@@ -224,9 +222,12 @@ int main(int argc, char *argv[])
                                                      intRawBlockLen, &intEncodedLen);
                 if (byEncodedBlock)
                 {
+                    // --- 9. Calculate CRC32 over encoded bytes ---
+                    uint32_t intCrc = calculate_checksum(byEncodedBlock, intEncodedLen);
+                    printf("CRC32: 0x%08X\n", intCrc);
                     printf("ZOSCII encoded: %zu bytes -> %zu bytes\n", intRawBlockLen, intEncodedLen);
 
-                    // --- 9. Write Encoded Block File ---
+                    // --- 10. Write CRC32 prefix + Encoded Block File ---
                     char strFilename[FILENAME_MAX];
                     snprintf(strFilename, FILENAME_MAX, "%s_%04d_%s.ztb",
                              strNewBranchId_a, 1, objHeader.block_id);
@@ -234,7 +235,14 @@ int main(int argc, char *argv[])
                     FILE *f_out = fopen(strFilename, "wb");
                     if (f_out)
                     {
-                        if (fwrite(byEncodedBlock, 1, intEncodedLen, f_out) == intEncodedLen)
+                        uint8_t arrCrcBytes[CRC32_PREFIX_SIZE];
+                        arrCrcBytes[0] = intCrc & 0xFF;
+                        arrCrcBytes[1] = (intCrc >> 8) & 0xFF;
+                        arrCrcBytes[2] = (intCrc >> 16) & 0xFF;
+                        arrCrcBytes[3] = (intCrc >> 24) & 0xFF;
+
+                        if (fwrite(arrCrcBytes, 1, CRC32_PREFIX_SIZE, f_out) == CRC32_PREFIX_SIZE &&
+                            fwrite(byEncodedBlock, 1, intEncodedLen, f_out) == intEncodedLen)
                         {
                             printf("\n+ Branch block created: %s\n", strFilename);
                             printf("+ New branch '%s' started from trunk '%s'\n",

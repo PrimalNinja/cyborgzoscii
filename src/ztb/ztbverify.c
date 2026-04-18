@@ -27,7 +27,6 @@ int verify_single_block(const char *strGenesisRomFile_a,
     int intValid = 0;
     uint8_t *byRollingRom = NULL;
     uint8_t *byEncoded = NULL;
-    uint8_t *byDecoded = NULL;
 
     BlockInfo *objTarget = NULL;
     int intI;
@@ -54,28 +53,27 @@ int verify_single_block(const char *strGenesisRomFile_a,
                 if (f)
                 {
                     fseek(f, 0, SEEK_END);
-                    size_t intEncodedLen = ftell(f);
+                    size_t intFileLen = ftell(f);
                     fseek(f, 0, SEEK_SET);
 
-                    byEncoded = malloc(intEncodedLen);
-                    if (byEncoded)
+                    if (intFileLen > CRC32_PREFIX_SIZE)
                     {
-                        if (fread(byEncoded, 1, intEncodedLen, f) == intEncodedLen)
+                        // Read CRC32 prefix
+                        uint8_t arrCrcBytes[CRC32_PREFIX_SIZE];
+                        if (fread(arrCrcBytes, 1, CRC32_PREFIX_SIZE, f) == CRC32_PREFIX_SIZE)
                         {
-                            size_t intDecodedLen;
-                            byDecoded = zoscii_decode_block(byRollingRom, byEncoded,
-                                                            intEncodedLen, &intDecodedLen);
+                            uint32_t intStoredCrc = arrCrcBytes[0] | (arrCrcBytes[1] << 8) |
+                                                    (arrCrcBytes[2] << 16) | (arrCrcBytes[3] << 24);
 
-                            if (byDecoded && intDecodedLen >= sizeof(ZTB_BlockHeader))
+                            size_t intEncodedLen = intFileLen - CRC32_PREFIX_SIZE;
+                            byEncoded = malloc(intEncodedLen);
+                            if (byEncoded)
                             {
-                                ZTB_BlockHeader *objHeader = (ZTB_BlockHeader*)byDecoded;
-                                size_t intPayloadSpace = intDecodedLen - sizeof(ZTB_BlockHeader);
-
-                                if (objHeader->padded_len <= intPayloadSpace)
+                                if (fread(byEncoded, 1, intEncodedLen, f) == intEncodedLen)
                                 {
-                                    uint8_t *byPayload = byDecoded + sizeof(ZTB_BlockHeader);
-                                    uint32_t intCalcChecksum = calculate_checksum(byPayload, objHeader->padded_len);
-                                    intValid = (intCalcChecksum == objHeader->checksum) ? 1 : 0;
+                                    // Verify CRC32 over encoded data
+                                    uint32_t intCalcCrc = calculate_checksum(byEncoded, intEncodedLen);
+                                    intValid = (intCalcCrc == intStoredCrc) ? 1 : 0;
                                 }
                             }
                         }
@@ -88,7 +86,6 @@ int verify_single_block(const char *strGenesisRomFile_a,
 
     if (byRollingRom) { free(byRollingRom); }
     if (byEncoded) { free(byEncoded); }
-    if (byDecoded) { free(byDecoded); }
 
     return intValid;
 }

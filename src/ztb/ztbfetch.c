@@ -83,6 +83,7 @@ int main(int argc, char *argv[])
 
         // --- 3. Load encoded block file ---
         size_t intEncodedLen = 0;
+        uint32_t intStoredCrc = 0;
 
         if (intResult == 0)
         {
@@ -98,22 +99,44 @@ int main(int argc, char *argv[])
             else
             {
                 fseek(f, 0, SEEK_END);
-                intEncodedLen = ftell(f);
+                size_t intFileLen = ftell(f);
                 fseek(f, 0, SEEK_SET);
 
-                byEncodedBlock = malloc(intEncodedLen);
-                if (byEncodedBlock)
+                if (intFileLen <= CRC32_PREFIX_SIZE)
                 {
-                    if (fread(byEncodedBlock, 1, intEncodedLen, f) != intEncodedLen)
-                    {
-                        fprintf(stderr, "Error: Cannot read encoded block\n");
-                        intResult = 1;
-                    }
+                    fprintf(stderr, "Error: Block file too small\n");
+                    intResult = 1;
                 }
                 else
                 {
-                    fprintf(stderr, "Error: Cannot allocate encoded block\n");
-                    intResult = 1;
+                    // Read CRC32 prefix
+                    uint8_t arrCrcBytes[CRC32_PREFIX_SIZE];
+                    if (fread(arrCrcBytes, 1, CRC32_PREFIX_SIZE, f) == CRC32_PREFIX_SIZE)
+                    {
+                        intStoredCrc = arrCrcBytes[0] | (arrCrcBytes[1] << 8) |
+                                       (arrCrcBytes[2] << 16) | (arrCrcBytes[3] << 24);
+
+                        intEncodedLen = intFileLen - CRC32_PREFIX_SIZE;
+                        byEncodedBlock = malloc(intEncodedLen);
+                        if (byEncodedBlock)
+                        {
+                            if (fread(byEncodedBlock, 1, intEncodedLen, f) != intEncodedLen)
+                            {
+                                fprintf(stderr, "Error: Cannot read encoded block\n");
+                                intResult = 1;
+                            }
+                        }
+                        else
+                        {
+                            fprintf(stderr, "Error: Cannot allocate encoded block\n");
+                            intResult = 1;
+                        }
+                    }
+                    else
+                    {
+                        fprintf(stderr, "Error: Cannot read CRC32 prefix\n");
+                        intResult = 1;
+                    }
                 }
                 fclose(f);
             }
@@ -122,6 +145,22 @@ int main(int argc, char *argv[])
         if (intResult == 0)
         {
             printf("Encoded block: %zu bytes\n", intEncodedLen);
+
+            // --- Verify CRC32 over encoded data ---
+            uint32_t intCalcCrc = calculate_checksum(byEncodedBlock, intEncodedLen);
+            printf("Stored CRC32:     0x%08X\n", intStoredCrc);
+            printf("Calculated CRC32: 0x%08X\n", intCalcCrc);
+
+            if (intCalcCrc != intStoredCrc)
+            {
+                fprintf(stderr, "\n!!! INTEGRITY FAILURE !!!\n");
+                fprintf(stderr, "CRC32 mismatch - data is corrupt or tampered\n");
+                intResult = 1;
+            }
+            else
+            {
+                printf("+ CRC32 verified\n");
+            }
         }
 
         // --- 4. Detect if this is a branch ---
@@ -209,7 +248,6 @@ int main(int argc, char *argv[])
         if (intResult == 0)
         {
             ZTB_BlockHeader *objHeader = (ZTB_BlockHeader*)byDecodedBlock;
-            size_t intPayloadSpace = intDecodedLen - sizeof(ZTB_BlockHeader);
 
             printf("\n--- Block Header ---\n");
             printf("Block ID:      %s\n", objHeader->block_id);
@@ -220,39 +258,11 @@ int main(int argc, char *argv[])
             printf("Padded Len:    %u bytes\n", objHeader->padded_len);
             printf("Timestamp:     %lu\n", (unsigned long)objHeader->timestamp);
 
-            // --- 9. Verify Checksum ---
-            if (objHeader->padded_len > intPayloadSpace)
-            {
-                fprintf(stderr, "\n!!! INTEGRITY FAILURE !!!\n");
-                fprintf(stderr, "Padded length %u exceeds decoded payload space %zu\n",
-                        objHeader->padded_len, intPayloadSpace);
-                intResult = 1;
-            }
-            else
-            {
-                uint8_t *byPayload = byDecodedBlock + sizeof(ZTB_BlockHeader);
-                uint32_t intCalcChecksum = calculate_checksum(byPayload, objHeader->padded_len);
-
-                printf("\n--- Verification ---\n");
-                printf("Stored CRC32:     0x%08X\n", objHeader->checksum);
-                printf("Calculated CRC32: 0x%08X\n", intCalcChecksum);
-
-                if (intCalcChecksum != objHeader->checksum)
-                {
-                    fprintf(stderr, "\n!!! INTEGRITY FAILURE !!!\n");
-                    fprintf(stderr, "Checksum mismatch - data is corrupt or tampered\n");
-                    intResult = 1;
-                }
-                else
-                {
-                    printf("+ Integrity verified\n");
-
-                    // --- 10. Output Payload ---
-                    printf("\n--- Decoded Payload (%u bytes) ---\n", objHeader->payload_len);
-                    fwrite(byPayload, 1, objHeader->payload_len, stdout);
-                    printf("\n--- End Payload ---\n");
-                }
-            }
+            // --- 9. Output Payload ---
+            uint8_t *byPayload = byDecodedBlock + sizeof(ZTB_BlockHeader);
+            printf("\n--- Decoded Payload (%u bytes) ---\n", objHeader->payload_len);
+            fwrite(byPayload, 1, objHeader->payload_len, stdout);
+            printf("\n--- End Payload ---\n");
         }
     }
 
