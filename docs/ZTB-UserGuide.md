@@ -25,8 +25,12 @@ Once, at the very beginning, before creating any blocks.
 
 ### Example:
 ```bash
-ztbcreate genesis.rom
+ztbcreate selfie.jpg genesis.rom
 ```
+
+ztbcreate <entropyfile1> [<entropyfile2>] [<entropyfile3>] genesis.rom
+
+Note: 1 to 3 entropy files are recommended to be JPEGs or MP3s or some other capture of real-world physics.
 
 ---
 
@@ -115,7 +119,7 @@ Whenever you want to see what's in a block.
 - Finds the requested block file
 - Reconstructs the Rolling ROM (samples from previous blocks)
 - Decodes the ZOSCII-encoded data
-- Verifies the checksum (detects tampering)
+- Verifies the CRC32 checksum (detects tampering)
 - Shows you the decoded payload
 
 ### Example:
@@ -149,7 +153,7 @@ To prove your data hasn't been altered. If anyone modifies even one byte in bloc
 - Scans all blocks in the chain
 - Rebuilds each block's Rolling ROM
 - Decodes each block
-- Verifies checksums
+- Verifies CRC32 checksums
 - Tests the tamperproof linking
 - Reports PASS/FAIL for each block
 
@@ -215,7 +219,7 @@ ztbcheckpoint MyTrunk genesis.rom last_block_of_2024_guid
 
 ```bash
 # 1. Start fresh
-ztbcreate genesis.rom
+ztbcreate selfie.jpg genesis.rom
 
 # 2. Create main trunk for 2025
 ztbaddblock genesis.rom FY2025 -t "Financial Year 2025"
@@ -265,7 +269,7 @@ Use branches like folders. Trunk = main timeline, branches = parallel sub-timeli
 
 | Command | Purpose | Usage |
 |---------|---------|-------|
-| `ztbcreate` | Create Genesis ROM | `ztbcreate genesis.rom` |
+| `ztbcreate` | Create Genesis ROM | `ztbcreate selfie.jpg genesis.rom` |
 | `ztbaddblock` | Add data block | `ztbaddblock genesis.rom chain -t "text"` |
 | `ztbaddbranch` | Create new branch | `ztbaddbranch genesis.rom trunk branch -t "text"` |
 | `ztbfetch` | Read block data | `ztbfetch genesis.rom chain index` |

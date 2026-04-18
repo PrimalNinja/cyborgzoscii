@@ -1,20 +1,14 @@
-// ZOSCII Tamperproof Blockchain Utility: ztbverify
+// Cyborg ZTB Chain Verifier v20260418
+// (c) 2026 Cyborg Unicorn Pty Ltd.
+// This software is released under MIT License.
+//
 // Verifies the integrity of a ZTB chain (trunk or branch).
-// Verifies BACKWARDS from latest block to genesis for each chain.
-// Discovers and verifies all branches.
-// (c) 2025 Cyborg Unicorn Pty Ltd. - MIT License
 // Usage: ztbverify <genesis_rom> <trunk_id>           - Verify trunk and all branches
 // Usage: ztbverify <genesis_rom> <trunk_id> -t        - Verify trunk only
 // Usage: ztbverify <genesis_rom> <trunk_id> -b <branch_id> - Verify specific branch only
 // Usage: ztbverify <genesis_rom> <trunk_id> -bb       - Verify all branches only (not trunk)
 
-#include "ztbcommon.h"
-#include <dirent.h>
-
-// --- Branch Discovery ---
-typedef struct {
-    char branch_id[GUID_LEN];
-} BranchInfo;
+#include "ztbcommon.c"
 
 // --- Verification Statistics ---
 typedef struct {
@@ -25,334 +19,301 @@ typedef struct {
 } VerifyStats;
 
 // --- Verify Single Block ---
-int verify_single_block(const char *genesis_rom_file,
-                       const BlockInfo *chain_history, int chain_count,
-                       const BlockInfo *trunk_history, int trunk_count,
-                       int target_index) {
-    
-    BlockInfo *target = NULL;
-    for (int i = 0; i < chain_count; i++) {
-        if (chain_history[i].index == target_index) {
-            target = (BlockInfo *)&chain_history[i];
-            break;
-        }
-    }
-    
-    if (!target) return 0;
-    
-    // Build rolling ROM
-    uint8_t *rolling_rom = malloc(ROM_SIZE);
-    if (!rolling_rom || !build_rolling_rom(genesis_rom_file,
-                                          chain_history, chain_count,
-                                          trunk_history, trunk_count,
-                                          target_index, rolling_rom)) {
-        if (rolling_rom) free(rolling_rom);
-        return 0;
-    }
-    
-    // Load encoded block
-    FILE *f = fopen(target->filename, "rb");
-    if (!f) {
-        free(rolling_rom);
-        return 0;
-    }
-    
-    fseek(f, 0, SEEK_END);
-    size_t encoded_len = ftell(f);
-    fseek(f, 0, SEEK_SET);
-    
-    uint8_t *encoded = malloc(encoded_len);
-    if (!encoded || fread(encoded, 1, encoded_len, f) != encoded_len) {
-        if (encoded) free(encoded);
-        fclose(f);
-        free(rolling_rom);
-        return 0;
-    }
-    fclose(f);
-    
-    // Decode ENTIRE block
-    size_t decoded_len;
-    uint8_t *decoded = zoscii_decode_block(rolling_rom, encoded, encoded_len, &decoded_len);
-    
-    free(rolling_rom);
-    free(encoded);
-    
-    if (!decoded || decoded_len < sizeof(ZTB_BlockHeader)) {
-        if (decoded) free(decoded);
-        return 0;
-    }
-    
-    // Extract header and payload
-    ZTB_BlockHeader *header = (ZTB_BlockHeader*)decoded;
-    uint8_t *payload = decoded + sizeof(ZTB_BlockHeader);
-    
-    // Verify checksum
-    uint32_t calc_checksum = calculate_checksum(payload, header->padded_len);
-    int valid = (calc_checksum == header->checksum);
-    
-    free(decoded);
-    return valid;
-}
+int verify_single_block(const char *strGenesisRomFile_a,
+                        const BlockInfo *arrChainHistory_a, int intChainCount_a,
+                        const BlockInfo *arrTrunkHistory_a, int intTrunkCount_a,
+                        int intTargetIndex_a)
+{
+    int intValid = 0;
+    uint8_t *byRollingRom = NULL;
+    uint8_t *byEncoded = NULL;
+    uint8_t *byDecoded = NULL;
 
-// --- Verify Chain BACKWARDS ---
-int verify_chain_backwards(const char *genesis_rom_file, const char *chain_id,
-                          const char *trunk_id, VerifyStats *stats) {
-    
-    BlockInfo history[MAX_BLOCKS_TO_SCAN];
-    int block_count = scan_chain_blocks(chain_id, history, MAX_BLOCKS_TO_SCAN);
-    
-    if (block_count == 0) return 0;
-    
-    // Determine if branch and load trunk history
-    BlockInfo trunk_history[MAX_BLOCKS_TO_SCAN];
-    int trunk_count = 0;
-    uint8_t is_branch = 0;
-    char actual_trunk_id[GUID_LEN];
-    strcpy(actual_trunk_id, NULL_GUID);
-    
-    // Decode first block to check branch status
-    FILE *f_first = fopen(history[0].filename, "rb");
-    if (f_first) {
-        fseek(f_first, 0, SEEK_END);
-        size_t first_encoded_len = ftell(f_first);
-        fseek(f_first, 0, SEEK_SET);
-        
-        uint8_t *first_encoded = malloc(first_encoded_len);
-        if (first_encoded && fread(first_encoded, 1, first_encoded_len, f_first) == first_encoded_len) {
-            uint8_t *genesis_rom = load_rom(genesis_rom_file);
-            if (genesis_rom) {
-                size_t first_decoded_len;
-                uint8_t *first_decoded = zoscii_decode_block(genesis_rom, first_encoded,
-                                                             first_encoded_len, &first_decoded_len);
-                if (first_decoded && first_decoded_len >= sizeof(ZTB_BlockHeader)) {
-                    ZTB_BlockHeader *first_header = (ZTB_BlockHeader*)first_decoded;
-                    is_branch = first_header->is_branch;
-                    if (is_branch) {
-                        strncpy(actual_trunk_id, first_header->trunk_id, GUID_LEN - 1);
-                    }
-                    free(first_decoded);
-                }
-                free(genesis_rom);
-            }
-        }
-        if (first_encoded) free(first_encoded);
-        fclose(f_first);
-    }
-    
-    if (is_branch && strcmp(actual_trunk_id, NULL_GUID) != 0) {
-        trunk_count = scan_chain_blocks(actual_trunk_id, trunk_history, MAX_BLOCKS_TO_SCAN);
-    }
-    
-    // Verify BACKWARDS from latest to first
-    for (int i = block_count - 1; i >= 0; i--) {
-        printf("  Block %d (%s)... ", history[i].index, history[i].block_id);
-        
-        if (verify_single_block(genesis_rom_file, history, block_count,
-                               trunk_history, trunk_count, history[i].index)) {
-            printf("[PASS]\n");
-            stats->verified_blocks++;
-        } else {
-            printf("[FAIL]\n");
-            stats->failed_blocks++;
-            return 0;
-        }
-        
-        stats->total_blocks++;
-    }
-    
-    return 1;
-}
+    BlockInfo *objTarget = NULL;
+    int intI;
 
-// --- Discover Branches by Scanning ---
-int discover_branches_from_trunk(const char *genesis_rom_file, const char *trunk_id,
-                                 BranchInfo *branches, int max_branches) {
-    DIR *d = opendir(".");
-    if (!d) return 0;
-    
-    struct dirent *dir;
-    int branch_count = 0;
-    
-    while ((dir = readdir(d)) != NULL) {
-        if (!strstr(dir->d_name, ".ztb")) continue;
-        
-        // Skip if it's a trunk block
-        if (strstr(dir->d_name, trunk_id) == dir->d_name) continue;
-        
-        FILE *f = fopen(dir->d_name, "rb");
-        if (!f) continue;
-        
-        fseek(f, 0, SEEK_END);
-        size_t encoded_len = ftell(f);
-        fseek(f, 0, SEEK_SET);
-        
-        uint8_t *encoded = malloc(encoded_len);
-        if (encoded && fread(encoded, 1, encoded_len, f) == encoded_len) {
-            uint8_t *genesis_rom = load_rom(genesis_rom_file);
-            if (genesis_rom) {
-                size_t decoded_len;
-                uint8_t *decoded = zoscii_decode_block(genesis_rom, encoded,
-                                                       encoded_len, &decoded_len);
-                if (decoded && decoded_len >= sizeof(ZTB_BlockHeader)) {
-                    ZTB_BlockHeader *header = (ZTB_BlockHeader*)decoded;
-                    if (header->is_branch && strcmp(header->trunk_id, trunk_id) == 0) {
-                        // Extract chain_id from filename
-                        char *underscore = strchr(dir->d_name, '_');
-                        if (underscore) {
-                            size_t id_len = underscore - dir->d_name;
-                            if (id_len >= GUID_LEN) id_len = GUID_LEN - 1;
-                            
-                            // Check if already found
-                            int found = 0;
-                            for (int i = 0; i < branch_count; i++) {
-                                if (strncmp(branches[i].branch_id, dir->d_name, id_len) == 0) {
-                                    found = 1;
-                                    break;
+    for (intI = 0; intI < intChainCount_a; intI++)
+    {
+        if (arrChainHistory_a[intI].index == intTargetIndex_a)
+        {
+            objTarget = (BlockInfo *)&arrChainHistory_a[intI];
+        }
+    }
+
+    if (objTarget)
+    {
+        byRollingRom = malloc(ROM_SIZE);
+        if (byRollingRom)
+        {
+            if (build_rolling_rom(strGenesisRomFile_a,
+                                  arrChainHistory_a, intChainCount_a,
+                                  arrTrunkHistory_a, intTrunkCount_a,
+                                  intTargetIndex_a, byRollingRom))
+            {
+                FILE *f = fopen(objTarget->filename, "rb");
+                if (f)
+                {
+                    fseek(f, 0, SEEK_END);
+                    size_t intEncodedLen = ftell(f);
+                    fseek(f, 0, SEEK_SET);
+
+                    byEncoded = malloc(intEncodedLen);
+                    if (byEncoded)
+                    {
+                        if (fread(byEncoded, 1, intEncodedLen, f) == intEncodedLen)
+                        {
+                            size_t intDecodedLen;
+                            byDecoded = zoscii_decode_block(byRollingRom, byEncoded,
+                                                            intEncodedLen, &intDecodedLen);
+
+                            if (byDecoded && intDecodedLen >= sizeof(ZTB_BlockHeader))
+                            {
+                                ZTB_BlockHeader *objHeader = (ZTB_BlockHeader*)byDecoded;
+                                size_t intPayloadSpace = intDecodedLen - sizeof(ZTB_BlockHeader);
+
+                                if (objHeader->padded_len <= intPayloadSpace)
+                                {
+                                    uint8_t *byPayload = byDecoded + sizeof(ZTB_BlockHeader);
+                                    uint32_t intCalcChecksum = calculate_checksum(byPayload, objHeader->padded_len);
+                                    intValid = (intCalcChecksum == objHeader->checksum) ? 1 : 0;
                                 }
-                            }
-                            
-                            if (!found && branch_count < max_branches) {
-                                strncpy(branches[branch_count].branch_id, dir->d_name, id_len);
-                                branches[branch_count].branch_id[id_len] = '\0';
-                                branch_count++;
                             }
                         }
                     }
-                    free(decoded);
+                    fclose(f);
                 }
-                free(genesis_rom);
             }
         }
-        if (encoded) free(encoded);
-        fclose(f);
     }
-    
-    closedir(d);
-    return branch_count;
+
+    if (byRollingRom) { free(byRollingRom); }
+    if (byEncoded) { free(byEncoded); }
+    if (byDecoded) { free(byDecoded); }
+
+    return intValid;
+}
+
+// --- Verify Chain BACKWARDS ---
+int verify_chain_backwards(const char *strGenesisRomFile_a, const char *strChainId_a,
+                           const char *strTrunkId_a, VerifyStats *objStats_a)
+{
+    int intSuccess = 0;
+    BlockInfo *arrHistory = NULL;
+    BlockInfo *arrTrunkHistory = NULL;
+
+    arrHistory = malloc(MAX_BLOCKS_TO_SCAN * sizeof(BlockInfo));
+    if (arrHistory)
+    {
+        int intBlockCount = scan_chain_blocks(strChainId_a, arrHistory, MAX_BLOCKS_TO_SCAN);
+
+        if (intBlockCount > 0)
+        {
+            int intTrunkCount = 0;
+
+            if (strTrunkId_a && strcmp(strTrunkId_a, NULL_GUID) != 0)
+            {
+                arrTrunkHistory = malloc(MAX_BLOCKS_TO_SCAN * sizeof(BlockInfo));
+                if (arrTrunkHistory)
+                {
+                    intTrunkCount = scan_chain_blocks(strTrunkId_a, arrTrunkHistory, MAX_BLOCKS_TO_SCAN);
+                }
+            }
+
+            intSuccess = 1;
+            int intI;
+
+            for (intI = intBlockCount - 1; intI >= 0; intI--)
+            {
+                printf("  Block %d (%s)... ", arrHistory[intI].index, arrHistory[intI].block_id);
+
+                if (verify_single_block(strGenesisRomFile_a, arrHistory, intBlockCount,
+                                        arrTrunkHistory, intTrunkCount, arrHistory[intI].index))
+                {
+                    printf("[PASS]\n");
+                    objStats_a->verified_blocks++;
+                }
+                else
+                {
+                    printf("[FAIL]\n");
+                    objStats_a->failed_blocks++;
+                    intSuccess = 0;
+                }
+
+                objStats_a->total_blocks++;
+            }
+        }
+    }
+
+    if (arrHistory) { free(arrHistory); }
+    if (arrTrunkHistory) { free(arrTrunkHistory); }
+
+    return intSuccess;
 }
 
 // --- Main ---
-int main(int argc, char *argv[]) {
-    printf("ZOSCII Tamperproof Blockchain - Chain Verifier\n");
-    printf("(c) 2025 Cyborg Unicorn Pty Ltd - MIT License\n\n");
-    
-    if (argc < 3 || argc > 5) {
+int main(int argc, char *argv[])
+{
+    int intResult = 0;
+
+    printf("ZTB Chain Verifier v20260418\n");
+    printf("(c) 2026 Cyborg Unicorn Pty Ltd - MIT License\n\n");
+
+    if (argc < 3 || argc > 5)
+    {
         fprintf(stderr, "Usage: %s <genesis_rom> <trunk_id>                - Verify trunk and all branches\n", argv[0]);
         fprintf(stderr, "       %s <genesis_rom> <trunk_id> -t             - Verify trunk only\n", argv[0]);
         fprintf(stderr, "       %s <genesis_rom> <trunk_id> -b <branch_id> - Verify specific branch only\n", argv[0]);
         fprintf(stderr, "       %s <genesis_rom> <trunk_id> -bb            - Verify all branches only (not trunk)\n", argv[0]);
-        return 1;
+        intResult = 1;
     }
-    
-    const char *genesis_rom_file = argv[1];
-    const char *trunk_id = argv[2];
-    
-    // Parse mode
-    int verify_trunk = 1;
-    int verify_branches = 1;
-    char specific_branch[GUID_LEN] = "";
-    
-    if (argc >= 4) {
-        if (strcmp(argv[3], "-t") == 0) {
-            // Trunk only
-            verify_trunk = 1;
-            verify_branches = 0;
-        } else if (strcmp(argv[3], "-bb") == 0) {
-            // All branches only
-            verify_trunk = 0;
-            verify_branches = 1;
-        } else if (strcmp(argv[3], "-b") == 0) {
-            // Specific branch
-            if (argc != 5) {
-                fprintf(stderr, "Error: -b requires a branch_id argument\n");
-                return 1;
+
+    if (intResult == 0)
+    {
+        const char *strGenesisRomFile_a = argv[1];
+        const char *strTrunkId_a = argv[2];
+
+        int intVerifyTrunk = 1;
+        int intVerifyBranches = 1;
+        char strSpecificBranch[GUID_LEN] = "";
+
+        if (argc >= 4)
+        {
+            if (strcmp(argv[3], "-t") == 0)
+            {
+                intVerifyTrunk = 1;
+                intVerifyBranches = 0;
             }
-            verify_trunk = 0;
-            verify_branches = 0;
-            strncpy(specific_branch, argv[4], GUID_LEN - 1);
-            specific_branch[GUID_LEN - 1] = '\0';
-        } else {
-            fprintf(stderr, "Error: Unknown option '%s'\n", argv[3]);
-            return 1;
-        }
-    }
-    
-    VerifyStats stats = {0, 0, 0, 0};
-    
-    // Verify trunk if requested
-    if (verify_trunk) {
-        printf("=== Verifying Trunk: %s ===\n", trunk_id);
-        if (!verify_chain_backwards(genesis_rom_file, trunk_id, NULL, &stats)) {
-            printf("\n✗ TRUNK VERIFICATION FAILED\n");
-            return 1;
-        }
-        printf("✓ Trunk verified\n\n");
-    }
-    
-    // Discover branches if needed
-    BranchInfo branches[100];
-    int branch_count = 0;
-    
-    if (verify_branches || specific_branch[0] != '\0') {
-        branch_count = discover_branches_from_trunk(genesis_rom_file, trunk_id, 
-                                                     branches, 100);
-        stats.branches_found = branch_count;
-    }
-    
-    // Verify specific branch
-    if (specific_branch[0] != '\0') {
-        // Check if branch exists
-        int found = 0;
-        for (int i = 0; i < branch_count; i++) {
-            if (strcmp(branches[i].branch_id, specific_branch) == 0) {
-                found = 1;
-                break;
+            else if (strcmp(argv[3], "-bb") == 0)
+            {
+                intVerifyTrunk = 0;
+                intVerifyBranches = 1;
+            }
+            else if (strcmp(argv[3], "-b") == 0)
+            {
+                if (argc != 5)
+                {
+                    fprintf(stderr, "Error: -b requires a branch_id argument\n");
+                    intResult = 1;
+                }
+                else
+                {
+                    intVerifyTrunk = 0;
+                    intVerifyBranches = 0;
+                    strncpy(strSpecificBranch, argv[4], GUID_LEN - 1);
+                    strSpecificBranch[GUID_LEN - 1] = '\0';
+                }
+            }
+            else
+            {
+                fprintf(stderr, "Error: Unknown option '%s'\n", argv[3]);
+                intResult = 1;
             }
         }
-        
-        if (!found) {
-            fprintf(stderr, "Error: Branch '%s' not found or not linked to trunk '%s'\n", 
-                    specific_branch, trunk_id);
-            return 1;
-        }
-        
-        printf("=== Verifying Branch: %s ===\n", specific_branch);
-        if (!verify_chain_backwards(genesis_rom_file, specific_branch, trunk_id, &stats)) {
-            printf("\n✗ BRANCH VERIFICATION FAILED\n");
-            return 1;
-        }
-        printf("✓ Branch verified\n\n");
-    }
-    // Verify all branches
-    else if (verify_branches && branch_count > 0) {
-        printf("=== Found %d branch(es) ===\n\n", branch_count);
-        
-        for (int i = 0; i < branch_count; i++) {
-            printf("--- Verifying Branch: %s ---\n", branches[i].branch_id);
-            
-            if (!verify_chain_backwards(genesis_rom_file, branches[i].branch_id,
-                                       trunk_id, &stats)) {
-                printf("\n✗ BRANCH VERIFICATION FAILED\n");
-                return 1;
+
+        if (intResult == 0)
+        {
+            VerifyStats objStats = {0, 0, 0, 0};
+
+            if (intVerifyTrunk)
+            {
+                printf("=== Verifying Trunk: %s ===\n", strTrunkId_a);
+                if (!verify_chain_backwards(strGenesisRomFile_a, strTrunkId_a, NULL, &objStats))
+                {
+                    printf("\n- TRUNK VERIFICATION FAILED\n");
+                    intResult = 1;
+                }
+                else
+                {
+                    printf("+ Trunk verified\n\n");
+                }
             }
-            printf("✓ Branch verified\n\n");
+
+            BranchInfo arrBranches[100];
+            int intBranchCount = 0;
+
+            if (intResult == 0 && (intVerifyBranches || strSpecificBranch[0] != '\0'))
+            {
+                intBranchCount = discover_branches_from_trunk(strGenesisRomFile_a, strTrunkId_a,
+                                                              arrBranches, 100);
+                objStats.branches_found = intBranchCount;
+            }
+
+            if (intResult == 0 && strSpecificBranch[0] != '\0')
+            {
+                int intFound = 0;
+                int intI;
+                for (intI = 0; intI < intBranchCount; intI++)
+                {
+                    if (strcmp(arrBranches[intI].branch_id, strSpecificBranch) == 0)
+                    {
+                        intFound = 1;
+                    }
+                }
+
+                if (!intFound)
+                {
+                    fprintf(stderr, "Error: Branch '%s' not found or not linked to trunk '%s'\n",
+                            strSpecificBranch, strTrunkId_a);
+                    intResult = 1;
+                }
+                else
+                {
+                    printf("=== Verifying Branch: %s ===\n", strSpecificBranch);
+                    if (!verify_chain_backwards(strGenesisRomFile_a, strSpecificBranch, strTrunkId_a, &objStats))
+                    {
+                        printf("\n- BRANCH VERIFICATION FAILED\n");
+                        intResult = 1;
+                    }
+                    else
+                    {
+                        printf("+ Branch verified\n\n");
+                    }
+                }
+            }
+            else if (intResult == 0 && intVerifyBranches && intBranchCount > 0)
+            {
+                printf("=== Found %d branch(es) ===\n\n", intBranchCount);
+
+                int intI;
+                for (intI = 0; intI < intBranchCount && intResult == 0; intI++)
+                {
+                    printf("--- Verifying Branch: %s ---\n", arrBranches[intI].branch_id);
+
+                    if (!verify_chain_backwards(strGenesisRomFile_a, arrBranches[intI].branch_id, strTrunkId_a, &objStats))
+                    {
+                        printf("\n- BRANCH VERIFICATION FAILED\n");
+                        intResult = 1;
+                    }
+                    else
+                    {
+                        printf("+ Branch verified\n\n");
+                    }
+                }
+            }
+            else if (intResult == 0 && intVerifyBranches && intBranchCount == 0)
+            {
+                printf("=== No branches found ===\n\n");
+            }
+
+            printf("=== Verification Summary ===\n");
+            printf("Total blocks verified: %d\n", objStats.verified_blocks);
+            printf("Failed verifications:  %d\n", objStats.failed_blocks);
+            if (intVerifyBranches || strSpecificBranch[0] != '\0')
+            {
+                printf("Branches found:        %d\n", objStats.branches_found);
+            }
+
+            if (objStats.failed_blocks == 0 && intResult == 0)
+            {
+                printf("\n+++ ALL VERIFICATIONS PASSED +++\n");
+            }
+            else
+            {
+                printf("\n- VERIFICATION FAILED\n");
+                intResult = 1;
+            }
         }
-    } else if (verify_branches && branch_count == 0) {
-        printf("=== No branches found ===\n\n");
     }
-    
-    // Summary
-    printf("=== Verification Summary ===\n");
-    printf("Total blocks verified: %d\n", stats.verified_blocks);
-    printf("Failed verifications:  %d\n", stats.failed_blocks);
-    if (verify_branches || specific_branch[0] != '\0') {
-        printf("Branches found:        %d\n", stats.branches_found);
-    }
-    
-    if (stats.failed_blocks == 0) {
-        printf("\n✓✓✓ ALL VERIFICATIONS PASSED ✓✓✓\n");
-        return 0;
-    } else {
-        printf("\n✗ VERIFICATION FAILED\n");
-        return 1;
-    }
+
+    return intResult;
 }

@@ -1,197 +1,267 @@
-// ZOSCII Tamperproof Blockchain Utility: ztbfetch
-// Fetches, decodes, and verifies a block from a trunk or branch.
-// Decodes ENTIRE BLOCK and extracts header + payload.
-// (c) 2025 Cyborg Unicorn Pty Ltd. - MIT License
+// Cyborg ZTB Block Fetcher v20260418
+// (c) 2026 Cyborg Unicorn Pty Ltd.
+// This software is released under MIT License.
+//
 // Usage: ztbfetch <genesis_rom> <chain_id> <block_index>
 
-#include "ztbcommon.h"
+#include "ztbcommon.c"
 
-int main(int argc, char *argv[]) {
-    printf("ZOSCII Tamperproof Blockchain - Block Fetcher\n");
-    printf("(c) 2025 Cyborg Unicorn Pty Ltd - MIT License\n\n");
-    
-    if (argc != 4) {
+int main(int argc, char *argv[])
+{
+    int intResult = 0;
+    uint8_t *byEncodedBlock = NULL;
+    uint8_t *byRollingRom = NULL;
+    uint8_t *byDecodedBlock = NULL;
+    BlockInfo *arrChainHistory = NULL;
+    BlockInfo *arrTrunkHistory = NULL;
+
+    printf("ZTB Block Fetcher v20260418\n");
+    printf("(c) 2026 Cyborg Unicorn Pty Ltd - MIT License\n\n");
+
+    if (argc != 4)
+    {
         fprintf(stderr, "Usage: %s <genesis_rom> <chain_id> <block_index>\n", argv[0]);
-        return 1;
+        intResult = 1;
     }
-    
-    const char *genesis_rom_file = argv[1];
-    const char *chain_id = argv[2];
-    int target_index = atoi(argv[3]);
-    
-    if (target_index < 1) {
-        fprintf(stderr, "Error: Block index must be >= 1\n");
-        return 1;
-    }
-    
-    // --- 1. Scan chain blocks ---
-    BlockInfo chain_history[MAX_BLOCKS_TO_SCAN];
-    int chain_count = scan_chain_blocks(chain_id, chain_history, MAX_BLOCKS_TO_SCAN);
-    
-    if (chain_count == 0) {
-        fprintf(stderr, "Error: Chain '%s' not found\n", chain_id);
-        return 1;
-    }
-    
-    // --- 2. Find target block ---
-    BlockInfo *target_block = NULL;
-    for (int i = 0; i < chain_count; i++) {
-        if (chain_history[i].index == target_index) {
-            target_block = &chain_history[i];
-            break;
+
+    if (intResult == 0)
+    {
+        const char *strGenesisRomFile_a = argv[1];
+        const char *strChainId_a = argv[2];
+        int intTargetIndex = atoi(argv[3]);
+
+        if (intTargetIndex < 1)
+        {
+            fprintf(stderr, "Error: Block index must be >= 1\n");
+            intResult = 1;
         }
-    }
-    
-    if (!target_block) {
-        fprintf(stderr, "Error: Block %d not found in chain '%s'\n", target_index, chain_id);
-        return 1;
-    }
-    
-    printf("Fetching block %d from chain '%s'\n", target_index, chain_id);
-    printf("Filename: %s\n", target_block->filename);
-    
-    // --- 3. Load encoded block file ---
-    FILE *f = fopen(target_block->filename, "rb");
-    if (!f) {
-        fprintf(stderr, "Error: Cannot open block file '%s'\n", target_block->filename);
-        return 1;
-    }
-    
-    fseek(f, 0, SEEK_END);
-    size_t encoded_len = ftell(f);
-    fseek(f, 0, SEEK_SET);
-    
-    uint8_t *encoded_block = malloc(encoded_len);
-    if (!encoded_block || fread(encoded_block, 1, encoded_len, f) != encoded_len) {
-        fprintf(stderr, "Error: Cannot read encoded block\n");
-        if (encoded_block) free(encoded_block);
-        fclose(f);
-        return 1;
-    }
-    fclose(f);
-    
-    printf("Encoded block: %zu bytes\n", encoded_len);
-    
-    // --- 4. Check if this is a branch (decode first block to check) ---
-    uint8_t is_branch = 0;
-    char trunk_id[GUID_LEN];
-    strcpy(trunk_id, NULL_GUID);
-    
-    if (target_index > 1 || chain_count > 1) {
-        // Load first block to check branch status
-        FILE *f_first = fopen(chain_history[0].filename, "rb");
-        if (f_first) {
-            fseek(f_first, 0, SEEK_END);
-            size_t first_encoded_len = ftell(f_first);
-            fseek(f_first, 0, SEEK_SET);
-            
-            uint8_t *first_encoded = malloc(first_encoded_len);
-            if (first_encoded && fread(first_encoded, 1, first_encoded_len, f_first) == first_encoded_len) {
-                uint8_t *genesis_rom = load_rom(genesis_rom_file);
-                if (genesis_rom) {
-                    size_t first_decoded_len;
-                    uint8_t *first_decoded = zoscii_decode_block(genesis_rom, first_encoded,
-                                                                 first_encoded_len, &first_decoded_len);
-                    if (first_decoded && first_decoded_len >= sizeof(ZTB_BlockHeader)) {
-                        ZTB_BlockHeader *first_header = (ZTB_BlockHeader*)first_decoded;
-                        is_branch = first_header->is_branch;
-                        if (is_branch) {
-                            strncpy(trunk_id, first_header->trunk_id, GUID_LEN - 1);
-                        }
-                        free(first_decoded);
-                    }
-                    free(genesis_rom);
+
+        // --- 1. Scan chain blocks ---
+        int intChainCount = 0;
+
+        if (intResult == 0)
+        {
+            arrChainHistory = malloc(MAX_BLOCKS_TO_SCAN * sizeof(BlockInfo));
+            if (!arrChainHistory)
+            {
+                fprintf(stderr, "Error: Cannot allocate chain history\n");
+                intResult = 1;
+            }
+        }
+
+        if (intResult == 0)
+        {
+            intChainCount = scan_chain_blocks(strChainId_a, arrChainHistory, MAX_BLOCKS_TO_SCAN);
+
+            if (intChainCount == 0)
+            {
+                fprintf(stderr, "Error: Chain '%s' not found\n", strChainId_a);
+                intResult = 1;
+            }
+        }
+
+        // --- 2. Find target block ---
+        BlockInfo *objTargetBlock = NULL;
+
+        if (intResult == 0)
+        {
+            int intI;
+            for (intI = 0; intI < intChainCount; intI++)
+            {
+                if (arrChainHistory[intI].index == intTargetIndex)
+                {
+                    objTargetBlock = &arrChainHistory[intI];
                 }
             }
-            if (first_encoded) free(first_encoded);
-            fclose(f_first);
+
+            if (!objTargetBlock)
+            {
+                fprintf(stderr, "Error: Block %d not found in chain '%s'\n", intTargetIndex, strChainId_a);
+                intResult = 1;
+            }
+        }
+
+        // --- 3. Load encoded block file ---
+        size_t intEncodedLen = 0;
+
+        if (intResult == 0)
+        {
+            printf("Fetching block %d from chain '%s'\n", intTargetIndex, strChainId_a);
+            printf("Filename: %s\n", objTargetBlock->filename);
+
+            FILE *f = fopen(objTargetBlock->filename, "rb");
+            if (!f)
+            {
+                fprintf(stderr, "Error: Cannot open block file '%s'\n", objTargetBlock->filename);
+                intResult = 1;
+            }
+            else
+            {
+                fseek(f, 0, SEEK_END);
+                intEncodedLen = ftell(f);
+                fseek(f, 0, SEEK_SET);
+
+                byEncodedBlock = malloc(intEncodedLen);
+                if (byEncodedBlock)
+                {
+                    if (fread(byEncodedBlock, 1, intEncodedLen, f) != intEncodedLen)
+                    {
+                        fprintf(stderr, "Error: Cannot read encoded block\n");
+                        intResult = 1;
+                    }
+                }
+                else
+                {
+                    fprintf(stderr, "Error: Cannot allocate encoded block\n");
+                    intResult = 1;
+                }
+                fclose(f);
+            }
+        }
+
+        if (intResult == 0)
+        {
+            printf("Encoded block: %zu bytes\n", intEncodedLen);
+        }
+
+        // --- 4. Detect if this is a branch ---
+        uint8_t byIsBranch = 0;
+        char strTrunkId[GUID_LEN];
+        int intTrunkCount = 0;
+        strcpy(strTrunkId, NULL_GUID);
+
+        if (intResult == 0)
+        {
+            byIsBranch = detect_branch_status(strGenesisRomFile_a, arrChainHistory, intChainCount,
+                                               strChainId_a, strTrunkId) ? 1 : 0;
+        }
+
+        // --- 5. Load trunk history if this is a branch ---
+        if (intResult == 0 && byIsBranch && strcmp(strTrunkId, NULL_GUID) != 0)
+        {
+            printf("Loading trunk history: %s\n", strTrunkId);
+            arrTrunkHistory = malloc(MAX_BLOCKS_TO_SCAN * sizeof(BlockInfo));
+            if (arrTrunkHistory)
+            {
+                intTrunkCount = scan_chain_blocks(strTrunkId, arrTrunkHistory, MAX_BLOCKS_TO_SCAN);
+                if (intTrunkCount > 0)
+                {
+                    printf("Found trunk with %d blocks\n", intTrunkCount);
+                }
+            }
+        }
+
+        // --- 6. Build Rolling ROM ---
+        if (intResult == 0)
+        {
+            byRollingRom = malloc(ROM_SIZE);
+            if (!byRollingRom)
+            {
+                fprintf(stderr, "Error: Cannot allocate rolling ROM\n");
+                intResult = 1;
+            }
+        }
+
+        if (intResult == 0)
+        {
+            if (!build_rolling_rom(strGenesisRomFile_a, arrChainHistory, intChainCount,
+                                   arrTrunkHistory, intTrunkCount, intTargetIndex, byRollingRom))
+            {
+                fprintf(stderr, "Error: Failed to build rolling ROM\n");
+                intResult = 1;
+            }
+        }
+
+        if (intResult == 0)
+        {
+            printf("Rolling ROM reconstructed\n");
+        }
+
+        // --- 7. Decode ENTIRE Block ---
+        size_t intDecodedLen = 0;
+
+        if (intResult == 0)
+        {
+            byDecodedBlock = zoscii_decode_block(byRollingRom, byEncodedBlock,
+                                                 intEncodedLen, &intDecodedLen);
+            if (!byDecodedBlock)
+            {
+                fprintf(stderr, "Error: ZOSCII decoding failed\n");
+                intResult = 1;
+            }
+        }
+
+        if (intResult == 0)
+        {
+            printf("Decoded block: %zu bytes\n", intDecodedLen);
+        }
+
+        // --- 8. Extract Header and Payload ---
+        if (intResult == 0)
+        {
+            if (intDecodedLen < sizeof(ZTB_BlockHeader))
+            {
+                fprintf(stderr, "Error: Decoded block too small for header\n");
+                intResult = 1;
+            }
+        }
+
+        if (intResult == 0)
+        {
+            ZTB_BlockHeader *objHeader = (ZTB_BlockHeader*)byDecodedBlock;
+            size_t intPayloadSpace = intDecodedLen - sizeof(ZTB_BlockHeader);
+
+            printf("\n--- Block Header ---\n");
+            printf("Block ID:      %s\n", objHeader->block_id);
+            printf("Prev Block ID: %s\n", objHeader->prev_block_id);
+            printf("Trunk ID:      %s\n", objHeader->trunk_id);
+            printf("Is Branch:     %s\n", objHeader->is_branch ? "Yes" : "No");
+            printf("Payload Len:   %u bytes\n", objHeader->payload_len);
+            printf("Padded Len:    %u bytes\n", objHeader->padded_len);
+            printf("Timestamp:     %lu\n", (unsigned long)objHeader->timestamp);
+
+            // --- 9. Verify Checksum ---
+            if (objHeader->padded_len > intPayloadSpace)
+            {
+                fprintf(stderr, "\n!!! INTEGRITY FAILURE !!!\n");
+                fprintf(stderr, "Padded length %u exceeds decoded payload space %zu\n",
+                        objHeader->padded_len, intPayloadSpace);
+                intResult = 1;
+            }
+            else
+            {
+                uint8_t *byPayload = byDecodedBlock + sizeof(ZTB_BlockHeader);
+                uint32_t intCalcChecksum = calculate_checksum(byPayload, objHeader->padded_len);
+
+                printf("\n--- Verification ---\n");
+                printf("Stored CRC32:     0x%08X\n", objHeader->checksum);
+                printf("Calculated CRC32: 0x%08X\n", intCalcChecksum);
+
+                if (intCalcChecksum != objHeader->checksum)
+                {
+                    fprintf(stderr, "\n!!! INTEGRITY FAILURE !!!\n");
+                    fprintf(stderr, "Checksum mismatch - data is corrupt or tampered\n");
+                    intResult = 1;
+                }
+                else
+                {
+                    printf("+ Integrity verified\n");
+
+                    // --- 10. Output Payload ---
+                    printf("\n--- Decoded Payload (%u bytes) ---\n", objHeader->payload_len);
+                    fwrite(byPayload, 1, objHeader->payload_len, stdout);
+                    printf("\n--- End Payload ---\n");
+                }
+            }
         }
     }
-    
-    // --- 5. Load trunk history if this is a branch ---
-    BlockInfo trunk_history[MAX_BLOCKS_TO_SCAN];
-    int trunk_count = 0;
-    
-    if (is_branch && strcmp(trunk_id, NULL_GUID) != 0) {
-        printf("Loading trunk history: %s\n", trunk_id);
-        trunk_count = scan_chain_blocks(trunk_id, trunk_history, MAX_BLOCKS_TO_SCAN);
-        if (trunk_count > 0) {
-            printf("Found trunk with %d blocks\n", trunk_count);
-        }
-    }
-    
-    // --- 6. Build Rolling ROM ---
-    uint8_t *rolling_rom = malloc(ROM_SIZE);
-    if (!rolling_rom || !build_rolling_rom(genesis_rom_file,
-                                          chain_history, chain_count,
-                                          trunk_history, trunk_count,
-                                          target_index, rolling_rom)) {
-        fprintf(stderr, "Error: Failed to build rolling ROM\n");
-        if (rolling_rom) free(rolling_rom);
-        free(encoded_block);
-        return 1;
-    }
-    
-    printf("Rolling ROM reconstructed\n");
-    
-    // --- 7. Decode ENTIRE Block ---
-    size_t decoded_len;
-    uint8_t *decoded_block = zoscii_decode_block(rolling_rom, encoded_block,
-                                                 encoded_len, &decoded_len);
-    if (!decoded_block) {
-        fprintf(stderr, "Error: ZOSCII decoding failed\n");
-        free(rolling_rom);
-        free(encoded_block);
-        return 1;
-    }
-    
-    printf("Decoded block: %zu bytes\n", decoded_len);
-    
-    free(rolling_rom);
-    free(encoded_block);
-    
-    // --- 8. Extract Header and Payload ---
-    if (decoded_len < sizeof(ZTB_BlockHeader)) {
-        fprintf(stderr, "Error: Decoded block too small for header\n");
-        free(decoded_block);
-        return 1;
-    }
-    
-    ZTB_BlockHeader *header = (ZTB_BlockHeader*)decoded_block;
-    uint8_t *payload = decoded_block + sizeof(ZTB_BlockHeader);
-    size_t payload_size = decoded_len - sizeof(ZTB_BlockHeader);
-    
-    printf("\n--- Block Header ---\n");
-    printf("Block ID:      %s\n", header->block_id);
-    printf("Prev Block ID: %s\n", header->prev_block_id);
-    printf("Trunk ID:      %s\n", header->trunk_id);
-    printf("Is Branch:     %s\n", header->is_branch ? "Yes" : "No");
-    printf("Payload Len:   %u bytes\n", header->payload_len);
-    printf("Padded Len:    %u bytes\n", header->padded_len);
-    printf("Timestamp:     %lu\n", (unsigned long)header->timestamp);
-    
-    // --- 9. Verify Checksum ---
-    uint32_t calculated_checksum = calculate_checksum(payload, header->padded_len);
-    
-    printf("\n--- Verification ---\n");
-    printf("Stored checksum:     %u\n", header->checksum);
-    printf("Calculated checksum: %u\n", calculated_checksum);
-    
-    if (calculated_checksum != header->checksum) {
-        fprintf(stderr, "\n!!! INTEGRITY FAILURE !!!\n");
-        fprintf(stderr, "Checksum mismatch - data is corrupt or tampered\n");
-        free(decoded_block);
-        return 1;
-    }
-    
-    printf("✓ Integrity verified\n");
-    
-    // --- 10. Output Payload ---
-    printf("\n--- Decoded Payload (%u bytes) ---\n", header->payload_len);
-    fwrite(payload, 1, header->payload_len, stdout);
-    printf("\n--- End Payload ---\n");
-    
-    free(decoded_block);
-    
-    return 0;
+
+    // --- Cleanup ---
+    if (byEncodedBlock) { free(byEncodedBlock); }
+    if (byRollingRom) { free(byRollingRom); }
+    if (byDecodedBlock) { free(byDecodedBlock); }
+    if (arrChainHistory) { free(arrChainHistory); }
+    if (arrTrunkHistory) { free(arrTrunkHistory); }
+
+    return intResult;
 }

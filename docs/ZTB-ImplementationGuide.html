@@ -10,7 +10,7 @@
     <div class="container">
         <h1>ZOSCII Tamperproof Blockchain</h1>
         <div class="subtitle">Implementation Guide for Developers</div>
-        <p><em>(c) 2025 Cyborg Unicorn Pty Ltd - MIT License</em></p>
+        <p><em>(c) 2026 Cyborg Unicorn Pty Ltd - MIT License</em></p>
 
         <div class="success">
             <strong>Key Features:</strong>
@@ -127,7 +127,6 @@
         <ul>
             <li><strong>Trunk Block</strong> (<code>is_branch = 0</code>) - Main chain blocks, linear progression</li>
             <li><strong>Branch Block</strong> (<code>is_branch = 1</code>) - Splits from trunk, maintains parent link</li>
-            <li><strong>Checkpoint Block</strong> (<code>is_branch = 2</code>) - Archival boundary marker</li>
         </ul>
 
         <h2 id="tools">Command-Line Tools</h2>
@@ -135,9 +134,9 @@
         <div class="tool-section">
             <h3>1. ztbcreate - Genesis ROM Creator</h3>
             <p>Creates the 64KB high-entropy Genesis ROM file.</p>
-            <pre><code>ztbcreate &lt;output_genesis_rom_file&gt;</code></pre>
+            <pre><code>ztbcreate &lt;entropyfile1&gt; [&lt;entropyfile2&gt;] [&lt;entropyfile3&gt;]&lt;output_genesis_rom_file&gt;</code></pre>
             <p><strong>Example:</strong></p>
-            <pre><code>ztbcreate genesis.rom</code></pre>
+            <pre><code>ztbcreate selfie.jpg genesis.rom</code></pre>
             <div class="warning">
                 <strong>⚠️ CRITICAL:</strong> Keep this file secure and backed up. Loss = unrecoverable blockchain.
             </div>
@@ -204,11 +203,11 @@ ztbverify &lt;genesis_rom&gt; &lt;trunk_id&gt; -b &lt;branch_id&gt;</code></pre>
 
         <div class="tool-section">
             <h3>6. ztbcheckpoint - Checkpoint Creator</h3>
-            <p>Creates an archival boundary for pruning old blocks.</p>
-            <pre><code>ztbcheckpoint &lt;chain_id&gt; &lt;genesis_rom&gt; &lt;previous_block_guid&gt;</code></pre>
+            <p>Creates a new Genesis ROM from the current rolling ROM state, enabling a clean chain split for archival.</p>
+            <pre><code>ztbcheckpoint &lt;genesis_rom&gt; &lt;chain_id&gt; &lt;output_checkpoint_rom&gt;</code></pre>
             <p><strong>Example:</strong></p>
             <pre><code># At end of financial year
-ztbcheckpoint FY2024 genesis.rom last_block_of_2024_guid</code></pre>
+ztbcheckpoint genesis.rom FY2024 checkpoint.rom</code></pre>
         </div>
 
         <h2 id="file-formats">File Formats</h2>
@@ -308,19 +307,19 @@ make
 make clean
 
 # Individual compilation
-gcc -o ztbcreate ztbcreate.c ztbcommon.c -O2
-gcc -o ztbaddblock ztbaddblock.c ztbcommon.c -O2
-gcc -o ztbaddbranch ztbaddbranch.c ztbcommon.c -O2
-gcc -o ztbfetch ztbfetch.c ztbcommon.c -O2
-gcc -o ztbverify ztbverify.c ztbcommon.c -O2
-gcc -o ztbcheckpoint ztbcheckpoint.c ztbcommon.c -O2</code></pre>
+gcc -o ztbcreate ztbcreate.c -O2
+gcc -o ztbaddblock ztbaddblock.c -O2
+gcc -o ztbaddbranch ztbaddbranch.c -O2
+gcc -o ztbfetch ztbfetch.c -O2
+gcc -o ztbverify ztbverify.c -O2
+gcc -o ztbcheckpoint ztbcheckpoint.c -O2</code></pre>
 
         <h2 id="examples">Example Workflows</h2>
         
         <div class="example">
             <h3>Basic Trunk Chain</h3>
             <pre><code># 1. Create Genesis ROM
-./ztbcreate genesis.rom
+./ztbcreate selfie.jpg genesis.rom
 
 # 2. Create trunk chain
 ./ztbaddblock genesis.rom MyTrunk -t "Block 1"
@@ -337,7 +336,7 @@ gcc -o ztbcheckpoint ztbcheckpoint.c ztbcommon.c -O2</code></pre>
         <div class="example">
             <h3>Hierarchical Organization</h3>
             <pre><code># 1. Create genesis
-./ztbcreate genesis.rom
+./ztbcreate selfie.jpg genesis.rom
 
 # 2. Create company trunk
 ./ztbaddblock genesis.rom CompanyLedger -t "FY2025 Genesis"
@@ -380,7 +379,7 @@ gcc -o ztbcheckpoint ztbcheckpoint.c ztbcommon.c -O2</code></pre>
 	
 	<div class="footer">
 		<h3>License & Information</h3>
-		<p><strong>MIT License</strong> - (c) 2025 Cyborg Unicorn Pty Ltd</p>
+		<p><strong>MIT License</strong> - (c) 2026 Cyborg Unicorn Pty Ltd</p>
 		<p>
 			<a href="https://zoscii.com" target="_blank" style="color: #007bff;">zoscii.com</a> |
 			<a href="https://github.com/PrimalNinja/cyborgzoscii" target="_blank" style="color: #007bff;">GitHub Repository</a> |

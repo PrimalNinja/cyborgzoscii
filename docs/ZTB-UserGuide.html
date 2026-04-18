@@ -9,7 +9,7 @@
 <body>
     <div class="container">
         <h1>ZOSCII Tamperproof Blockchain - User Guide</h1>
-        <p><em>(c) 2025 Cyborg Unicorn Pty Ltd - MIT License</em></p>
+        <p><em>(c) 2026 Cyborg Unicorn Pty Ltd - MIT License</em></p>
 
         <div class="command-section">
             <h2>ztbcreate - Create Your Blockchain Foundation</h2>
@@ -36,7 +36,11 @@
             </div>
             
             <h3>Example:</h3>
-            <pre><code>ztbcreate genesis.rom</code></pre>
+            <pre><code>ztbcreate selfie.jpg genesis.rom</code></pre>
+			
+			<p>ztbcreate &lt;entropyfile1&gt; [&lt;entropyfile2&gt;] [&lt;entropyfile3&gt;]&lt;output_genesis_rom_file&gt;<br><br>
+Note: 1 to 3 entropy files are recommended to be JPEGs or MP3s or some other capture of real-world physics.
+			</p>
         </div>
 
         <div class="command-section">
@@ -128,7 +132,7 @@ ztbaddblock genesis.rom Marketing -t "Campaign #001"</code></pre>
                 <li>Finds the requested block file</li>
                 <li>Reconstructs the Rolling ROM (samples from previous blocks)</li>
                 <li>Decodes the ZOSCII-encoded data</li>
-                <li>Verifies the checksum (detects tampering)</li>
+                <li>Verifies the CRC32 checksum (detects tampering)</li>
                 <li>Shows you the decoded payload</li>
             </ul>
             
@@ -138,7 +142,7 @@ ztbfetch genesis.rom MyTrunk 3
 
 # Output shows:
 # - Block metadata (ID, timestamp, etc.)
-# - Checksum verification
+# - CRC32 verification
 # - Your decoded data</code></pre>
         </div>
 
@@ -164,7 +168,7 @@ ztbfetch genesis.rom MyTrunk 3
                 <li>Scans all blocks in the chain</li>
                 <li>Rebuilds each block's Rolling ROM</li>
                 <li>Decodes each block</li>
-                <li>Verifies checksums</li>
+                <li>Verifies CRC32 checksums</li>
                 <li>Tests the tamperproof linking</li>
                 <li>Reports PASS/FAIL for each block</li>
             </ul>
@@ -209,21 +213,21 @@ ztbverify genesis.rom MyTrunk -b Sales</code></pre>
             
             <h3>What happens:</h3>
             <ul>
-                <li>Creates a special Type 2 (checkpoint) block</li>
-                <li>This block becomes a new "mini-genesis"</li>
-                <li>Blocks after this point can build Rolling ROMs from checkpoint → Genesis (skipping archived blocks)</li>
-                <li>You can move blocks BEFORE the checkpoint to slow storage</li>
-                <li>Each archive gets its own copy of Genesis ROM for independent verification</li>
+                <li>Builds the Rolling ROM at the current chain tip</li>
+                <li>Saves that Rolling ROM as a new Genesis ROM file</li>
+                <li>New blocks use the checkpoint ROM as their genesis — a clean chain restart</li>
+                <li>Archive the old blocks + original Genesis ROM to cold storage</li>
+                <li>Both archive and active chain are fully self-contained and independently verifiable</li>
             </ul>
             
             <h3>Example:</h3>
             <pre><code># At end of 2024
-ztbcheckpoint MyTrunk genesis.rom last_block_of_2024_guid
+ztbcheckpoint genesis.rom MyTrunk checkpoint.rom
 
 # Now you can:
-# 1. Move all 2024 blocks + Genesis ROM to archive storage
-# 2. Keep checkpoint + 2025 blocks on fast storage
-# 3. Both archives remain independently verifiable</code></pre>
+# 1. Move all old blocks + original genesis.rom to archive storage
+# 2. Use checkpoint.rom as genesis for new blocks
+# 3. Both archive and active chain verify independently</code></pre>
         </div>
 
         <div class="workflow">
@@ -231,7 +235,7 @@ ztbcheckpoint MyTrunk genesis.rom last_block_of_2024_guid
             <p><strong>Scenario:</strong> Accounting firm tracking invoices with separate accounts</p>
             
             <pre><code># 1. Start fresh
-ztbcreate genesis.rom
+ztbcreate selfie.jpg genesis.rom
 
 # 2. Create main trunk for 2025
 ztbaddblock genesis.rom FY2025 -t "Financial Year 2025"
@@ -254,9 +258,9 @@ ztbfetch genesis.rom ClientA 2
 ztbverify genesis.rom FY2025
 
 # 8. At year-end, create checkpoint
-ztbcheckpoint FY2025 genesis.rom last_block_guid
+ztbcheckpoint genesis.rom FY2025 checkpoint.rom
 
-# 9. Archive 2025 data to slow storage, start FY2026</code></pre>
+# 9. Archive old blocks + genesis.rom, use checkpoint.rom for FY2026</code></pre>
         </div>
 
         <div class="key-concepts">
@@ -278,7 +282,7 @@ ztbcheckpoint FY2025 genesis.rom last_block_guid
 	
 	<div class="footer">
 		<h3>License & Information</h3>
-		<p><strong>MIT License</strong> - (c) 2025 Cyborg Unicorn Pty Ltd</p>
+		<p><strong>MIT License</strong> - (c) 2026 Cyborg Unicorn Pty Ltd</p>
 		<p>
 			<a href="https://zoscii.com" target="_blank" style="color: #007bff;">zoscii.com</a> |
 			<a href="https://github.com/PrimalNinja/cyborgzoscii" target="_blank" style="color: #007bff;">GitHub Repository</a> |

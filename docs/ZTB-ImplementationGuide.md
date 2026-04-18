@@ -118,12 +118,12 @@ Creates the 64KB high-entropy Genesis ROM file - the foundation of your blockcha
 
 **Usage:**
 ```bash
-ztbcreate <output_genesis_rom_file>
+ztbcreate <entropyfile1> [<entropyfile2>] [<entropyfile3>] <output_genesis_rom_file>
 ```
 
 **Example:**
 ```bash
-ztbcreate genesis.rom
+ztbcreate selfie.jpg genesis.rom
 ```
 
 **Output:**
@@ -255,8 +255,8 @@ Payload Len:   256 bytes
 Timestamp:     1735689600
 
 --- Verification ---
-Stored checksum:     3
-Calculated checksum: 3
+Stored CRC32:     0xA3B2C1D0
+Calculated CRC32: 0xA3B2C1D0
 ✓ Integrity verified
 
 --- Decoded Payload (256 bytes) ---
@@ -417,7 +417,7 @@ Sales_0010_C2D1A670-3456-6789-ABCD-EF0123456789.ztb
   char trunk_id[37];        // Parent trunk ID (or NULL_GUID if not branch)
   uint32_t payload_len;     // Original payload length
   uint32_t padded_len;      // Padded payload length (min 512 bytes)
-  uint32_t checksum;        // Mod 7 checksum of payload
+  uint32_t checksum;        // CRC32 checksum of padded payload
   uint64_t timestamp;       // Unix timestamp
   uint8_t is_branch;        // 0=trunk, 1=branch, 2=checkpoint
 
@@ -570,12 +570,12 @@ sudo apt-get install build-essential  # Ubuntu/Debian
 make
 
 # Individual tools
-gcc -o ztbcreate ztbcreate.c ztbcommon.c -O2
-gcc -o ztbaddblock ztbaddblock.c ztbcommon.c -O2
-gcc -o ztbaddbranch ztbaddbranch.c ztbcommon.c -O2
-gcc -o ztbfetch ztbfetch.c ztbcommon.c -O2
-gcc -o ztbverify ztbverify.c ztbcommon.c -O2
-gcc -o ztbcheckpoint ztbcheckpoint.c ztbcommon.c -O2
+gcc -o ztbcreate ztbcreate.c -O2
+gcc -o ztbaddblock ztbaddblock.c -O2
+gcc -o ztbaddbranch ztbaddbranch.c -O2
+gcc -o ztbfetch ztbfetch.c -O2
+gcc -o ztbverify ztbverify.c -O2
+gcc -o ztbcheckpoint ztbcheckpoint.c -O2
 
 # Clean build artifacts
 make clean
@@ -584,9 +584,8 @@ make clean
 ### Windows
 
 ```cmd
-# Using MinGW or Visual Studio
-cl /O2 ztbcreate.c ztbcommon.c
-cl /O2 ztbaddblock.c ztbcommon.c
+# Using build.bat
+build
 ...
 ```
 
@@ -598,7 +597,7 @@ cl /O2 ztbaddblock.c ztbcommon.c
 
 ```bash
 # 1. Create Genesis ROM
-./ztbcreate genesis.rom
+./ztbcreate selfie.jpg genesis.rom
 
 # 2. Create trunk chain
 ./ztbaddblock genesis.rom MyTrunk -t "Block 1"
@@ -616,7 +615,7 @@ cl /O2 ztbaddblock.c ztbcommon.c
 
 ```bash
 # 1. Create genesis
-./ztbcreate genesis.rom
+./ztbcreate selfie.jpg genesis.rom
 
 # 2. Create company trunk
 ./ztbaddblock genesis.rom CompanyLedger -t "FY2025 Genesis"
@@ -646,7 +645,7 @@ cl /O2 ztbaddblock.c ztbcommon.c
 
 ```bash
 # 1. Create genesis
-./ztbcreate genesis.rom
+./ztbcreate selfie.jpg genesis.rom
 
 # 2. Create main chain
 ./ztbaddblock genesis.rom MainChain -t "Network Genesis"
@@ -689,7 +688,7 @@ mv FY2024_*.ztb archive_2024/
 # Move to cold storage...
 
 # Continue with fresh genesis for 2025
-./ztbcreate genesis.rom
+./ztbcreate selfie.jpg genesis.rom
 ./ztbaddblock genesis.rom FY2025 -t "Jan transaction"
 ```
 
