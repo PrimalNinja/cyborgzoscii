@@ -1,4 +1,4 @@
-// Cyborg ZTB Common Functions v20260418
+// Cyborg ZTB Common Functions v20260420
 // (c) 2026 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
 
@@ -67,7 +67,7 @@ void generate_guid(char *strBuffer_a)
              get_random());
 }
 
-// --- CRC32 Checksum ---
+// --- CRC32 Checksum over a buffer ---
 uint32_t calculate_checksum(const uint8_t *byData_a, size_t intLen_a)
 {
     uint32_t intCrc = 0xFFFFFFFF;
@@ -88,6 +88,40 @@ uint32_t calculate_checksum(const uint8_t *byData_a, size_t intLen_a)
             }
         }
     }
+    return intCrc ^ 0xFFFFFFFF;
+}
+
+// --- CRC32 Checksum over an entire file ---
+uint32_t calculate_file_checksum(const char *strFilename_a)
+{
+    uint32_t intCrc = 0xFFFFFFFF;
+    FILE *f = fopen(strFilename_a, "rb");
+    if (!f) { return 0; }
+
+    uint8_t byBuf[4096];
+    size_t intRead;
+    int intJ;
+
+    while ((intRead = fread(byBuf, 1, sizeof(byBuf), f)) > 0)
+    {
+        size_t intI;
+        for (intI = 0; intI < intRead; intI++)
+        {
+            intCrc ^= byBuf[intI];
+            for (intJ = 0; intJ < 8; intJ++)
+            {
+                if (intCrc & 1)
+                {
+                    intCrc = (intCrc >> 1) ^ 0xEDB88320;
+                }
+                else
+                {
+                    intCrc = intCrc >> 1;
+                }
+            }
+        }
+    }
+    fclose(f);
     return intCrc ^ 0xFFFFFFFF;
 }
 
@@ -439,8 +473,73 @@ int build_rolling_rom(const char *strGenesisRomFile_a,
     return 1;
 }
 
-// --- Try to decode block 1 with a given ROM and verify CRC32 ---
+// --- X1 Mode: XOR a buffer with a file's content, always wrapping if file is shorter ---
+// The previous block file XORs the current output buffer byte-for-byte.
+// If the file is shorter than the buffer, wrap back to start and continue.
+// This ensures every byte of the previous block contributes to the XOR regardless
+// of the size relationship between the two blocks.
+int xor_buffer_with_file(uint8_t *byBuffer_a, size_t intBufferLen_a,
+                         const char *strFilename_a)
+{
+    FILE *f = fopen(strFilename_a, "rb");
+    if (!f)
+    {
+        fprintf(stderr, "Error: Cannot open previous block '%s' for X1 mode\n", strFilename_a);
+        return 0;
+    }
+
+    fseek(f, 0, SEEK_END);
+    long lngFileLen = ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    if (lngFileLen == 0)
+    {
+        fclose(f);
+        return 0;
+    }
+
+    size_t intBufPos = 0;
+    uint8_t byBuf[4096];
+
+    while (intBufPos < intBufferLen_a)
+    {
+        size_t intToRead = intBufferLen_a - intBufPos;
+        if (intToRead > sizeof(byBuf))
+        {
+            intToRead = sizeof(byBuf);
+        }
+
+        size_t intRead = fread(byBuf, 1, intToRead, f);
+        if (intRead == 0)
+        {
+            // EOF — wrap back to start of file
+            fseek(f, 0, SEEK_SET);
+            intRead = fread(byBuf, 1, intToRead, f);
+            if (intRead == 0)
+            {
+                break;
+            }
+        }
+
+        size_t intI;
+        for (intI = 0; intI < intRead && intBufPos < intBufferLen_a; intI++)
+        {
+            byBuffer_a[intBufPos] ^= byBuf[intI];
+            intBufPos++;
+        }
+    }
+
+    fclose(f);
+    return 1;
+}
+
+// --- Try to decode block 1 of a chain with a given ROM ---
+// Used by detect_branch_status and discover_branches_from_trunk.
+// strPrevBlockFilename_a: filename of the previous block for X1 un-XOR (trunk's last block
+// for a branch block 1, NULL for a trunk block 1 which is always stored plain even in X1).
+// Returns 1 and fills objHeaderOut_a if the CRC and decode succeed; 0 otherwise.
 static int try_decode_block1(const uint8_t *byRom_a, const char *strFilename_a,
+                              const char *strPrevBlockFilename_a,
                               ZTB_BlockHeader *objHeaderOut_a)
 {
     int intValid = 0;
@@ -451,25 +550,71 @@ static int try_decode_block1(const uint8_t *byRom_a, const char *strFilename_a,
         size_t intFileLen = ftell(f);
         fseek(f, 0, SEEK_SET);
 
-        if (intFileLen > CRC32_PREFIX_SIZE)
+        if (intFileLen > BLOCK_PREFIX_ENCODED_SIZE)
         {
-            uint8_t arrStoredCrc[CRC32_PREFIX_SIZE];
-            if (fread(arrStoredCrc, 1, CRC32_PREFIX_SIZE, f) == CRC32_PREFIX_SIZE)
+            uint8_t *byFileData = malloc(intFileLen);
+            if (byFileData)
             {
-                uint32_t intStoredCrc = arrStoredCrc[0] | (arrStoredCrc[1] << 8) |
-                                        (arrStoredCrc[2] << 16) | (arrStoredCrc[3] << 24);
-
-                size_t intEncodedLen = intFileLen - CRC32_PREFIX_SIZE;
-                uint8_t *byEncoded = malloc(intEncodedLen);
-                if (byEncoded)
+                if (fread(byFileData, 1, intFileLen, f) == intFileLen)
                 {
-                    if (fread(byEncoded, 1, intEncodedLen, f) == intEncodedLen)
+                    // Read mode from encoded bytes 0-1 (never XOR'd on disk).
+                    size_t intModeDecodedLen;
+                    uint8_t *byModeDecoded = zoscii_decode_block(byRom_a, byFileData, 2,
+                                                                  &intModeDecodedLen);
+                    uint8_t byMode = MODE_NORMAL;
+                    if (byModeDecoded && intModeDecodedLen >= 1)
                     {
-                        uint32_t intCalcCrc = calculate_checksum(byEncoded, intEncodedLen);
+                        byMode = byModeDecoded[0];
+                        free(byModeDecoded);
+                    }
+                    else
+                    {
+                        if (byModeDecoded) { free(byModeDecoded); }
+                        free(byFileData);
+                        fclose(f);
+                        return 0;
+                    }
+
+                    // If X1 and a previous block is available, un-XOR the file data.
+                    // Trunk block 1 has no previous block and was written plain — skip XOR.
+                    if (byMode == MODE_X1 && strPrevBlockFilename_a != NULL)
+                    {
+                        if (!xor_buffer_with_file(byFileData, intFileLen, strPrevBlockFilename_a))
+                        {
+                            free(byFileData);
+                            fclose(f);
+                            return 0;
+                        }
+                        // Bytes 0-1 (mode) were never XOR'd by the writer; restore them
+                        // so the CRC decode at bytes 2-17 uses the correct data.
+                        // We already have byMode, so just leave bytes 0-1 as-is (they are
+                        // doubly-XOR'd but we won't use them again).
+                    }
+
+                    // Decode the CRC fields from encoded bytes 2-17.
+                    size_t intPrefixDecodedLen;
+                    uint8_t *byPrefixDecoded = zoscii_decode_block(byRom_a, byFileData + 2,
+                                                                    CRC_PREFIX_ENCODED_SIZE,
+                                                                    &intPrefixDecodedLen);
+                    if (byPrefixDecoded && intPrefixDecodedLen >= CRC32_SIZE * 2)
+                    {
+                        // byPrefixDecoded[0..3] = CRC32 of current encoded block
+                        // byPrefixDecoded[4..7] = CRC32 of previous block (zero for block 1)
+                        uint32_t intStoredCrc = byPrefixDecoded[0] | (byPrefixDecoded[1] << 8) |
+                                                (byPrefixDecoded[2] << 16) | (byPrefixDecoded[3] << 24);
+                        free(byPrefixDecoded);
+
+                        // Verify CRC32 over the encoded block data (after prefix)
+                        size_t intEncodedLen = intFileLen - BLOCK_PREFIX_ENCODED_SIZE;
+                        uint32_t intCalcCrc = calculate_checksum(byFileData + BLOCK_PREFIX_ENCODED_SIZE,
+                                                                 intEncodedLen);
+
                         if (intCalcCrc == intStoredCrc)
                         {
+                            // Decode block body to read the header
                             size_t intDecodedLen;
-                            uint8_t *byDecoded = zoscii_decode_block(byRom_a, byEncoded,
+                            uint8_t *byDecoded = zoscii_decode_block(byRom_a,
+                                                                      byFileData + BLOCK_PREFIX_ENCODED_SIZE,
                                                                       intEncodedLen, &intDecodedLen);
                             if (byDecoded && intDecodedLen >= sizeof(ZTB_BlockHeader))
                             {
@@ -477,10 +622,18 @@ static int try_decode_block1(const uint8_t *byRom_a, const char *strFilename_a,
                                 intValid = 1;
                                 free(byDecoded);
                             }
+                            else
+                            {
+                                if (byDecoded) { free(byDecoded); }
+                            }
                         }
                     }
-                    free(byEncoded);
+                    else
+                    {
+                        if (byPrefixDecoded) { free(byPrefixDecoded); }
+                    }
                 }
+                free(byFileData);
             }
         }
         fclose(f);
@@ -503,7 +656,8 @@ int detect_branch_status(const char *strGenesisRomFile_a,
         if (byGenesisRom)
         {
             ZTB_BlockHeader objHeader;
-            if (try_decode_block1(byGenesisRom, arrChainHistory_a[0].filename, &objHeader))
+            // Trunk block 1 has no previous block (written plain even in X1) — pass NULL.
+            if (try_decode_block1(byGenesisRom, arrChainHistory_a[0].filename, NULL, &objHeader))
             {
                 if (objHeader.is_branch == 1)
                 {
@@ -538,7 +692,10 @@ int detect_branch_status(const char *strGenesisRomFile_a,
                                               arrCandTrunkHistory, intCandTrunkCount, 1, byRollingRom))
                         {
                             ZTB_BlockHeader objHeader;
-                            if (try_decode_block1(byRollingRom, arrChainHistory_a[0].filename, &objHeader))
+                            // Branch block 1 in X1 mode is XOR'd with the trunk's last block.
+                            const char *strPrevFile = arrCandTrunkHistory[intCandTrunkCount - 1].filename;
+                            if (try_decode_block1(byRollingRom, arrChainHistory_a[0].filename,
+                                                  strPrevFile, &objHeader))
                             {
                                 if (objHeader.is_branch == 1 &&
                                     strcmp(objHeader.trunk_id, arrCandidates[intC]) == 0)
@@ -595,7 +752,12 @@ int discover_branches_from_trunk(const char *strGenesisRomFile_a, const char *st
                                               arrTrunkHistory, intTrunkCount, 1, byRollingRom))
                         {
                             ZTB_BlockHeader objHeader;
-                            if (try_decode_block1(byRollingRom, arrCandHistory[0].filename, &objHeader))
+                            // Branch block 1 in X1 mode is XOR'd with the trunk's last block.
+                            const char *strPrevFile = (intTrunkCount > 0)
+                                                      ? arrTrunkHistory[intTrunkCount - 1].filename
+                                                      : NULL;
+                            if (try_decode_block1(byRollingRom, arrCandHistory[0].filename,
+                                                  strPrevFile, &objHeader))
                             {
                                 if (objHeader.is_branch == 1 &&
                                     strcmp(objHeader.trunk_id, strTrunkId_a) == 0)

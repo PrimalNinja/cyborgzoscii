@@ -55,6 +55,7 @@ Every time you want to add new data to your chain.
 ### Options:
 - `-t "text"` - Add a text string
 - `-f filename` - Add a file's contents
+- `-x1` - Enable X1 extended security mode (see below)
 
 ### Example:
 ```bash
@@ -101,6 +102,8 @@ ztbaddbranch genesis.rom CompanyLedger Marketing -t "Marketing Q1"
 ztbaddblock genesis.rom Sales -t "Sale #001"
 ztbaddblock genesis.rom Marketing -t "Campaign #001"
 ```
+
+> **Note:** Add `-x1` to any `ztbaddbranch` or `ztbaddblock` call to enable X1 mode for that block. All blocks in a chain should use the same mode consistently.
 
 ---
 
@@ -254,6 +257,11 @@ ztbcheckpoint FY2025 genesis.rom last_block_guid
 ### Tamperproof
 If you change ANY byte in block N, all blocks N+1 onwards fail verification. The ZOSCII pointer encoding makes forgery combinatorially impossible (10^152900 combinations).
 
+### X1 Extended Security Mode
+X1 mode adds an additional layer on top of the standard tamper-evidence. Each block is XOR'd against the entire previous block file as it sits on disk. This means every block also commits to a CRC32 of the previous block's complete on-disk content — including its own encoding and XOR. An attacker attempting to forge block N would need to simultaneously satisfy two interdependent integrity checks: the current block's own CRC, and the CRC that block N+1 has already committed to for block N's on-disk form. Add `-x1` to any `ztbaddblock` or `ztbaddbranch` call to enable it. The first block of a trunk has no predecessor and is stored plain even in X1 mode — this is by design.
+
+**When to use X1:** The rolling ROM samples the first 1KB of each block's encoded data. For payloads under 1KB, the entire block falls within that sample — every subsequent block's encoding table is directly derived from the full content, and the combinatorial tamper-evidence applies to the whole payload without X1. For payloads larger than 1KB, content beyond the first 1KB is protected only by CRC32 in normal mode. X1 closes that gap. Use normal mode for short records (invoices, transactions, log entries). Use `-x1` when storing large files such as PDFs, images, or contracts where the full payload integrity matters and the modest performance cost is acceptable.
+
 ### No Decryption Needed
 This isn't encryption - it's addressing. The data is encoded as pointers into the Rolling ROM. Without the exact Rolling ROM, the pointers are meaningless.
 
@@ -270,8 +278,8 @@ Use branches like folders. Trunk = main timeline, branches = parallel sub-timeli
 | Command | Purpose | Usage |
 |---------|---------|-------|
 | `ztbcreate` | Create Genesis ROM | `ztbcreate selfie.jpg genesis.rom` |
-| `ztbaddblock` | Add data block | `ztbaddblock genesis.rom chain -t "text"` |
-| `ztbaddbranch` | Create new branch | `ztbaddbranch genesis.rom trunk branch -t "text"` |
+| `ztbaddblock` | Add data block | `ztbaddblock genesis.rom chain -t "text" [-x1]` |
+| `ztbaddbranch` | Create new branch | `ztbaddbranch genesis.rom trunk branch -t "text" [-x1]` |
 | `ztbfetch` | Read block data | `ztbfetch genesis.rom chain index` |
 | `ztbverify` | Verify integrity | `ztbverify genesis.rom trunk` |
 | `ztbcheckpoint` | Archive boundary | `ztbcheckpoint trunk genesis.rom prev_guid` |

@@ -146,10 +146,10 @@
             <h3>2. ztbaddblock - Block Creator</h3>
             <p>Adds a new block to an existing chain (trunk or branch).</p>
             <pre><code># Add text block
-ztbaddblock &lt;genesis_rom&gt; &lt;chain_id&gt; -t "text string"
+ztbaddblock &lt;genesis_rom&gt; &lt;chain_id&gt; -t "text string" [-x1]
 
 # Add file block
-ztbaddblock &lt;genesis_rom&gt; &lt;chain_id&gt; -f &lt;file_path&gt;</code></pre>
+ztbaddblock &lt;genesis_rom&gt; &lt;chain_id&gt; -f &lt;file_path&gt; [-x1]</code></pre>
             <p><strong>Examples:</strong></p>
             <pre><code># First block creates new trunk
 ztbaddblock genesis.rom MyTrunk -t "Genesis block"
@@ -162,8 +162,8 @@ ztbaddblock genesis.rom MyTrunk -f invoice.pdf</code></pre>
         <div class="tool-section">
             <h3>3. ztbaddbranch - Branch Creator</h3>
             <p>Creates a new branch splitting from a trunk block.</p>
-            <pre><code>ztbaddbranch &lt;genesis_rom&gt; &lt;trunk_id&gt; &lt;new_branch_id&gt; -t "text"
-ztbaddbranch &lt;genesis_rom&gt; &lt;trunk_id&gt; &lt;new_branch_id&gt; -f &lt;file&gt;</code></pre>
+            <pre><code>ztbaddbranch &lt;genesis_rom&gt; &lt;trunk_id&gt; &lt;new_branch_id&gt; -t "text" [-x1]
+ztbaddbranch &lt;genesis_rom&gt; &lt;trunk_id&gt; &lt;new_branch_id&gt; -f &lt;file&gt; [-x1]</code></pre>
             <p><strong>Example:</strong></p>
             <pre><code># Create trunk
 ztbaddblock genesis.rom CompanyLedger -t "2025 Books"
@@ -266,8 +266,19 @@ ClientA_0002_B1C0956F-2345-5678-9ABC-DEF012345678.ztb</code></pre>
             <p><strong>This is combinatorially infeasible</strong> - not just hard, but information-theoretically impossible.</p>
         </div>
 
+        <h3>X1 Extended Security Mode</h3>
+        <div class="info">
+            <p>X1 mode adds an additional binding layer on top of the standard tamper-evidence. Each block is XOR'd against the entire previous block file as it sits on disk. Two CRC32 values are committed to in every block's prefix:</p>
+            <ol>
+                <li><strong>Current block CRC</strong> — over the ZOSCII-encoded block data.</li>
+                <li><strong>Previous block on-disk CRC</strong> — over the complete previous block file (fully encoded and XOR'd), committed to by the <em>current</em> block and verified by the <em>next</em>.</li>
+            </ol>
+            <p>An attacker modifying block N must simultaneously satisfy both interdependent CRC targets. The second target is over non-deterministically encoded on-disk data, making it practically infeasible to satisfy independently of the first.</p>
+            <p><strong>1KB threshold:</strong> The rolling ROM samples the first 1KB of each block. For payloads under 1KB the entire block is captured in the rolling ROM — the combinatorial tamper-evidence applies to the full payload without X1. For payloads exceeding 1KB, content beyond that boundary is protected only by CRC32 in normal mode. X1 closes this gap. Use normal mode for short records (invoices, transactions, log entries). Use <code>-x1</code> for large files such as PDFs, images, or contracts where full payload integrity beyond 1KB is required.</p>
+            <p><strong>Trunk block 1 exception:</strong> The first block of a trunk has no predecessor and is stored plain even in X1 mode. Its prev-block CRC is zero. This is by design and handled correctly by all tools.</p>
+        </div>
+
         <h3>Why Quantum-Resistant?</h3>
-        <table>
             <thead>
                 <tr>
                     <th>Attack Vector</th>

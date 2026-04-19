@@ -62,6 +62,16 @@ This is combinatorially infeasible, even for quantum computers.
 
 The security is based on the non-reproducible randomness of the address selection during encoding.
 
+### D. X1 Extended Security Mode (Optional)
+
+In X1 mode each block is additionally XOR'd against the entire previous block file as it exists on disk — fully encoded, complete with its own prefix and CRC fields. The current block stores a CRC32 of its own encoded data, and also commits to a CRC32 of the previous block's complete on-disk content.
+
+This creates a dual-CRC constraint: an attacker attempting to forge block N must simultaneously satisfy two interdependent integrity checks. The second CRC target is over the previous block's on-disk form, which is itself a product of non-deterministic ZOSCII encoding. Because the attacker cannot predict or control the encoded output, satisfying the second constraint is practically infeasible independently of the first.
+
+The result is that X1 mode binds each block to its predecessor not just through the Rolling ROM lineage but through a direct on-disk dependency. The first block of a trunk has no predecessor and is stored plain even in X1 mode.
+
+The 1KB rolling ROM sample size is the natural threshold for this decision. Payloads under 1KB are fully captured in the Rolling ROM sample, meaning the combinatorial tamper-evidence of the pointer encoding applies to the entire payload without X1. Payloads exceeding 1KB benefit from X1 to extend strong integrity guarantees beyond the sampled boundary.
+
 ---
 
 ## 3. Scalable Architecture: Wallet and Transaction Chains
@@ -125,6 +135,7 @@ The ZOSCII Tamperproof Blockchain represents a fundamental shift in DLT security
 | **Verification Speed** | Hash computation | O(1) pointer lookups |
 | **Scalability** | Linear chain (full scan) | Branching architecture (indexed) |
 | **Tamper Detection** | Hash mismatch | Pointer misalignment (10^152900 impossibility) |
+| **X1 Mode** | N/A | Dual-CRC on-disk binding; each block commits to predecessor's exact on-disk form |
 | **Data Confidentiality** | Separate encryption layer | Optional ITS encoding |
 | **Attack Resistance** | Computationally hard | Information-theoretically impossible |
 

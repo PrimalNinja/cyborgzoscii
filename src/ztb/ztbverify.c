@@ -1,4 +1,4 @@
-// Cyborg ZTB Chain Verifier v20260418
+// Cyborg ZTB Chain Verifier v20260420
 // (c) 2026 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
 //
@@ -18,6 +18,7 @@ typedef struct {
     int branches_found;
 } VerifyStats;
 
+
 // --- Verify Single Block ---
 int verify_single_block(const char *strGenesisRomFile_a,
                         const BlockInfo *arrChainHistory_a, int intChainCount_a,
@@ -26,11 +27,11 @@ int verify_single_block(const char *strGenesisRomFile_a,
 {
     int intValid = 0;
     uint8_t *byRollingRom = NULL;
-    uint8_t *byEncoded = NULL;
+    uint8_t *byFileData = NULL;
 
+    // Find target block
     BlockInfo *objTarget = NULL;
     int intI;
-
     for (intI = 0; intI < intChainCount_a; intI++)
     {
         if (arrChainHistory_a[intI].index == intTargetIndex_a)
@@ -39,56 +40,118 @@ int verify_single_block(const char *strGenesisRomFile_a,
         }
     }
 
-    if (objTarget)
+    if (!objTarget) { return 0; }
+
+    // Find previous block filename for X1 mode:
+    // For trunk block N>1: chain block N-1.
+    // For branch block 1: trunk's last block.
+    // For trunk block 1: no previous block.
+    const char *strPrevBlockFilename = NULL;
+    for (intI = 0; intI < intChainCount_a; intI++)
     {
-        byRollingRom = malloc(ROM_SIZE);
-        if (byRollingRom)
+        if (arrChainHistory_a[intI].index == intTargetIndex_a - 1)
         {
-            if (build_rolling_rom(strGenesisRomFile_a,
-                                  arrChainHistory_a, intChainCount_a,
-                                  arrTrunkHistory_a, intTrunkCount_a,
-                                  intTargetIndex_a, byRollingRom))
+            strPrevBlockFilename = arrChainHistory_a[intI].filename;
+        }
+    }
+    if (!strPrevBlockFilename && intTargetIndex_a == 1 && intTrunkCount_a > 0)
+    {
+        strPrevBlockFilename = arrTrunkHistory_a[intTrunkCount_a - 1].filename;
+    }
+
+    byRollingRom = malloc(ROM_SIZE);
+    if (!byRollingRom) { return 0; }
+
+    if (!build_rolling_rom(strGenesisRomFile_a,
+                           arrChainHistory_a, intChainCount_a,
+                           arrTrunkHistory_a, intTrunkCount_a,
+                           intTargetIndex_a, byRollingRom))
+    {
+        free(byRollingRom);
+        return 0;
+    }
+
+    FILE *f = fopen(objTarget->filename, "rb");
+    if (f)
+    {
+        fseek(f, 0, SEEK_END);
+        size_t intFileLen = ftell(f);
+        fseek(f, 0, SEEK_SET);
+
+        if (intFileLen > BLOCK_PREFIX_ENCODED_SIZE)
+        {
+            byFileData = malloc(intFileLen);
+            if (byFileData && fread(byFileData, 1, intFileLen, f) == intFileLen)
             {
-                FILE *f = fopen(objTarget->filename, "rb");
-                if (f)
+                // Encoded bytes 0-1 are the mode and are never XOR'd on disk —
+                // decode them directly to learn the mode before doing anything else.
+                size_t intModeDecodedLen;
+                uint8_t *byModeDecoded = zoscii_decode_block(byRollingRom, byFileData, 2,
+                                                              &intModeDecodedLen);
+                uint8_t byMode = MODE_NORMAL;
+                if (byModeDecoded && intModeDecodedLen >= 1)
                 {
-                    fseek(f, 0, SEEK_END);
-                    size_t intFileLen = ftell(f);
-                    fseek(f, 0, SEEK_SET);
+                    byMode = byModeDecoded[0];
+                    free(byModeDecoded);
+                }
 
-                    if (intFileLen > CRC32_PREFIX_SIZE)
+                // Un-XOR the file buffer if X1 and a previous block exists.
+                // Trunk block 1 has no previous block and was written plain even in X1 — skip XOR.
+                int intDataReady = 1;
+                if (byMode == MODE_X1 && strPrevBlockFilename != NULL)
+                {
+                    if (!xor_buffer_with_file(byFileData, intFileLen, strPrevBlockFilename))
                     {
-                        // Read CRC32 prefix
-                        uint8_t arrCrcBytes[CRC32_PREFIX_SIZE];
-                        if (fread(arrCrcBytes, 1, CRC32_PREFIX_SIZE, f) == CRC32_PREFIX_SIZE)
-                        {
-                            uint32_t intStoredCrc = arrCrcBytes[0] | (arrCrcBytes[1] << 8) |
-                                                    (arrCrcBytes[2] << 16) | (arrCrcBytes[3] << 24);
+                        intDataReady = 0;
+                    }
+                }
 
-                            size_t intEncodedLen = intFileLen - CRC32_PREFIX_SIZE;
-                            byEncoded = malloc(intEncodedLen);
-                            if (byEncoded)
-                            {
-                                if (fread(byEncoded, 1, intEncodedLen, f) == intEncodedLen)
-                                {
-                                    // Verify CRC32 over encoded data
-                                    uint32_t intCalcCrc = calculate_checksum(byEncoded, intEncodedLen);
-                                    intValid = (intCalcCrc == intStoredCrc) ? 1 : 0;
-                                }
-                            }
+                if (intDataReady)
+                {
+                    // Decode CRC fields from encoded bytes 2-17 (raw bytes 1-8: current CRC + prev CRC)
+                    size_t intCrcDecodedLen;
+                    uint8_t *byCrcDecoded = zoscii_decode_block(byRollingRom, byFileData + 2,
+                                                                 CRC_PREFIX_ENCODED_SIZE,
+                                                                 &intCrcDecodedLen);
+                    if (byCrcDecoded && intCrcDecodedLen >= CRC32_SIZE * 2)
+                    {
+                        uint32_t intStoredCrc     = byCrcDecoded[0] | (byCrcDecoded[1] << 8) |
+                                                    (byCrcDecoded[2] << 16) | (byCrcDecoded[3] << 24);
+                        uint32_t intStoredPrevCrc = byCrcDecoded[4] | (byCrcDecoded[5] << 8) |
+                                                    (byCrcDecoded[6] << 16) | (byCrcDecoded[7] << 24);
+                        free(byCrcDecoded);
+
+                        int intPrevCrcOk = 1;
+                        if (byMode == MODE_X1 && intStoredPrevCrc != 0 && strPrevBlockFilename)
+                        {
+                            uint32_t intCalcPrevCrc = calculate_file_checksum(strPrevBlockFilename);
+                            intPrevCrcOk = (intCalcPrevCrc == intStoredPrevCrc) ? 1 : 0;
+                        }
+
+                        if (intPrevCrcOk)
+                        {
+                            size_t intEncodedLen = intFileLen - BLOCK_PREFIX_ENCODED_SIZE;
+                            uint32_t intCalcCrc = calculate_checksum(byFileData + BLOCK_PREFIX_ENCODED_SIZE,
+                                                                     intEncodedLen);
+                            intValid = (intCalcCrc == intStoredCrc) ? 1 : 0;
                         }
                     }
-                    fclose(f);
+                    else
+                    {
+                        if (byCrcDecoded) { free(byCrcDecoded); }
+                    }
                 }
             }
         }
+        fclose(f);
     }
 
+    if (byFileData)   { free(byFileData); }
     if (byRollingRom) { free(byRollingRom); }
-    if (byEncoded) { free(byEncoded); }
 
     return intValid;
 }
+
 
 // --- Verify Chain BACKWARDS ---
 int verify_chain_backwards(const char *strGenesisRomFile_a, const char *strChainId_a,
@@ -141,7 +204,7 @@ int verify_chain_backwards(const char *strGenesisRomFile_a, const char *strChain
         }
     }
 
-    if (arrHistory) { free(arrHistory); }
+    if (arrHistory)      { free(arrHistory); }
     if (arrTrunkHistory) { free(arrTrunkHistory); }
 
     return intSuccess;
@@ -152,7 +215,7 @@ int main(int argc, char *argv[])
 {
     int intResult = 0;
 
-    printf("ZTB Chain Verifier v20260418\n");
+    printf("ZTB Chain Verifier v20260420\n");
     printf("(c) 2026 Cyborg Unicorn Pty Ltd - MIT License\n\n");
 
     if (argc < 3 || argc > 5)

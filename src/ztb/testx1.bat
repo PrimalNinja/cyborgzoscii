@@ -1,9 +1,9 @@
 @echo off
 REM ============================================================
-REM  ZTB Test Suite v20260420
+REM  ZTB Test Suite v20260420 (X1 Mode)
 REM  (c) 2026 Cyborg Unicorn Pty Ltd - MIT License
 REM
-REM  Comprehensive test of all ZTB tools:
+REM  Comprehensive test of all ZTB tools (X1 Mode):
 REM    Test 1: Genesis ROM creation
 REM    Test 2: 100-block trunk chain
 REM    Test 3: Branch creation and population
@@ -23,15 +23,15 @@ set FAIL=0
 set TOTAL=0
 
 echo ============================================================
-echo  ZTB Test Suite v20260420
+echo  ZTB Test Suite v20260420 (X1 Mode)
 echo  ^(c^) 2026 Cyborg Unicorn Pty Ltd - MIT License
 echo ============================================================
 echo.
 
 REM --- Clean up any previous test data ---
-if exist testdata rd /s /q testdata
-mkdir testdata
-cd testdata
+if exist testdata_x1 rd /s /q testdata_x1
+mkdir testdata_x1
+cd testdata_x1
 
 REM ============================================================
 REM  TEST 1: Genesis ROM Creation
@@ -68,7 +68,7 @@ echo --- TEST 2: 100-Block Trunk Chain ---
 
 set TRUNK_ERRORS=0
 for /L %%N in (1,1,100) do (
-    ..\ztbaddblock genesis.rom MainTrunk -t "Trunk block %%N of 100 - timestamp test data padding to ensure reasonable payload size" > nul 2>&1
+    ..\ztbaddblock genesis.rom MainTrunk -t "Trunk block %%N of 100 - timestamp test data padding to ensure reasonable payload size" -x1 > nul 2>&1
     if errorlevel 1 (
         set /a TRUNK_ERRORS+=1
     )
@@ -103,7 +103,7 @@ REM ============================================================
 echo --- TEST 3: Branch Creation and Population ---
 
 REM Create 3 branches
-..\ztbaddbranch genesis.rom MainTrunk Sales -t "Sales department branch" > nul 2>&1
+..\ztbaddbranch genesis.rom MainTrunk Sales -t "Sales department branch" -x1 > nul 2>&1
 if not errorlevel 1 (
     echo   [PASS] Branch 'Sales' created
     set /a PASS+=1
@@ -113,7 +113,7 @@ if not errorlevel 1 (
 )
 set /a TOTAL+=1
 
-..\ztbaddbranch genesis.rom MainTrunk Engineering -t "Engineering department branch" > nul 2>&1
+..\ztbaddbranch genesis.rom MainTrunk Engineering -t "Engineering department branch" -x1 > nul 2>&1
 if not errorlevel 1 (
     echo   [PASS] Branch 'Engineering' created
     set /a PASS+=1
@@ -123,7 +123,7 @@ if not errorlevel 1 (
 )
 set /a TOTAL+=1
 
-..\ztbaddbranch genesis.rom MainTrunk Legal -t "Legal department branch" > nul 2>&1
+..\ztbaddbranch genesis.rom MainTrunk Legal -t "Legal department branch" -x1 > nul 2>&1
 if not errorlevel 1 (
     echo   [PASS] Branch 'Legal' created
     set /a PASS+=1
@@ -136,7 +136,7 @@ set /a TOTAL+=1
 REM Add 20 blocks to Sales
 set SALES_ERRORS=0
 for /L %%N in (1,1,20) do (
-    ..\ztbaddblock genesis.rom Sales -t "Sales invoice %%N - customer order processing record" > nul 2>&1
+    ..\ztbaddblock genesis.rom Sales -t "Sales invoice %%N - customer order processing record" -x1 > nul 2>&1
     if errorlevel 1 set /a SALES_ERRORS+=1
 )
 
@@ -155,7 +155,7 @@ set /a TOTAL+=1
 REM Add 15 blocks to Engineering
 set ENG_ERRORS=0
 for /L %%N in (1,1,15) do (
-    ..\ztbaddblock genesis.rom Engineering -t "Engineering commit %%N - build artifact record" > nul 2>&1
+    ..\ztbaddblock genesis.rom Engineering -t "Engineering commit %%N - build artifact record" -x1 > nul 2>&1
     if errorlevel 1 set /a ENG_ERRORS+=1
 )
 
@@ -174,7 +174,7 @@ set /a TOTAL+=1
 REM Add 10 blocks to Legal
 set LEGAL_ERRORS=0
 for /L %%N in (1,1,10) do (
-    ..\ztbaddblock genesis.rom Legal -t "Legal document %%N - compliance filing record" > nul 2>&1
+    ..\ztbaddblock genesis.rom Legal -t "Legal document %%N - compliance filing record" -x1 > nul 2>&1
     if errorlevel 1 set /a LEGAL_ERRORS+=1
 )
 
@@ -382,7 +382,7 @@ echo --- TEST 7: Post-Checkpoint Chain ---
 REM Add 30 blocks using checkpoint ROM
 set POSTCP_ERRORS=0
 for /L %%N in (1,1,30) do (
-    ..\ztbaddblock checkpoint.rom MainTrunk -t "Post-checkpoint block %%N - new era data record" > nul 2>&1
+    ..\ztbaddblock checkpoint.rom MainTrunk -t "Post-checkpoint block %%N - new era data record" -x1 > nul 2>&1
     if errorlevel 1 set /a POSTCP_ERRORS+=1
 )
 
@@ -421,7 +421,7 @@ if not errorlevel 1 (
 set /a TOTAL+=1
 
 REM Create a branch on the post-checkpoint chain
-..\ztbaddbranch checkpoint.rom MainTrunk PostCPBranch -t "Post-checkpoint branch" > nul 2>&1
+..\ztbaddbranch checkpoint.rom MainTrunk PostCPBranch -t "Post-checkpoint branch" -x1 > nul 2>&1
 if not errorlevel 1 (
     echo   [PASS] Post-checkpoint branch created
     set /a PASS+=1
@@ -433,7 +433,7 @@ set /a TOTAL+=1
 
 REM Add blocks to post-checkpoint branch
 for /L %%N in (1,1,5) do (
-    ..\ztbaddblock checkpoint.rom PostCPBranch -t "Post-CP branch block %%N" > nul 2>&1
+    ..\ztbaddblock checkpoint.rom PostCPBranch -t "Post-CP branch block %%N" -x1 > nul 2>&1
 )
 
 set PCPB_COUNT=0
@@ -524,7 +524,7 @@ echo This is a test file with some content for ZTB blockchain storage. > testfil
 echo Line 2: More data to ensure the payload is meaningful. >> testfile.txt
 echo Line 3: ZOSCII Tamperproof Blockchain test payload. >> testfile.txt
 
-..\ztbaddblock checkpoint.rom MainTrunk -f testfile.txt > nul 2>&1
+..\ztbaddblock checkpoint.rom MainTrunk -f testfile.txt -x1 > nul 2>&1
 if not errorlevel 1 (
     echo   [PASS] File payload block created
     set /a PASS+=1
@@ -556,9 +556,9 @@ mkdir tampertest
 pushd tampertest
 copy ..\genesis.rom . > nul 2>&1
 
-..\..\ztbaddblock genesis.rom TamperChain -t "Block one - original data" > nul 2>&1
-..\..\ztbaddblock genesis.rom TamperChain -t "Block two - original data" > nul 2>&1
-..\..\ztbaddblock genesis.rom TamperChain -t "Block three - original data" > nul 2>&1
+..\..\ztbaddblock genesis.rom TamperChain -t "Block one - original data" -x1 > nul 2>&1
+..\..\ztbaddblock genesis.rom TamperChain -t "Block two - original data" -x1 > nul 2>&1
+..\..\ztbaddblock genesis.rom TamperChain -t "Block three - original data" -x1 > nul 2>&1
 
 REM Verify before tampering
 ..\..\ztbverify genesis.rom TamperChain -t > nul 2>&1
@@ -596,7 +596,7 @@ REM ============================================================
 echo --- TEST 11: Edge Cases ---
 
 REM Try to create a branch that already exists (should fail)
-..\ztbaddbranch checkpoint.rom MainTrunk PostCPBranch -t "Duplicate branch" > nul 2>&1
+..\ztbaddbranch checkpoint.rom MainTrunk PostCPBranch -t "Duplicate branch" -x1 > nul 2>&1
 if errorlevel 1 (
     echo   [PASS] Correctly rejected duplicate branch name
     set /a PASS+=1
@@ -607,7 +607,7 @@ if errorlevel 1 (
 set /a TOTAL+=1
 
 REM Try to create a branch from non-existent trunk (should fail)
-..\ztbaddbranch checkpoint.rom NonExistent NewBranch -t "Bad branch" > nul 2>&1
+..\ztbaddbranch checkpoint.rom NonExistent NewBranch -t "Bad branch" -x1 > nul 2>&1
 if errorlevel 1 (
     echo   [PASS] Correctly rejected non-existent trunk
     set /a PASS+=1
@@ -652,6 +652,6 @@ echo ============================================================
 
 REM Clean up
 cd ..
-rd /s /q testdata
+rd /s /q testdata_x1
 
 endlocal

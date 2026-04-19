@@ -167,11 +167,14 @@ ztbaddblock genesis.rom ClientA -t "Transaction 1"
 3. Creates header (GUID, timestamp, checksum, metadata)
 4. Combines header + payload (padded to min 512 bytes)
 5. **ZOSCII encodes entire block** using Rolling ROM
-6. Writes: `<chain_id>_<index>_<block_guid>.ztb`
+6. Calculates CRC32 over encoded block data
+7. In X1 mode: calculates CRC32 of previous block's on-disk file; XORs entire output against previous block file (trunk block 1 stored plain — no predecessor exists)
+8. Writes prefix (mode + CRCs, ZOSCII encoded) + encoded block: `<chain_id>_<index>_<block_guid>.ztb`
 
 **Parameters:**
 - `-t "text"` - Add text string as payload
 - `-f filename` - Add file contents as payload
+- `-x1` - Enable X1 extended security mode
 
 ---
 
@@ -181,8 +184,8 @@ Creates a new branch splitting from a trunk block.
 
 **Usage:**
 ```bash
-ztbaddbranch <genesis_rom> <trunk_id> <new_branch_id> -t "text"
-ztbaddbranch <genesis_rom> <trunk_id> <new_branch_id> -f <file>
+ztbaddbranch <genesis_rom> <trunk_id> <new_branch_id> -t "text" [-x1]
+ztbaddbranch <genesis_rom> <trunk_id> <new_branch_id> -f <file> [-x1]
 ```
 
 **Example:**
@@ -431,10 +434,14 @@ uint32_t checksum;          // CRC32 checksum of header + padded payload stored 
 ### Block Structure (After Encoding)
 
 ```
-[ZOSCII Encoded Block]
-  - Entire raw block encoded as 16-bit pointers
-  - Size: (132 + padded_len) × 2 bytes
-  - Each byte → 2-byte little-endian pointer into Rolling ROM
+[On-disk Block File]
+  Bytes 0-1:   Mode byte, ZOSCII encoded (never XOR'd — always readable)
+               MODE_NORMAL (0) or MODE_X1 (1)
+  Bytes 2-9:   CRC32 of current encoded block, ZOSCII encoded
+  Bytes 10-17: CRC32 of previous block's on-disk file, ZOSCII encoded
+               (zero for normal mode or trunk block 1)
+  Bytes 18+:   ZOSCII encoded block (header + payload)
+               In X1 mode: bytes 2 onwards are XOR'd with previous block file
 ```
 
 **Example:**
@@ -520,6 +527,21 @@ The encoded addresses themselves are the entropy source:
 4. Probability of pointers still resolving correctly: ~10^-152900
 
 **This is combinatorially infeasible** - not computationally hard, but **information-theoretically impossible**.
+
+### X1 Mode: Dual-CRC Chain Binding
+
+In X1 mode each block adds two additional constraints beyond the standard tamper-evidence:
+
+1. **Current block CRC** — CRC32 over the ZOSCII-encoded block data, stored in the prefix.
+2. **Previous block on-disk CRC** — CRC32 over the entire previous block file as it sits on disk (fully encoded and XOR'd), committed to in the *current* block's prefix and verified by the *next* block.
+
+An attacker modifying block N beyond the first 1KB (which feeds the rolling ROM) would need to find a modified payload that simultaneously satisfies both: its own CRC32, *and* produces the same on-disk byte sequence that block N+1 has already committed to in its prev-block CRC. Because the on-disk form is ZOSCII-encoded with non-deterministic address selection, the attacker cannot predict or control the encoded output — making the second constraint practically infeasible to satisfy independently of the first.
+
+The XOR of each block against its predecessor's on-disk content creates the physical binding between the two CRC constraints, making them interdependent rather than independently attackable.
+
+**Trunk block 1 exception:** The first block of a trunk has no predecessor. It is stored plain (no XOR applied) even in X1 mode. Its prev-block CRC is zero. This is by design and handled correctly by all tools.
+
+**When to use X1:** The rolling ROM samples the first 1KB of each block's encoded data. For payloads under 1KB, the entire block falls within that sample — every subsequent block's Rolling ROM is directly derived from the full content, and the combinatorial tamper-evidence applies to the whole payload without X1. For payloads exceeding 1KB, content beyond that boundary is protected only by CRC32 in normal mode. X1 closes this gap by adding the dual-CRC on-disk binding for the full file. Use normal mode for short records. Use `-x1` when storing large payloads such as PDFs, images, or binary files where full payload integrity beyond 1KB is required and the additional I/O cost of reading and XORing the previous block is acceptable.
 
 ### Why Quantum-Resistant?
 

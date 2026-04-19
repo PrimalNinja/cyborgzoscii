@@ -1,4 +1,4 @@
-// Cyborg ZTB Checkpoint Creator v20260418
+// Cyborg ZTB Checkpoint Creator v20260420
 // (c) 2026 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
 //
@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
     BlockInfo *arrChainHistory = NULL;
     BlockInfo *arrTrunkHistory = NULL;
 
-    printf("ZTB Checkpoint Creator v20260418\n");
+    printf("ZTB Checkpoint Creator v20260420\n");
     printf("(c) 2026 Cyborg Unicorn Pty Ltd - MIT License\n\n");
 
     if (argc != 4)

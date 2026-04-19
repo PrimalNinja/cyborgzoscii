@@ -1,4 +1,4 @@
-// Cyborg ZTB Common Definitions v20260418
+// Cyborg ZTB Common Definitions v20260420
 // (c) 2026 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
 
@@ -32,7 +32,24 @@
 #define MIN_PAYLOAD_SIZE 512
 #define NULL_GUID "00000000-0000-0000-0000-000000000000"
 #define ROM_ENTRY_SIZE 1024
-#define CRC32_PREFIX_SIZE 4
+#define CRC32_SIZE 4                    // 4 bytes raw CRC32 value
+#define CRC32_ENCODED_SIZE 8            // 4 bytes * 2 (ZOSCII encoded)
+#define MODE_SIZE 1                     // 1 byte mode value
+#define MODE_ENCODED_SIZE 2             // 1 byte * 2 (ZOSCII encoded)
+#define CRC_PREFIX_ENCODED_SIZE 16      // Two CRC32 values, ZOSCII encoded
+#define BLOCK_PREFIX_ENCODED_SIZE 18    // Mode byte + two CRC32 values, ZOSCII encoded
+#define MODE_NORMAL 0
+#define MODE_X1 1
+
+// --- Prefix layout (raw, before ZOSCII encoding) ---
+// Byte  0:    mode flag (MODE_NORMAL or MODE_X1)  <-- FIRST, always readable unXOR'd
+// Bytes 1-4:  CRC32 of current encoded block (all modes)
+// Bytes 5-8:  CRC32 of previous block's on-disk data (X1 mode; zero for normal or block 1)
+//
+// On disk (ZOSCII encoded, 2 bytes per raw byte):
+// Bytes  0-1:  mode  (never XOR'd in X1 mode — always readable without context)
+// Bytes  2-9:  CRC32 of current block
+// Bytes 10-17: CRC32 of previous block
 
 // --- Block Header Structure ---
 typedef struct {
@@ -71,6 +88,7 @@ uint32_t get_random(void);
 // --- Utility Functions ---
 void generate_guid(char *buffer);
 uint32_t calculate_checksum(const uint8_t *data, size_t len);
+uint32_t calculate_file_checksum(const char *filename);
 uint8_t* load_rom(const char *filename);
 uint8_t* load_rom_and_seed_rng(const char *filename);
 int compare_blocks(const void *a, const void *b);
@@ -95,5 +113,10 @@ int detect_branch_status(const char *genesis_rom_file,
 
 int discover_branches_from_trunk(const char *genesis_rom_file, const char *trunk_id,
                                  BranchInfo *branches, int max_branches);
+
+// --- X1 Mode: XOR a buffer with a file's content, wrapping if file is shorter ---
+// Used to XOR the final on-disk block data (prefix + encoded block) with previous block file.
+int xor_buffer_with_file(uint8_t *byBuffer_a, size_t intBufferLen_a,
+                         const char *strFilename_a);
 
 #endif // ZTB_COMMON_H

@@ -1,4 +1,4 @@
-// Cyborg ZTB Genesis ROM Creator v20260418
+// Cyborg ZTB Genesis ROM Creator v20260420
 // (c) 2026 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
 //
@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
     int intI = 0;
     const char *strOutputFilename = NULL;
 
-    printf("ZTB Genesis ROM Creator v20260418\n");
+    printf("ZTB Genesis ROM Creator v20260420\n");
     printf("(c) 2026 Cyborg Unicorn Pty Ltd - MIT License\n\n");
 
     if (argc < 3 || argc > 5)

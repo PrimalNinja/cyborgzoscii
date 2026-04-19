@@ -68,6 +68,7 @@ Note: 1 to 3 entropy files are recommended to be JPEGs or MP3s or some other cap
             <ul>
                 <li><code>-t "text"</code> - Add a text string</li>
                 <li><code>-f filename</code> - Add a file's contents</li>
+                <li><code>-x1</code> - Enable X1 extended security mode (see Key Concepts)</li>
             </ul>
             
             <h3>Example:</h3>
@@ -113,6 +114,7 @@ ztbaddbranch genesis.rom CompanyLedger Marketing -t "Marketing Q1"
 # Now add blocks to branches
 ztbaddblock genesis.rom Sales -t "Sale #001"
 ztbaddblock genesis.rom Marketing -t "Campaign #001"</code></pre>
+            <p><strong>Note:</strong> Add <code>-x1</code> to any <code>ztbaddbranch</code> or <code>ztbaddblock</code> call to enable X1 mode for that block. All blocks in a chain should use the same mode consistently.</p>
         </div>
 
         <div class="command-section">
@@ -268,6 +270,10 @@ ztbcheckpoint genesis.rom FY2025 checkpoint.rom
             
             <h3>Tamperproof</h3>
             <p>If you change ANY byte in block N, all blocks N+1 onwards fail verification. The ZOSCII pointer encoding makes forgery combinatorially impossible (10^152900 combinations).</p>
+            
+            <h3>X1 Extended Security Mode</h3>
+            <p>X1 mode adds an additional layer on top of the standard tamper-evidence. Each block is XOR'd against the entire previous block file as it sits on disk, and every block commits to a CRC32 of the previous block's complete on-disk content. An attacker attempting to forge block N must simultaneously satisfy two interdependent integrity checks, making forgery practically infeasible even beyond the standard combinatorial guarantee.</p>
+            <p><strong>When to use X1:</strong> The rolling ROM samples the first 1KB of each block. For payloads under 1KB, the entire block is captured in that sample and the combinatorial tamper-evidence applies to the full payload — X1 is not needed. For payloads larger than 1KB, content beyond that boundary is protected only by CRC32 in normal mode. X1 closes this gap. Use normal mode for short records (invoices, transactions, log entries). Use <code>-x1</code> when storing large files such as PDFs, images, or contracts where full payload integrity matters and the modest performance cost is acceptable. The first block of a trunk is always stored plain even in X1 mode — this is by design.</p>
             
             <h3>No Decryption Needed</h3>
             <p>This isn't encryption - it's addressing. The data is encoded as pointers into the Rolling ROM. Without the exact Rolling ROM, the pointers are meaningless.</p>

@@ -1,4 +1,4 @@
-// Cyborg ZTB Branch Creator v20260418
+// Cyborg ZTB Branch Creator v20260420
 // (c) 2026 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
 //
@@ -15,16 +15,18 @@ int main(int argc, char *argv[])
     uint8_t *byRollingRom = NULL;
     uint8_t *byRawBlock = NULL;
     uint8_t *byEncodedBlock = NULL;
+    uint8_t *byPrefixEncoded = NULL;
+    uint8_t *byFinalOutput = NULL;
     BlockInfo *arrTrunkHistory = NULL;
     BlockInfo *arrBranchHistory = NULL;
 
-    printf("ZTB Branch Creator v20260418\n");
+    printf("ZTB Branch Creator v20260420\n");
     printf("(c) 2026 Cyborg Unicorn Pty Ltd - MIT License\n\n");
 
-    if (argc != 6)
+    if (argc < 6 || argc > 7)
     {
-        fprintf(stderr, "Usage: %s <genesis_rom> <trunk_id> <new_branch_id> -t \"text\"\n", argv[0]);
-        fprintf(stderr, "Usage: %s <genesis_rom> <trunk_id> <new_branch_id> -f <file>\n", argv[0]);
+        fprintf(stderr, "Usage: %s <genesis_rom> <trunk_id> <new_branch_id> -t \"text\" [-x1]\n", argv[0]);
+        fprintf(stderr, "Usage: %s <genesis_rom> <trunk_id> <new_branch_id> -f <file> [-x1]\n", argv[0]);
         intResult = 1;
     }
 
@@ -35,6 +37,13 @@ int main(int argc, char *argv[])
         const char *strNewBranchId_a = argv[3];
         const char *strFlag_a = argv[4];
         const char *strDataSource_a = argv[5];
+        uint8_t byMode = MODE_NORMAL;
+
+        if (argc == 7 && strcmp(argv[6], "-x1") == 0)
+        {
+            byMode = MODE_X1;
+            printf("Mode: X1 (extended security)\n");
+        }
 
         // Seed RNG from genesis ROM content
         uint8_t *bySeedRom = load_rom_and_seed_rng(strGenesisRomFile_a);
@@ -168,7 +177,7 @@ int main(int argc, char *argv[])
             }
         }
 
-        // --- 5. Build Rolling ROM (trunk -> genesis) ---
+        // --- 5. Build Rolling ROM (trunk history -> genesis) ---
         if (intResult == 0)
         {
             byRollingRom = malloc(ROM_SIZE);
@@ -211,78 +220,152 @@ int main(int argc, char *argv[])
             // --- 7. Create complete raw block ---
             size_t intRawBlockLen = sizeof(ZTB_BlockHeader) + intPaddedLen;
             byRawBlock = malloc(intRawBlockLen);
-            if (byRawBlock)
+            if (!byRawBlock)
+            {
+                fprintf(stderr, "Error: Cannot allocate raw block\n");
+                intResult = 1;
+            }
+
+            if (intResult == 0)
             {
                 memcpy(byRawBlock, &objHeader, sizeof(ZTB_BlockHeader));
                 memcpy(byRawBlock + sizeof(ZTB_BlockHeader), byPaddedPayload, intPaddedLen);
 
-                // --- 8. ZOSCII Encode ENTIRE Block ---
+                // --- 8. ZOSCII encode with plain rolling ROM (always) ---
                 size_t intEncodedLen;
                 byEncodedBlock = zoscii_encode_block(byRollingRom, byRawBlock,
                                                      intRawBlockLen, &intEncodedLen);
-                if (byEncodedBlock)
-                {
-                    // --- 9. Calculate CRC32 over encoded bytes ---
-                    uint32_t intCrc = calculate_checksum(byEncodedBlock, intEncodedLen);
-                    printf("CRC32: 0x%08X\n", intCrc);
-                    printf("ZOSCII encoded: %zu bytes -> %zu bytes\n", intRawBlockLen, intEncodedLen);
-
-                    // --- 10. Write CRC32 prefix + Encoded Block File ---
-                    char strFilename[FILENAME_MAX];
-                    snprintf(strFilename, FILENAME_MAX, "%s_%04d_%s.ztb",
-                             strNewBranchId_a, 1, objHeader.block_id);
-
-                    FILE *f_out = fopen(strFilename, "wb");
-                    if (f_out)
-                    {
-                        uint8_t arrCrcBytes[CRC32_PREFIX_SIZE];
-                        arrCrcBytes[0] = intCrc & 0xFF;
-                        arrCrcBytes[1] = (intCrc >> 8) & 0xFF;
-                        arrCrcBytes[2] = (intCrc >> 16) & 0xFF;
-                        arrCrcBytes[3] = (intCrc >> 24) & 0xFF;
-
-                        if (fwrite(arrCrcBytes, 1, CRC32_PREFIX_SIZE, f_out) == CRC32_PREFIX_SIZE &&
-                            fwrite(byEncodedBlock, 1, intEncodedLen, f_out) == intEncodedLen)
-                        {
-                            printf("\n+ Branch block created: %s\n", strFilename);
-                            printf("+ New branch '%s' started from trunk '%s'\n",
-                                   strNewBranchId_a, strTrunkId_a);
-                        }
-                        else
-                        {
-                            fprintf(stderr, "Error: Failed to write block file\n");
-                            intResult = 1;
-                        }
-                        fclose(f_out);
-                    }
-                    else
-                    {
-                        fprintf(stderr, "Error: Cannot create file '%s'\n", strFilename);
-                        intResult = 1;
-                    }
-                }
-                else
+                if (!byEncodedBlock)
                 {
                     fprintf(stderr, "Error: ZOSCII encoding failed\n");
                     intResult = 1;
                 }
-            }
-            else
-            {
-                fprintf(stderr, "Error: Cannot allocate raw block\n");
-                intResult = 1;
+
+                if (intResult == 0)
+                {
+                    // --- 9. CRC32 over encoded block data ---
+                    uint32_t intCrc = calculate_checksum(byEncodedBlock, intEncodedLen);
+                    printf("CRC32 (current block): 0x%08X\n", intCrc);
+                    printf("ZOSCII encoded: %zu bytes -> %zu bytes\n", intRawBlockLen, intEncodedLen);
+
+                    // --- 10. CRC32 of trunk's last block on-disk data (X1 only; zero otherwise) ---
+                    // For branch block 1, the "previous block" is the trunk's last block.
+                    const char *strPrevBlockFilename = arrTrunkHistory[intTrunkCount - 1].filename;
+                    uint32_t intPrevCrc = 0;
+                    if (byMode == MODE_X1)
+                    {
+                        intPrevCrc = calculate_file_checksum(strPrevBlockFilename);
+                        printf("CRC32 (previous trunk block on-disk): 0x%08X\n", intPrevCrc);
+                    }
+
+                    // --- 11. Assemble and encode prefix with plain rolling ROM ---
+                    // Mode byte is first (bytes 0-1 encoded) so readers can always
+                    // identify the mode without any prior context.
+                    uint8_t arrPrefixRaw[MODE_SIZE + CRC32_SIZE * 2];
+                    arrPrefixRaw[0] = byMode;
+                    arrPrefixRaw[1] = intCrc & 0xFF;
+                    arrPrefixRaw[2] = (intCrc >> 8) & 0xFF;
+                    arrPrefixRaw[3] = (intCrc >> 16) & 0xFF;
+                    arrPrefixRaw[4] = (intCrc >> 24) & 0xFF;
+                    arrPrefixRaw[5] = intPrevCrc & 0xFF;
+                    arrPrefixRaw[6] = (intPrevCrc >> 8) & 0xFF;
+                    arrPrefixRaw[7] = (intPrevCrc >> 16) & 0xFF;
+                    arrPrefixRaw[8] = (intPrevCrc >> 24) & 0xFF;
+
+                    size_t intPrefixEncodedLen;
+                    byPrefixEncoded = zoscii_encode_block(byRollingRom, arrPrefixRaw,
+                                                          sizeof(arrPrefixRaw), &intPrefixEncodedLen);
+                    if (!byPrefixEncoded)
+                    {
+                        fprintf(stderr, "Error: Failed to encode prefix\n");
+                        intResult = 1;
+                    }
+
+                    if (intResult == 0)
+                    {
+                        // --- 12. Concatenate prefix + encoded block into final output ---
+                        size_t intFinalLen = intPrefixEncodedLen + intEncodedLen;
+                        byFinalOutput = malloc(intFinalLen);
+                        if (!byFinalOutput)
+                        {
+                            fprintf(stderr, "Error: Cannot allocate final output buffer\n");
+                            intResult = 1;
+                        }
+
+                        if (intResult == 0)
+                        {
+                            memcpy(byFinalOutput, byPrefixEncoded, intPrefixEncodedLen);
+                            memcpy(byFinalOutput + intPrefixEncodedLen, byEncodedBlock, intEncodedLen);
+
+                            // --- 13. X1: XOR entire output with trunk's last block file ---
+                            // Branch block 1's previous block is always the trunk's last block.
+                            // Encoded mode bytes 0-1 are restored after XOR so readers can always
+                            // identify the mode without needing to un-XOR first.
+                            if (byMode == MODE_X1)
+                            {
+                                uint8_t byModeSave0 = byFinalOutput[0];
+                                uint8_t byModeSave1 = byFinalOutput[1];
+
+                                if (!xor_buffer_with_file(byFinalOutput, intFinalLen, strPrevBlockFilename))
+                                {
+                                    fprintf(stderr, "Error: X1 XOR failed\n");
+                                    intResult = 1;
+                                }
+                                else
+                                {
+                                    byFinalOutput[0] = byModeSave0;
+                                    byFinalOutput[1] = byModeSave1;
+                                    printf("X1: Output XOR'd with trunk's last block (%s)\n",
+                                           strPrevBlockFilename);
+                                }
+                            }
+
+                            // --- 14. Write final output ---
+                            if (intResult == 0)
+                            {
+                                char strFilename[FILENAME_MAX];
+                                snprintf(strFilename, FILENAME_MAX, "%s_%04d_%s.ztb",
+                                         strNewBranchId_a, 1, objHeader.block_id);
+
+                                FILE *f_out = fopen(strFilename, "wb");
+                                if (f_out)
+                                {
+                                    if (fwrite(byFinalOutput, 1, intFinalLen, f_out) == intFinalLen)
+                                    {
+                                        printf("\n+ Branch block created: %s\n", strFilename);
+                                        printf("+ New branch '%s' started from trunk '%s'\n",
+                                               strNewBranchId_a, strTrunkId_a);
+                                    }
+                                    else
+                                    {
+                                        fprintf(stderr, "Error: Failed to write block file\n");
+                                        intResult = 1;
+                                    }
+                                    fclose(f_out);
+                                }
+                                else
+                                {
+                                    fprintf(stderr, "Error: Cannot create file '%s'\n", strFilename);
+                                    intResult = 1;
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
 
     // --- Cleanup ---
-    if (byRawPayload) { free(byRawPayload); }
+    if (byRawPayload)    { free(byRawPayload); }
     if (byPaddedPayload) { free(byPaddedPayload); }
-    if (byRollingRom) { free(byRollingRom); }
-    if (byRawBlock) { free(byRawBlock); }
-    if (byEncodedBlock) { free(byEncodedBlock); }
+    if (byRollingRom)    { free(byRollingRom); }
+    if (byRawBlock)      { free(byRawBlock); }
+    if (byEncodedBlock)  { free(byEncodedBlock); }
+    if (byPrefixEncoded) { free(byPrefixEncoded); }
+    if (byFinalOutput)   { free(byFinalOutput); }
     if (arrTrunkHistory) { free(arrTrunkHistory); }
-    if (arrBranchHistory) { free(arrBranchHistory); }
+    if (arrBranchHistory){ free(arrBranchHistory); }
 
     return intResult;
 }

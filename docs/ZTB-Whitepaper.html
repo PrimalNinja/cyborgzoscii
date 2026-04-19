@@ -61,6 +61,11 @@
 
         <p>The security is based on the non-reproducible randomness of the address selection during encoding.</p>
 
+        <h3>D. X1 Extended Security Mode (Optional)</h3>
+        <p>In X1 mode each block is additionally XOR'd against the entire previous block file as it exists on disk — fully encoded, complete with its own prefix and CRC fields. The current block stores a CRC32 of its own encoded data, and also commits to a CRC32 of the previous block's complete on-disk content.</p>
+        <p>This creates a dual-CRC constraint: an attacker attempting to forge block N must simultaneously satisfy two interdependent integrity checks. The second CRC target is over the previous block's on-disk form, which is itself a product of non-deterministic ZOSCII encoding. Because the attacker cannot predict or control the encoded output, satisfying the second constraint is practically infeasible independently of the first.</p>
+        <p>The 1KB rolling ROM sample size is the natural threshold for this decision. Payloads under 1KB are fully captured in the rolling ROM sample, meaning the combinatorial tamper-evidence of the pointer encoding applies to the entire payload without X1. Payloads exceeding 1KB benefit from X1 to extend strong integrity guarantees beyond the sampled boundary. The first block of a trunk has no predecessor and is stored plain even in X1 mode.</p>
+
         <h2>3. Scalable Architecture: Wallet and Transaction Chains</h2>
 
         <p>The ZOSCII Tamperproof Blockchain introduces a branching architecture for enhanced scalability:</p>
