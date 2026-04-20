@@ -4,128 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ZTB Consensus Refinements for High-Speed Asynchronous Operation</title>
-    <style>
-        body {
-            font-family: 'Georgia', 'Times New Roman', serif;
-            line-height: 1.8;
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 20px;
-            background: #fafafa;
-            color: #333;
-        }
-        .container {
-            background: white;
-            padding: 60px;
-            border-radius: 2px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        h1 {
-            font-size: 2.2em;
-            color: #1a1a1a;
-            margin-bottom: 0.5em;
-            line-height: 1.3;
-            border-bottom: 2px solid #2c3e50;
-            padding-bottom: 0.5em;
-        }
-        .abstract {
-            background: #f8f9fa;
-            padding: 30px;
-            border-left: 5px solid #3498db;
-            margin: 40px 0;
-            font-style: italic;
-        }
-        h2 {
-            font-size: 1.6em;
-            color: #2c3e50;
-            margin-top: 50px;
-            margin-bottom: 20px;
-        }
-        h3 {
-            font-size: 1.3em;
-            color: #34495e;
-            margin-top: 30px;
-            margin-bottom: 15px;
-        }
-        h4 {
-            font-size: 1.1em;
-            color: #34495e;
-            margin-top: 25px;
-            margin-bottom: 12px;
-        }
-        p {
-            margin: 15px 0;
-            text-align: justify;
-        }
-        .technical-term {
-            font-weight: 600;
-            color: #2c3e50;
-        }
-        .formula {
-            background: #ecf0f1;
-            padding: 15px;
-            margin: 20px 0;
-            border-left: 4px solid #e74c3c;
-            font-family: 'Courier New', monospace;
-            white-space: pre-wrap;
-            overflow-x: auto;
-        }
-        .security-note {
-            background: #fff3cd;
-            padding: 20px;
-            border-left: 4px solid #ffc107;
-            margin: 25px 0;
-        }
-        .architecture-note {
-            background: #e8f5e9;
-            padding: 20px;
-            border-left: 4px solid #4caf50;
-            margin: 25px 0;
-        }
-        ul {
-            margin: 15px 0;
-            padding-left: 40px;
-        }
-        li {
-            margin: 10px 0;
-        }
-        .conclusion {
-            background: #e3f2fd;
-            padding: 30px;
-            margin-top: 50px;
-            border-radius: 4px;
-        }
-        strong {
-            color: #2c3e50;
-        }
-        .header-meta {
-            text-align: center;
-            color: #7f8c8d;
-            margin-bottom: 40px;
-            font-size: 0.95em;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-        }
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        th {
-            background-color: #2c3e50;
-            color: white;
-        }
-        code {
-            background: #f5f5f5;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9em;
-        }
-    </style>
+    <link rel="stylesheet" type="text/css" href="cu-styles.css">
 </head>
 <body>
     <div class="container">
@@ -133,9 +12,9 @@
         
         <div class="header-meta">
             <p><strong>Version:</strong> 1.0<br>
-            <strong>Date:</strong> October 2025<br>
-            <strong>Status:</strong> Draft Specification<br>
-            <strong>Copyright:</strong> (c) 2025 Cyborg Unicorn Pty Ltd - MIT License</p>
+            <strong>Date:</strong> April 2026<br>
+            <strong>Status:</strong> Final Specification<br>
+            <strong>Copyright:</strong> (c) 2026 Cyborg Unicorn Pty Ltd - MIT License</p>
         </div>
 
         <div class="abstract">
@@ -753,33 +632,13 @@ Divergence depth: 86,400 blocks</div>
 
         <table>
             <thead>
-                <tr>
-                    <th>Confirmations</th>
-                    <th>Status</th>
-                    <th>Confidence</th>
-                </tr>
+                <tr><th>Confirmations</th><th>Status</th><th>Confidence</th></tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>0</td>
-                    <td>Block added, tentative state</td>
-                    <td>~95%</td>
-                </tr>
-                <tr>
-                    <td>1</td>
-                    <td>Survived first sync check</td>
-                    <td>~99%</td>
-                </tr>
-                <tr>
-                    <td>3</td>
-                    <td>Survived three sync checks</td>
-                    <td>~99.9%</td>
-                </tr>
-                <tr>
-                    <td>6+</td>
-                    <td>High confidence</td>
-                    <td>~99.99%</td>
-                </tr>
+                <tr><td>0</td><td>Block added, tentative state</td><td>~95%</td></tr>
+                <tr><td>1</td><td>Survived first sync check</td><td>~99%</td></tr>
+                <tr><td>3</td><td>Survived three sync checks</td><td>~99.9%</td></tr>
+                <tr><td>6+</td><td>High confidence</td><td>~99.99%</td></tr>
             </tbody>
         </table>
 
@@ -883,55 +742,8 @@ consensus_threshold: 0.67</div>
   requeue_depth_warning: 5000
   requeue_depth_critical: 10000</div>
 
-        <h2>IX. Implementation Roadmap</h2>
-
-        <h3>Phase 1: Core Consensus (Weeks 1-2)</h3>
-        <ul>
-            <li>Implement R-ROM hash calculation</li>
-            <li>Build shrinkable tip mechanism</li>
-            <li>Develop sync check protocol</li>
-            <li>Create tiebreaker cascade logic</li>
-            <li>Add divergence depth monitoring</li>
-        </ul>
-
-        <h3>Phase 2: Validator Models (Weeks 3-4)</h3>
-        <ul>
-            <li>Implement permissioned validator model</li>
-            <li>Add PoS weighting system</li>
-            <li>Build reputation calculation engine</li>
-            <li>Develop Sybil resistance measures</li>
-            <li>Create bootstrap protocol</li>
-        </ul>
-
-        <h3>Phase 3: Attack Mitigation (Week 5)</h3>
-        <ul>
-            <li>Implement transaction TTL</li>
-            <li>Add re-queue attempt limits</li>
-            <li>Build priority queue system</li>
-            <li>Develop emergency consensus mode</li>
-            <li>Create checkpoint finality system</li>
-        </ul>
-
-        <h3>Phase 4: Testing & Validation (Weeks 6-8)</h3>
-        <ul>
-            <li>Simulate network splits</li>
-            <li>Test catastrophic divergence</li>
-            <li>Benchmark sync performance</li>
-            <li>Stress test re-queue system</li>
-            <li>Validate Byzantine fault tolerance</li>
-        </ul>
-
-        <h3>Phase 5: Production Hardening (Weeks 9-10)</h3>
-        <ul>
-            <li>Build monitoring dashboard</li>
-            <li>Create operator runbook</li>
-            <li>Document failure modes</li>
-            <li>Implement logging and metrics</li>
-            <li>Security audit</li>
-        </ul>
-
         <div class="conclusion">
-            <h2>X. Conclusion</h2>
+            <h2>IX. Conclusion</h2>
 
             <p>The ZTB consensus model achieves sub-second finality while maintaining robust security through:</p>
 
@@ -946,31 +758,97 @@ consensus_threshold: 0.67</div>
             <p>This design represents a fundamental rethinking of blockchain consensus, optimized for the realities of high-speed asynchronous operation while preserving the security guarantees that make blockchains trustworthy.</p>
         </div>
 
-        <h2>Appendix A: Glossary</h2>
+        <h2>Appendix A: Configuration Reference</h2>
+
+        <div class="formula"># Complete ZTB Configuration Template
+network:
+  name: "ZTB Network"
+  genesis_rom: "/path/to/genesis.rom"
+  
+consensus:
+  # Conflict resolution policy
+  conflict_policy: "retry"  # or "discard"
+  
+  # Synchronization
+  sync_interval: 300  # seconds
+  sync_triggers:
+    collision_rate: 0.10  # 10%
+    max_divergence: 500  # blocks
+  
+  # Tiebreaker rules (applied in order)
+  tiebreakers:
+    - "longest_tree"
+    - "hash_consensus"
+    - "earliest_divergence"
+    - "lexicographic_id"
+    - "lowest_hash"
+
+validator:
+  model: "permissioned"  # or "proof_of_stake", "hybrid_reputation"
+  
+  # Permissioned model
+  validators:
+    - id: "validator01"
+      pubkey: "0x..."
+      weight: 1
+  
+  consensus_threshold: 0.67  # 2/3+ majority
+  byzantine_fault_tolerance: true
+
+transactions:
+  ttl: 3600  # seconds
+  max_requeue_attempts: 5
+  requeue_priority: "age"  # or "fee", "random"
+
+checkpoint:
+  interval: 1000  # blocks
+  finality: true
+  required_signatures: 5
+  automatic: true
+
+monitoring:
+  metrics_port: 9090
+  dashboard_enabled: true
+  alert_webhook: "https://alerts.example.com/ztb"
+  
+  thresholds:
+    divergence_warning: 200
+    divergence_critical: 500
+    collision_rate_warning: 0.15
+    collision_rate_critical: 0.30
+
+bootstrap:
+  seed_nodes:
+    - "node1.ztb.network:8332"
+    - "node2.ztb.network:8332"
+  require_minimum: 2
+  checkpoint_verification: true</div>
+
+        <h2>Appendix B: Glossary</h2>
 
         <p><strong>R-ROM (Rolling ROM):</strong> 64KB cache of security context sampled from previous blocks</p>
-        
         <p><strong>R-ROM Hash:</strong> 32-byte cryptographic fingerprint of the R-ROM state</p>
-        
         <p><strong>Shrinkable Tip:</strong> The most recent blocks that can be rolled back during reconciliation</p>
-        
         <p><strong>Divergence Depth:</strong> Number of blocks built past the last common R-ROM hash</p>
-        
         <p><strong>Master Trunk:</strong> The canonical chain selected during consensus rounds</p>
-        
         <p><strong>Checkpoint:</strong> An irreversible finality marker signed by validators</p>
-        
         <p><strong>TTL (Time-to-Live):</strong> Maximum age a transaction can reach before expiring</p>
-        
         <p><strong>Collision:</strong> Multiple competing blocks proposed at the same height</p>
-        
         <p><strong>Tentative Block:</strong> A block that has been added but not yet confirmed by consensus</p>
-        
         <p><strong>Canonical Block:</strong> A block confirmed as part of the master trunk</p>
 
         <div class="header-meta" style="margin-top: 60px; border-top: 2px solid #ecf0f1; padding-top: 30px;">
             <p><strong>End of Addendum</strong></p>
         </div>
+    </div>
+    
+    <div class="footer">
+        <h3>License & Information</h3>
+        <p><strong>MIT License</strong> - (c) 2026 Cyborg Unicorn Pty Ltd</p>
+        <p>
+            <a href="https://zoscii.com" target="_blank">zoscii.com</a> |
+            <a href="https://github.com/PrimalNinja/cyborgzoscii" target="_blank">GitHub Repository</a>
+        </p>
     </div>
 </body>
 </html>

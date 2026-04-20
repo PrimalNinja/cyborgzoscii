@@ -2,10 +2,36 @@
 // (c) 2026 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
 //
-// Usage: ztbaddbranch <genesis_rom> <trunk_id> <new_branch_id> -t "text"
-// Usage: ztbaddbranch <genesis_rom> <trunk_id> <new_branch_id> -f <file>
+// Usage: ztbaddbranch <genesis_rom> <trunk_id> <new_branch_id> -t "text" [-x1] [-x2] [-i <block_id>]
+// Usage: ztbaddbranch <genesis_rom> <trunk_id> <new_branch_id> -f <file>  [-x1] [-x2] [-i <block_id>]
 
 #include "ztbcommon.c"
+
+// --- Validate a GUID string (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx, hex digits only) ---
+/* static int is_valid_guid(const char *strGuid_a)
+{
+    // Expected format: 8-4-4-4-12 hex digits separated by hyphens = 36 chars
+    if (!strGuid_a || strlen(strGuid_a) != 36) { return 0; }
+    int arrGroupLen[] = {8, 4, 4, 4, 12};
+    int intPos = 0;
+    int intG;
+    for (intG = 0; intG < 5; intG++)
+    {
+        int intL;
+        for (intL = 0; intL < arrGroupLen[intG]; intL++)
+        {
+            char c = strGuid_a[intPos++];
+            if (!((c >= '0' && c <= '9') ||
+                  (c >= 'A' && c <= 'F') ||
+                  (c >= 'a' && c <= 'f')))
+            {
+                return 0;
+            }
+        }
+        if (intG < 4 && strGuid_a[intPos++] != '-') { return 0; }
+    }
+    return 1;
+} */
 
 int main(int argc, char *argv[])
 {
@@ -23,10 +49,19 @@ int main(int argc, char *argv[])
     printf("ZTB Branch Creator v20260420\n");
     printf("(c) 2026 Cyborg Unicorn Pty Ltd - MIT License\n\n");
 
-    if (argc < 6 || argc > 7)
+    // Argument parsing:
+    // Required positional: <genesis_rom> <trunk_id> <new_branch_id> <-t|-f> <data>
+    // Optional flags (any order after positional): -x1, -x2, -i <block_id>
+    // Minimum argc: 6 (no optional flags)
+    // Maximum argc: 9 (-x1 or -x2 with -i <block_id>)
+
+    if (argc < 6 || argc > 9)
     {
-        fprintf(stderr, "Usage: %s <genesis_rom> <trunk_id> <new_branch_id> -t \"text\" [-x1]\n", argv[0]);
-        fprintf(stderr, "Usage: %s <genesis_rom> <trunk_id> <new_branch_id> -f <file> [-x1]\n", argv[0]);
+        fprintf(stderr, "Usage: %s <genesis_rom> <trunk_id> <new_branch_id> -t \"text\" [-x1] [-x2] [-i <block_id>]\n", argv[0]);
+        fprintf(stderr, "Usage: %s <genesis_rom> <trunk_id> <new_branch_id> -f <file>  [-x1] [-x2] [-i <block_id>]\n", argv[0]);
+        fprintf(stderr, "\n  -x1           Extended security: prev-block CRC binding (no XOR)\n");
+        fprintf(stderr, "  -x2           Extended security: prev-block CRC binding + on-disk XOR\n");
+        fprintf(stderr, "  -i <block_id> Use supplied GUID as the block ID instead of auto-generating\n");
         intResult = 1;
     }
 
@@ -38,11 +73,58 @@ int main(int argc, char *argv[])
         const char *strFlag_a = argv[4];
         const char *strDataSource_a = argv[5];
         uint8_t byMode = MODE_NORMAL;
+        const char *strSuppliedBlockId = NULL;
 
-        if (argc == 7 && strcmp(argv[6], "-x1") == 0)
+        // Scan optional flags from argv[6] onwards
+        int intArg;
+        for (intArg = 6; intArg < argc && intResult == 0; intArg++)
         {
-            byMode = MODE_X1;
-            printf("Mode: X1 (extended security)\n");
+            if (strcmp(argv[intArg], "-x1") == 0)
+            {
+                byMode = MODE_X1;
+            }
+            else if (strcmp(argv[intArg], "-x2") == 0)
+            {
+                byMode = MODE_X2;
+            }
+            else if (strcmp(argv[intArg], "-i") == 0)
+            {
+                if (intArg + 1 >= argc)
+                {
+                    fprintf(stderr, "Error: -i requires a block_id argument\n");
+                    intResult = 1;
+                }
+                else
+                {
+                    intArg++;
+                    strSuppliedBlockId = argv[intArg];
+                    // if (!is_valid_guid(strSuppliedBlockId))
+                    // {
+                        // fprintf(stderr, "Error: Invalid block_id '%s'\n", strSuppliedBlockId);
+                        // fprintf(stderr, "       Must be xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (hex digits)\n");
+                        // intResult = 1;
+                    // }
+                }
+            }
+            else
+            {
+                fprintf(stderr, "Error: Unknown option '%s'\n", argv[intArg]);
+                intResult = 1;
+            }
+        }
+
+        if (intResult == 0 && byMode == MODE_X1)
+        {
+            printf("Mode: X1 (extended security, CRC binding)\n");
+        }
+        else if (intResult == 0 && byMode == MODE_X2)
+        {
+            printf("Mode: X2 (extended security, CRC binding + XOR)\n");
+        }
+
+        if (intResult == 0 && strSuppliedBlockId)
+        {
+            printf("Block ID: %s (supplied)\n", strSuppliedBlockId);
         }
 
         // Seed RNG from genesis ROM content
@@ -204,7 +286,19 @@ int main(int argc, char *argv[])
 
             // --- 6. Create Branch Block Header ---
             ZTB_BlockHeader objHeader;
-            generate_guid(objHeader.block_id);
+
+            // Use supplied block ID if provided, otherwise auto-generate
+            if (strSuppliedBlockId)
+            {
+                strncpy(objHeader.block_id, strSuppliedBlockId, GUID_LEN - 1);
+                objHeader.block_id[GUID_LEN - 1] = '\0';
+            }
+            else
+            {
+                generate_guid(objHeader.block_id);
+                printf("Branch Block ID: %s\n", objHeader.block_id);
+            }
+
             strncpy(objHeader.prev_block_id, arrTrunkHistory[intTrunkCount - 1].block_id, GUID_LEN - 1);
             objHeader.prev_block_id[GUID_LEN - 1] = '\0';
             strncpy(objHeader.trunk_id, strTrunkId_a, GUID_LEN - 1);
@@ -214,7 +308,6 @@ int main(int argc, char *argv[])
             objHeader.timestamp = time(NULL);
             objHeader.is_branch = 1;
 
-            printf("Branch Block ID: %s\n", objHeader.block_id);
             printf("Anchored to trunk block: %s\n", objHeader.prev_block_id);
 
             // --- 7. Create complete raw block ---
@@ -248,11 +341,11 @@ int main(int argc, char *argv[])
                     printf("CRC32 (current block): 0x%08X\n", intCrc);
                     printf("ZOSCII encoded: %zu bytes -> %zu bytes\n", intRawBlockLen, intEncodedLen);
 
-                    // --- 10. CRC32 of trunk's last block on-disk data (X1 only; zero otherwise) ---
+                    // --- 10. CRC32 of trunk's last block on-disk data (X1/X2 only; zero otherwise) ---
                     // For branch block 1, the "previous block" is the trunk's last block.
                     const char *strPrevBlockFilename = arrTrunkHistory[intTrunkCount - 1].filename;
                     uint32_t intPrevCrc = 0;
-                    if (byMode == MODE_X1)
+                    if (byMode == MODE_X1 || byMode == MODE_X2)
                     {
                         intPrevCrc = calculate_file_checksum(strPrevBlockFilename);
                         printf("CRC32 (previous trunk block on-disk): 0x%08X\n", intPrevCrc);
@@ -297,11 +390,11 @@ int main(int argc, char *argv[])
                             memcpy(byFinalOutput, byPrefixEncoded, intPrefixEncodedLen);
                             memcpy(byFinalOutput + intPrefixEncodedLen, byEncodedBlock, intEncodedLen);
 
-                            // --- 13. X1: XOR entire output with trunk's last block file ---
-                            // Branch block 1's previous block is always the trunk's last block.
-                            // Encoded mode bytes 0-1 are restored after XOR so readers can always
-                            // identify the mode without needing to un-XOR first.
-                            if (byMode == MODE_X1)
+                            // --- 13. X2: XOR entire output with trunk's last block file ---
+                            // Only performed in X2 mode. Branch block 1's previous block is
+                            // always the trunk's last block. Encoded mode bytes 0-1 are restored
+                            // after XOR so readers can always identify the mode without un-XOR'ing first.
+                            if (byMode == MODE_X2)
                             {
                                 uint8_t byModeSave0 = byFinalOutput[0];
                                 uint8_t byModeSave1 = byFinalOutput[1];
@@ -315,7 +408,7 @@ int main(int argc, char *argv[])
                                 {
                                     byFinalOutput[0] = byModeSave0;
                                     byFinalOutput[1] = byModeSave1;
-                                    printf("X1: Output XOR'd with trunk's last block (%s)\n",
+                                    printf("X2: Output XOR'd with trunk's last block (%s)\n",
                                            strPrevBlockFilename);
                                 }
                             }

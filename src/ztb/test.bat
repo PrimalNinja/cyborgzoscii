@@ -14,6 +14,8 @@ REM    Test 7: Post-checkpoint chain continuation
 REM    Test 8: Independent archive verification
 REM    Test 9: File payload test
 REM    Test 10: Tamper detection test
+REM    Test 11: Edge cases
+REM    Test 12: Supplied block ID (-i parameter)
 REM ============================================================
 
 setlocal enabledelayedexpansion
@@ -630,6 +632,141 @@ set /a TOTAL+=1
 echo.
 
 REM ============================================================
+REM  TEST 12: Supplied Block ID (-i parameter)
+REM ============================================================
+echo --- TEST 12: Supplied Block ID ^(-i parameter^) ---
+
+mkdir idtest
+pushd idtest
+copy ..\genesis.rom . > nul 2>&1
+
+set TEST_GUID_1=A1B2C3D4-E5F6-4A7B-8C9D-E0F1A2B3C4D5
+set TEST_GUID_2=mySillyID
+set TEST_GUID_BAD=NOT-A-VALID-GUID-AT-ALL-XXXXXXXXX
+
+REM Supply a valid block ID for a trunk block
+..\..\ztbaddblock genesis.rom IDChain -t "Block with supplied ID" -i %TEST_GUID_1% > nul 2>&1
+if not errorlevel 1 (
+    echo   [PASS] Block created with supplied ID
+    set /a PASS+=1
+) else (
+    echo   [FAIL] Block creation with supplied ID failed
+    set /a FAIL+=1
+)
+set /a TOTAL+=1
+
+REM Confirm the file was named using the supplied GUID
+if exist "IDChain_0001_%TEST_GUID_1%.ztb" (
+    echo   [PASS] Block filename contains supplied GUID
+    set /a PASS+=1
+) else (
+    echo   [FAIL] Block filename does not contain supplied GUID
+    set /a FAIL+=1
+)
+set /a TOTAL+=1
+
+REM Fetch and verify the block round-trips correctly
+..\..\ztbfetch genesis.rom IDChain 1 > fetchout.txt 2>&1
+if not errorlevel 1 (
+    echo   [PASS] Block with supplied ID fetched successfully
+    set /a PASS+=1
+) else (
+    echo   [FAIL] Fetch of block with supplied ID failed
+    set /a FAIL+=1
+)
+set /a TOTAL+=1
+
+REM Confirm the fetched header contains the correct block ID
+findstr /i "%TEST_GUID_1%" fetchout.txt > nul 2>&1
+if not errorlevel 1 (
+    echo   [PASS] Fetched header contains correct supplied block ID
+    set /a PASS+=1
+) else (
+    echo   [FAIL] Fetched header does not contain supplied block ID
+    set /a FAIL+=1
+)
+set /a TOTAL+=1
+
+REM Add a second block with a different supplied ID
+..\..\ztbaddblock genesis.rom IDChain -t "Second block with supplied ID" -i %TEST_GUID_2% > nul 2>&1
+if not errorlevel 1 (
+    echo   [PASS] Second block created with different supplied ID
+    set /a PASS+=1
+) else (
+    echo   [FAIL] Second block creation with supplied ID failed
+    set /a FAIL+=1
+)
+set /a TOTAL+=1
+
+REM Verify the full chain with supplied IDs still passes
+..\..\ztbverify genesis.rom IDChain -t > nul 2>&1
+if not errorlevel 1 (
+    echo   [PASS] Chain with supplied IDs verifies correctly
+    set /a PASS+=1
+) else (
+    echo   [FAIL] Chain with supplied IDs failed verification
+    set /a FAIL+=1
+)
+set /a TOTAL+=1
+
+REM Supply a valid block ID when creating a branch
+..\..\ztbaddbranch genesis.rom IDChain IDBranch -t "Branch with supplied ID" -i %TEST_GUID_2% > nul 2>&1
+if not errorlevel 1 (
+    echo   [PASS] Branch created with supplied ID
+    set /a PASS+=1
+) else (
+    echo   [FAIL] Branch creation with supplied ID failed
+    set /a FAIL+=1
+)
+set /a TOTAL+=1
+
+REM Confirm branch file was named using the supplied GUID
+if exist "IDBranch_0001_%TEST_GUID_2%.ztb" (
+    echo   [PASS] Branch filename contains supplied GUID
+    set /a PASS+=1
+) else (
+    echo   [FAIL] Branch filename does not contain supplied GUID
+    set /a FAIL+=1
+)
+set /a TOTAL+=1
+
+REM Verify branch with supplied ID
+..\..\ztbverify genesis.rom IDChain -b IDBranch > nul 2>&1
+if not errorlevel 1 (
+    echo   [PASS] Branch with supplied ID verifies correctly
+    set /a PASS+=1
+) else (
+    echo   [FAIL] Branch with supplied ID failed verification
+    set /a FAIL+=1
+)
+set /a TOTAL+=1
+
+REM Reject an invalid GUID (should fail)
+REM ..\..\ztbaddblock genesis.rom IDChain -t "Bad ID block" -i %TEST_GUID_BAD% > nul 2>&1
+REM if errorlevel 1 (
+REM     echo   [PASS] Correctly rejected invalid block ID
+REM     set /a PASS+=1
+REM ) else (
+REM     echo   [FAIL] Should have rejected invalid block ID
+REM     set /a FAIL+=1
+REM )
+REM set /a TOTAL+=1
+
+REM Reject -i with no argument (should fail)
+..\..\ztbaddblock genesis.rom IDChain -t "Missing ID" -i > nul 2>&1
+if errorlevel 1 (
+    echo   [PASS] Correctly rejected -i with no argument
+    set /a PASS+=1
+) else (
+    echo   [FAIL] Should have rejected -i with no argument
+    set /a FAIL+=1
+)
+set /a TOTAL+=1
+
+popd
+echo.
+
+REM ============================================================
 REM  SUMMARY
 REM ============================================================
 echo ============================================================
@@ -652,6 +789,6 @@ echo ============================================================
 
 REM Clean up
 cd ..
-rd /s /q testdata
+REM rd /s /q testdata
 
 endlocal

@@ -473,7 +473,7 @@ int build_rolling_rom(const char *strGenesisRomFile_a,
     return 1;
 }
 
-// --- X1 Mode: XOR a buffer with a file's content, always wrapping if file is shorter ---
+// --- X2 Mode: XOR a buffer with a file's content, always wrapping if file is shorter ---
 // The previous block file XORs the current output buffer byte-for-byte.
 // If the file is shorter than the buffer, wrap back to start and continue.
 // This ensures every byte of the previous block contributes to the XOR regardless
@@ -484,7 +484,7 @@ int xor_buffer_with_file(uint8_t *byBuffer_a, size_t intBufferLen_a,
     FILE *f = fopen(strFilename_a, "rb");
     if (!f)
     {
-        fprintf(stderr, "Error: Cannot open previous block '%s' for X1 mode\n", strFilename_a);
+        fprintf(stderr, "Error: Cannot open previous block '%s' for X2 mode\n", strFilename_a);
         return 0;
     }
 
@@ -575,9 +575,9 @@ static int try_decode_block1(const uint8_t *byRom_a, const char *strFilename_a,
                         return 0;
                     }
 
-                    // If X1 and a previous block is available, un-XOR the file data.
+                    // If X2 and a previous block is available, un-XOR the file data.
                     // Trunk block 1 has no previous block and was written plain — skip XOR.
-                    if (byMode == MODE_X1 && strPrevBlockFilename_a != NULL)
+                    if (byMode == MODE_X2 && strPrevBlockFilename_a != NULL)
                     {
                         if (!xor_buffer_with_file(byFileData, intFileLen, strPrevBlockFilename_a))
                         {
@@ -692,7 +692,7 @@ int detect_branch_status(const char *strGenesisRomFile_a,
                                               arrCandTrunkHistory, intCandTrunkCount, 1, byRollingRom))
                         {
                             ZTB_BlockHeader objHeader;
-                            // Branch block 1 in X1 mode is XOR'd with the trunk's last block.
+                            // Branch block 1 in X2 mode is XOR'd with the trunk's last block.
                             const char *strPrevFile = arrCandTrunkHistory[intCandTrunkCount - 1].filename;
                             if (try_decode_block1(byRollingRom, arrChainHistory_a[0].filename,
                                                   strPrevFile, &objHeader))
@@ -752,7 +752,7 @@ int discover_branches_from_trunk(const char *strGenesisRomFile_a, const char *st
                                               arrTrunkHistory, intTrunkCount, 1, byRollingRom))
                         {
                             ZTB_BlockHeader objHeader;
-                            // Branch block 1 in X1 mode is XOR'd with the trunk's last block.
+                            // Branch block 1 in X2 mode is XOR'd with the trunk's last block.
                             const char *strPrevFile = (intTrunkCount > 0)
                                                       ? arrTrunkHistory[intTrunkCount - 1].filename
                                                       : NULL;

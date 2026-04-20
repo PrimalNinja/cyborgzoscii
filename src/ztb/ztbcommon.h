@@ -39,15 +39,16 @@
 #define CRC_PREFIX_ENCODED_SIZE 16      // Two CRC32 values, ZOSCII encoded
 #define BLOCK_PREFIX_ENCODED_SIZE 18    // Mode byte + two CRC32 values, ZOSCII encoded
 #define MODE_NORMAL 0
-#define MODE_X1 1
+#define MODE_X1 1                       // prev-block CRC binding, no XOR
+#define MODE_X2 2                       // prev-block CRC binding + on-disk XOR
 
 // --- Prefix layout (raw, before ZOSCII encoding) ---
-// Byte  0:    mode flag (MODE_NORMAL or MODE_X1)  <-- FIRST, always readable unXOR'd
+// Byte  0:    mode flag (MODE_NORMAL, MODE_X1, or MODE_X2)  <-- FIRST, always readable unXOR'd
 // Bytes 1-4:  CRC32 of current encoded block (all modes)
-// Bytes 5-8:  CRC32 of previous block's on-disk data (X1 mode; zero for normal or block 1)
+// Bytes 5-8:  CRC32 of previous block's on-disk data (X1/X2 mode; zero for normal or block 1)
 //
 // On disk (ZOSCII encoded, 2 bytes per raw byte):
-// Bytes  0-1:  mode  (never XOR'd in X1 mode — always readable without context)
+// Bytes  0-1:  mode  (never XOR'd in X2 mode — always readable without context)
 // Bytes  2-9:  CRC32 of current block
 // Bytes 10-17: CRC32 of previous block
 
@@ -114,7 +115,7 @@ int detect_branch_status(const char *genesis_rom_file,
 int discover_branches_from_trunk(const char *genesis_rom_file, const char *trunk_id,
                                  BranchInfo *branches, int max_branches);
 
-// --- X1 Mode: XOR a buffer with a file's content, wrapping if file is shorter ---
+// --- X2 Mode: XOR a buffer with a file's content, wrapping if file is shorter ---
 // Used to XOR the final on-disk block data (prefix + encoded block) with previous block file.
 int xor_buffer_with_file(uint8_t *byBuffer_a, size_t intBufferLen_a,
                          const char *strFilename_a);

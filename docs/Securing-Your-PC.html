@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Securing Your PC Running Windows 10+</title>
+    <link rel="stylesheet" type="text/css" href="cu-styles.css">
+</head>
+<body>
+<div class="container">
+    <h1>Securing Your PC Running Windows 10+</h1>
+    <div class="header-meta">
+        <p><em>Last Updated: January 2026</em><br>
+        <strong>Version DRAFT 1.0</strong></p>
+    </div>
+
+    <h2>Overview</h2>
+    <p><strong>Note:</strong> This document refers to <strong>unsecured data</strong> as data you want to be secure.</p>
+    <p>This document explains how to configure your PC to ensure that <strong>zero traces of unsecured data</strong> remain on any PC drive that could be stolen. This is for situations where your unsecured original files are highly sensitive and you need absolute certainty that they leave no trace on your computer.</p>
+    <p>This document does NOT cover internet or network security.</p>
+    <div class="warning">
+        <strong>Important:</strong> This is an advanced configuration. Most users should follow the simpler approach in the <strong>"Securing Your Files Guide"</strong> document. Only pursue this setup if you have specific requirements for maximum security against PC theft or seizure.
+    </div>
+
+    <h2>The Simplest and Most Secure Solution: Portable Windows</h2>
+    <p><strong>RECOMMENDED APPROACH:</strong></p>
+    <p>The easiest and most reliable way to ensure a stolen PC does not contain unwanted traces of secured data is to <strong>run Windows from portable removable media</strong> (such as a USB drive or external SSD).</p>
+
+    <h3>Why Portable Windows is Best</h3>
+    <ul>
+        <li><strong>100% guaranteed isolation</strong> - Your PC's internal hard drives are not used for Windows caching and other related leaks</li>
+        <li><strong>Simplest setup</strong> - No complex Windows configuration needed</li>
+        <li><strong>Most secure</strong> - When you shut down, unplug the portable Windows drive, and your PC has zero traces</li>
+        <li><strong>Easy destruction</strong> - If needed, physically destroy just the portable drive</li>
+        <li><strong>Easiest to use</strong> - Works like normal Windows, but completely separate from PC drives</li>
+    </ul>
+
+    <h3>How to Set Up Portable Windows</h3>
+    <ol>
+        <li>Get a fast USB 3.0+ drive or external SSD (at least 32GB, preferably 64GB+)</li>
+        <li>Use Windows To Go (Windows Enterprise) or third-party tools like Rufus or WinToUSB</li>
+        <li>Install Windows on the portable drive</li>
+        <li>Boot from the portable drive when processing sensitive files</li>
+        <li>When done, shut down and unplug the drive - your PC has zero traces</li>
+    </ol>
+
+    <h3>Using Portable Windows</h3>
+    <ul>
+        <li>Boot your PC from the portable Windows drive</li>
+        <li>Store unsecured originals on a separate USB drive or the portable Windows drive itself</li>
+        <li>Store ROM files on separate removable media with multiple backups</li>
+        <li>Process files and save secured output anywhere (even back to PC's internal drives - it's protected!)</li>
+        <li>Shut down and unplug the portable Windows drive</li>
+        <li>Your PC's internal drives contain zero traces of unsecured data</li>
+    </ul>
+    <div class="success">
+        <strong>This is the recommended approach for maximum security.</strong> The rest of this document describes alternative configurations if you cannot use portable Windows.
+    </div>
+
+    <h2>Alternative: Advanced PC Configuration</h2>
+    <p><strong>Scenario:</strong> You want to use your regular Windows installation but ensure no traces of unsecured data remain on PC drives if stolen.</p>
+    <p><strong>Security Goal:</strong> Ensure that if your PC is stolen, forensic analysis will find ZERO traces of unsecured data on any drive. Encoded data can be anywhere - it doesn't matter since it's information-theoretically secure.</p>
+    <p><strong>The Challenge:</strong> Even after "deleting" files, Windows leaves traces everywhere:</p>
+    <ul>
+        <li>Page file (virtual memory)</li>
+        <li>Hibernation file</li>
+        <li>System restore points</li>
+        <li>Shadow copies</li>
+        <li>Search indexes</li>
+        <li>Temporary caches</li>
+        <li>Journal files</li>
+        <li>Thumbnail caches</li>
+        <li>Recent files lists</li>
+    </ul>
+    <div class="warning">
+        <strong>WARNING:</strong> This configuration hopes to eliminate all these traces of unsecured data as much as possible. Note however Windows changes frequently with updates, and new leaks / behavioural changes may occur without your knowledge - do NOT consider this document complete - you need to keep your system knowledge up to date.
+    </div>
+
+    <h2>Required Windows Configuration</h2>
+    <p>Complete ALL steps below before using this application. Most require administrator privileges.</p>
+
+    <h3>Step 1: Disable Virtual Memory (Page File)</h3>
+    <p>Virtual memory can write unsecured data from RAM to disk, compromising security.</p>
+    <p><strong>Instructions:</strong></p>
+    <ol>
+        <li>Press <code>Win + Pause/Break</code> or right-click "This PC" → Properties</li>
+        <li>Click "Advanced system settings" (left sidebar)</li>
+        <li>Under "Performance", click "Settings..."</li>
+        <li>Go to "Advanced" tab</li>
+        <li>Under "Virtual memory", click "Change..."</li>
+        <li><strong>Uncheck</strong> "Automatically manage paging file size for all drives"</li>
+        <li>Select "No paging file"</li>
+        <li>Click "Set", then "OK"</li>
+        <li><strong>Restart your computer</strong> (required)</li>
+    </ol>
+    <p><strong>Verification:</strong></p>
+    <ul>
+        <li>After restart, return to Virtual Memory settings</li>
+        <li>Confirm "No paging file" is selected for all drives</li>
+    </ul>
+
+    <h3>Step 2: Disable Hibernation</h3>
+    <p>Hibernation saves RAM contents (including your unsecured data) to disk.</p>
+    <p><strong>Instructions:</strong></p>
+    <ol>
+        <li>Open Command Prompt or PowerShell <strong>as Administrator</strong></li>
+        <li>Run: <code>powercfg /hibernate off</code></li>
+        <li>Press Enter</li>
+    </ol>
+    <p><strong>Verification:</strong></p>
+    <ul>
+        <li>Check that <code>C:\hiberfil.sys</code> no longer exists</li>
+        <li>Or run: <code>powercfg /a</code> and verify "Hibernate has not been enabled" appears</li>
+    </ul>
+
+    <h3>Step 3: Disable System Restore and Shadow Copies</h3>
+    <p>These features create snapshots that may contain your unsecured files.</p>
+    <p><strong>Disable System Restore:</strong></p>
+    <ol>
+        <li>Press <code>Win + Pause/Break</code> or right-click "This PC" → Properties</li>
+        <li>Click "System protection" (left sidebar)</li>
+        <li>Select each drive that could potentially contain traces</li>
+        <li>Click "Configure"</li>
+        <li>Select "Disable system protection"</li>
+        <li>Click "Apply", then "OK"</li>
+        <li>When prompted to delete restore points, click "Yes"</li>
+    </ol>
+    <p><strong>Delete Existing Shadow Copies:</strong></p>
+    <ol>
+        <li>Open Command Prompt <strong>as Administrator</strong></li>
+        <li>For EACH drive, run: <code>vssadmin Delete Shadows /For=C: /All /Quiet</code> (Replace <code>C:</code> with your drive letter)</li>
+    </ol>
+
+    <h3>Step 4: Disable Windows Search Indexing</h3>
+    <p>Search indexing may cache fragments of your file contents.</p>
+    <p><strong>Instructions:</strong></p>
+    <ol>
+        <li>Press <code>Win + R</code>, type <code>services.msc</code>, press Enter</li>
+        <li>Find "Windows Search" in the list</li>
+        <li>Right-click → Properties</li>
+        <li>Set "Startup type" to "Disabled"</li>
+        <li>Click "Stop" if the service is running</li>
+        <li>Click "Apply", then "OK"</li>
+    </ol>
+    <p><strong>Alternative - Disable for specific drives:</strong></p>
+    <ol>
+        <li>Open "Indexing Options" from Control Panel</li>
+        <li>Click "Modify"</li>
+        <li>Uncheck all drives</li>
+        <li>Click "OK"</li>
+    </ol>
+
+    <h3>Step 5: Disable Crash Dumps</h3>
+    <p>Crash dumps may contain memory contents including unsecured data.</p>
+    <p><strong>Instructions:</strong></p>
+    <ol>
+        <li>Press <code>Win + Pause/Break</code> or right-click "This PC" → Properties</li>
+        <li>Click "Advanced system settings"</li>
+        <li>Under "Startup and Recovery", click "Settings..."</li>
+        <li>Under "Write debugging information", select "(none)"</li>
+        <li>Click "OK"</li>
+    </ol>
+
+    <h3>Step 6: Disable Prefetch and Superfetch</h3>
+    <p>These features cache file access patterns and fragments.</p>
+    <p><strong>Instructions:</strong></p>
+    <ol>
+        <li>Open Command Prompt <strong>as Administrator</strong></li>
+        <li>Run these commands:</li>
+    </ol>
+    <pre><code>sc stop "SysMain"
+sc config "SysMain" start=disabled
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters" /v EnablePrefetcher /t REG_DWORD /d 0 /f
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters" /v EnableSuperfetch /t REG_DWORD /d 0 /f</code></pre>
+    <ol start="3">
+        <li>Restart your computer</li>
+    </ol>
+
+    <h3>Step 7: Clear Thumbnail Cache and Disable Thumbnail Generation</h3>
+    <p>Even if you only open an unsecured file from a USB stick, Windows File Explorer often automatically generates thumbnails stored on the local C: drive.</p>
+    <p><strong>Clear Existing Thumbnails:</strong></p>
+    <ol>
+        <li>Open Command Prompt <strong>as Administrator</strong></li>
+        <li>Run: <code>del /f /s /q /a %LocalAppData%\Microsoft\Windows\Explorer\thumbcache_*.db</code></li>
+    </ol>
+    <p><strong>Disable Future Thumbnail Generation:</strong></p>
+    <ol>
+        <li>Press <code>Win + R</code>, type <code>gpedit.msc</code>, press Enter (Group Policy Editor)</li>
+        <li>Navigate to: User Configuration → Administrative Templates → Windows Components → File Explorer</li>
+        <li>Find "Turn off the caching of thumbnails in hidden thumbs.db files"</li>
+        <li>Set to "Enabled"</li>
+        <li>Also find "Turn off the display of thumbnails and only display icons"</li>
+        <li>Set to "Enabled"</li>
+    </ol>
+    <p><strong>Alternative (via Registry):</strong></p>
+    <pre><code>reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v DisableThumbnailCache /t REG_DWORD /d 1 /f
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v DisableThumbnails /t REG_DWORD /d 1 /f</code></pre>
+
+    <h3>Step 8: Disable Recent Files and Quick Access</h3>
+    <p>The Windows Jump Lists and "Recent Items" store filenames and paths of files on the local disk.</p>
+    <p><strong>Instructions:</strong></p>
+    <ol>
+        <li>Open File Explorer</li>
+        <li>Click "..." (three dots) → Options</li>
+        <li>In the "General" tab:
+            <ul>
+                <li>Uncheck "Show recently used files in Quick access"</li>
+                <li>Uncheck "Show frequently used folders in Quick access"</li>
+            </ul>
+        </li>
+        <li>Click "Clear" next to "Clear File Explorer history"</li>
+        <li>Click "OK"</li>
+    </ol>
+    <p><strong>Additionally, disable via Privacy Settings:</strong></p>
+    <ol>
+        <li>Press <code>Win + I</code> for Settings</li>
+        <li>Go to Privacy → Activity history</li>
+        <li>Uncheck "Store my activity history on this device"</li>
+        <li>Click "Clear" under "Clear activity history"</li>
+    </ol>
+
+    <h2>Storage Setup</h2>
+    <h3>Unsecured Zone (Input Files - MUST NOT TOUCH PC)</h3>
+    <p><strong>Use removable media only:</strong></p>
+    <ul>
+        <li>USB flash drive containing original files</li>
+        <li>Separate USB flash drive containing the ROM files</li>
+        <li>External SSD with originals</li>
+        <li><strong>Never on PC's internal drives</strong> - not even temporarily</li>
+    </ul>
+    <h3>Secured Zone (Output Files - CAN GO ANYWHERE)</h3>
+    <p><strong>Store wherever convenient:</strong></p>
+    <ul>
+        <li>Your PC's C:\ drive</li>
+        <li>Any internal PC drive</li>
+        <li>External storage</li>
+        <li>Cloud storage</li>
+        <li><strong>Doesn't matter</strong> - encoded data is information-theoretically secure</li>
+    </ul>
+    <div class="success">
+        <strong>The point:</strong> Your PC can be stolen with all its drives, and the attacker will find ZERO traces of unsecured data.
+    </div>
+
+    <h2>Using the Application</h2>
+    <h3>Best Practices</h3>
+    <p><strong>Before processing:</strong></p>
+    <ul>
+        <li>Keep unsecured originals on removable media ONLY</li>
+        <li>Keep unsecured ROM files on removable media ONLY with multiple backups</li>
+        <li>Never copy them to your PC</li>
+        <li>Verify all Windows configurations are complete</li>
+    </ul>
+    <p><strong>During processing:</strong></p>
+    <ul>
+        <li>Read directly from removable media</li>
+        <li>Write secured output to your PC (any drive - doesn't matter)</li>
+        <li>Windows configurations prevent any unsecured data leaking to PC drives</li>
+    </ul>
+    <p><strong>After processing:</strong></p>
+    <ul>
+        <li>Secured files on your PC are safe - no special handling needed</li>
+    </ul>
+
+    <h2>Verification Checklist</h2>
+    <p>Before using this application, verify ALL items are complete:</p>
+    <p><strong>Windows Configuration:</strong></p>
+    <ul>
+        <li><input type="checkbox"> Are you using Portable Windows? (Recommended - if yes, skip remaining checklist)</li>
+        <li><input type="checkbox"> Virtual memory (page file) is disabled</li>
+        <li><input type="checkbox"> Hibernation is disabled</li>
+        <li><input type="checkbox"> System Restore is disabled</li>
+        <li><input type="checkbox"> Shadow Copies are deleted</li>
+        <li><input type="checkbox"> Windows Search indexing is disabled</li>
+        <li><input type="checkbox"> Crash dumps are disabled</li>
+        <li><input type="checkbox"> Prefetch/Superfetch are disabled</li>
+        <li><input type="checkbox"> Thumbnail cache cleared and generation disabled</li>
+        <li><input type="checkbox"> Recent files and Quick Access disabled</li>
+        <li><input type="checkbox"> Computer has been restarted after configuration changes</li>
+    </ul>
+    <p><strong>Storage Setup:</strong></p>
+    <ul>
+        <li><input type="checkbox"> Unsecured originals are on removable media ONLY (USB, external drive)</li>
+        <li><input type="checkbox"> Unsecured ROM files are on removable media ONLY (USB, external drive) with multiple backups</li>
+        <li><input type="checkbox"> Unsecured originals have NEVER been copied to PC's internal drives</li>
+    </ul>
+    <p><strong>Understanding:</strong></p>
+    <ul>
+        <li><input type="checkbox"> I understand secured output can go anywhere on my PC (it's protected)</li>
+        <li><input type="checkbox"> I understand the ONLY risk is traces of unsecured data</li>
+        <li><input type="checkbox"> I understand portable Windows is the easiest and most secure option</li>
+    </ul>
+
+    <h2>Additional Security Measures (Optional)</h2>
+    <h3>RAM Disk for Temporary Processing</h3>
+    <p>If you need temporary storage during processing:</p>
+    <ul>
+        <li>Install RAM disk software (e.g., ImDisk, OSFMount)</li>
+        <li>Create a RAM disk for temporary files</li>
+        <li>Configure application to use RAM disk for temp storage</li>
+        <li>RAM disk contents are lost when computer powers off (no traces)</li>
+    </ul>
+    <h3>Disable Cloud Sync</h3>
+    <p>Ensure cloud services don't silently copy your files:</p>
+    <ul>
+        <li>OneDrive: Settings → Account → Unlink this PC</li>
+        <li>Dropbox: Pause or quit the application</li>
+        <li>Google Drive: Pause or quit the application</li>
+    </ul>
+    <h3>Disable Antivirus Scanning (Advanced)</h3>
+    <p>Some antivirus software caches scanned files:</p>
+    <ul>
+        <li>Add your removable media to exclusion list</li>
+        <li>Or temporarily disable real-time protection during processing</li>
+        <li>Re-enable after secure deletion</li>
+    </ul>
+    <h3>Additional Privacy Measures</h3>
+    <p><strong>Disable Cortana/Search Suggestions:</strong></p>
+    <ul>
+        <li>Settings → Privacy → Search permissions</li>
+        <li>Disable all search history and suggestions</li>
+    </ul>
+    <p><strong>Disable Diagnostic Data:</strong></p>
+    <ul>
+        <li>Settings → Privacy → Diagnostics & feedback</li>
+        <li>Set to "Basic" or use third-party tools to disable entirely</li>
+    </ul>
+    <p><strong>Clear Temp Folders Regularly:</strong></p>
+    <pre><code>del /f /s /q %temp%\*
+del /f /s /q C:\Windows\Temp\*</code></pre>
+
+    <h2>Understanding the Limitations</h2>
+    <h3>What This DOES Protect Against:</h3>
+    <ul>
+        <li>✓ PC stolen with all drives - ZERO traces of unsecured data found</li>
+        <li>✓ Forensic analysis of PC - No unsecured data discoverable</li>
+        <li>✓ Memory dumps to disk - Prevented by disabling page file/hibernation</li>
+        <li>✓ Windows caching/indexing unsecured data - Prevented by disabling these features</li>
+    </ul>
+    <h3>What This CANNOT Fully Protect Against:</h3>
+    <ul>
+        <li>✗ <strong>Active malware during processing</strong> - Can capture data from RAM while you're processing</li>
+        <li>✗ <strong>Screen capture</strong> - If someone is watching or recording your screen</li>
+        <li>✗ <strong>Keyloggers</strong> - If capturing your inputs</li>
+        <li>✗ <strong>Hardware keyloggers or screen recorders</strong> - Physical devices monitoring your activity</li>
+    </ul>
+    <h3>The Guarantee:</h3>
+    <p>After processing:</p>
+    <ul>
+        <li>Your PC contains ONLY secured data (which is safe even if stolen)</li>
+        <li>ZERO traces of unsecured data remain on PC drives (if properly configured)</li>
+        <li>Forensic analysis of your stolen PC will find nothing useful</li>
+    </ul>
+    <h3>For Maximum Security:</h3>
+    <ul>
+        <li><strong>Use Portable Windows</strong> (recommended - simplest and most secure)</li>
+        <li>Use this in a physically secure environment</li>
+        <li>Ensure PC is clean (no malware) before processing</li>
+        <li>Keep ROM file backups in physically separate locations</li>
+    </ul>
+
+    <h2>Troubleshooting</h2>
+    <p><strong>"The application detected insecure configuration"</strong></p>
+    <ul>
+        <li>Review the verification checklist above</li>
+        <li>Restart your computer after making changes</li>
+        <li>Run the application as Administrator to perform checks</li>
+    </ul>
+    <p><strong>"Cannot disable page file"</strong></p>
+    <ul>
+        <li>You must have Administrator privileges</li>
+        <li>Some system configurations require page file (minimum size)</li>
+        <li>Consider using a RAM disk for sensitive operations instead</li>
+        <li><strong>Or use Portable Windows</strong> (recommended)</li>
+    </ul>
+    <p><strong>"Performance is slow after disabling page file"</strong></p>
+    <ul>
+        <li>Add more physical RAM to your computer</li>
+        <li>Close unnecessary applications before processing</li>
+        <li>This is normal when RAM is limited</li>
+        <li><strong>Or use Portable Windows</strong> with adequate RAM</li>
+    </ul>
+    <p><strong>"Cannot access Group Policy Editor (gpedit.msc)"</strong></p>
+    <ul>
+        <li>You may have Windows Home edition (doesn't include Group Policy Editor)</li>
+        <li>Use the Registry alternative methods provided in the steps above</li>
+        <li><strong>Or use Portable Windows with Professional/Enterprise edition</strong></li>
+    </ul>
+    <p><strong>"Files are on the same drive warning"</strong></p>
+    <ul>
+        <li>Verify you're using different <strong>physical drives</strong>, not just partitions</li>
+        <li>Check drive letters in Disk Management (diskmgmt.msc)</li>
+        <li>Use removable media for unsecured files</li>
+        <li><strong>Portable Windows eliminates this issue entirely</strong></li>
+    </ul>
+
+    <h2>Common Questions</h2>
+    <p><strong>Is this really necessary?</strong><br>
+    For most users, NO. The simple approach in "Securing Your Files Guide" is sufficient. This advanced configuration is only for highly sensitive data where you need absolute certainty that zero traces remain on your PC if stolen.</p>
+    <p><strong>What's the easiest way to achieve maximum security?</strong><br>
+    <strong>Use Portable Windows.</strong> It's simpler than all the configuration steps above and provides 100% guaranteed isolation. This is the recommended approach.</p>
+    <p><strong>Why doesn't Portable Windows need all these configuration steps?</strong><br>
+    Because Portable Windows runs entirely from removable media. Your PC's Windows leaky nature does not touch your hard drives, so there are no traces to worry about. When you unplug the portable drive, your PC has zero traces.</p>
+    <p><strong>How does this provide perfect protection?</strong><br>
+    By keeping unsecured originals ONLY on removable media that never touches your PC's drives, and by disabling all Windows features that might cache data to disk during processing.</p>
+    <p><strong>Can I skip some Windows configuration steps?</strong><br>
+    No (unless using Portable Windows). Each step prevents a specific way Windows might write unsecured data from RAM to disk during processing (page file, hibernation, caching, thumbnails, etc.). Skipping steps creates risk.</p>
+    <p><strong>What if I make a mistake?</strong><br>
+    If you accidentally copy unsecured data to your PC before processing, those traces may remain. You'd need to secure-erase affected drives or use Portable Windows going forward.</p>
+    <p><strong>Does this protect against malware?</strong><br>
+    No. If your PC has active malware while processing, it could capture unsecured data from RAM or steal ROM files. This approach assumes your PC is clean during processing - it protects against physical theft afterward, not active compromise during use.</p>
+    <p><strong>Can I go back to normal Windows settings later?</strong><br>
+    Yes, you can re-enable all the features you disabled. However, any traces created while features were enabled may persist. For maximum security, use a clean Windows installation or Portable Windows.</p>
+    <p><strong>What about SSDs with wear-leveling?</strong><br>
+    Modern SSDs automatically move data around for longevity, which can leave traces even after deletion. This is another reason Portable Windows is recommended - it provides guaranteed isolation regardless of storage technology.</p>
+
+    <h2>Quick Reference Card</h2>
+    <p><strong>Portable Windows (Recommended):</strong></p>
+    <ol>
+        <li><strong>Install Windows on USB/external SSD</strong> - Use Windows To Go, Rufus, or WinToUSB</li>
+        <li><strong>Boot from portable drive</strong> - When processing sensitive files</li>
+        <li><strong>Keep originals on separate removable media</strong> - Never on PC drives</li>
+        <li><strong>Process and save secured output anywhere</strong> - Even PC drives are fine (it's protected)</li>
+        <li><strong>Shut down and unplug</strong> - Zero traces on PC</li>
+    </ol>
+    <p><strong>Advanced PC Configuration (Alternative):</strong></p>
+    <ol>
+        <li><strong>Unsecured data NEVER touches PC</strong> - Keep on removable media only</li>
+        <li><strong>Configure Windows FIRST</strong> - All 8+ configuration steps required</li>
+        <li><strong>Process directly from removable media</strong> - Don't copy to PC first</li>
+        <li><strong>Secured output anywhere on PC is fine</strong> - It's protected, can be stolen without risk</li>
+    </ol>
+
+    <div class="footer">
+        <h3>License & Information</h3>
+        <p><strong>MIT License</strong> - (c) 2026 Cyborg Unicorn Pty Ltd</p>
+        <p><a href="https://zoscii.com" target="_blank">zoscii.com</a> | <a href="https://github.com/PrimalNinja/cyborgzoscii" target="_blank">GitHub Repository</a></p>
+    </div>
+</div>
+</body>
+</html>

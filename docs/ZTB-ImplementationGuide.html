@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ZOSCII Tamperproof Blockchain - Implementation Guide</title>
-	<link rel="stylesheet" type="text/css" href="cu-styles.css">
+    <link rel="stylesheet" type="text/css" href="cu-styles.css">
 </head>
 <body>
     <div class="container">
@@ -14,7 +14,7 @@
 
         <div class="success">
             <strong>Key Features:</strong>
-            <span class="badge badge-success">Quantum Resistant</span>
+            <span class="badge badge-success">Quantum Proof</span>
             <span class="badge badge-info">Information-Theoretic Security</span>
             <span class="badge badge-success">Fast Verification</span>
             <span class="badge badge-info">Scalable Architecture</span>
@@ -39,7 +39,7 @@
         <h2 id="overview">Overview</h2>
         <p>The ZOSCII Tamperproof Blockchain (ZTB) provides:</p>
         <ul>
-            <li>✅ <strong>Quantum Resistance</strong> - Security based on combinatorial infeasibility, not computational difficulty</li>
+            <li>✅ <strong>Quantum Proof</strong> - Security based on combinatorial impossibility, not computational difficulty</li>
             <li>✅ <strong>Scalable Architecture</strong> - Trunk and branch chains for efficient organization</li>
             <li>✅ <strong>Tamperproof Guarantee</strong> - ~10^152900 impossibility of forgery</li>
             <li>✅ <strong>Fast Verification</strong> - O(1) lookups, no complex cryptography</li>
@@ -51,38 +51,14 @@
         <h3>Traditional Blockchains vs ZTB</h3>
         <table>
             <thead>
-                <tr>
-                    <th>Aspect</th>
-                    <th>Traditional Blockchain</th>
-                    <th>ZTB</th>
-                </tr>
+                <tr><th>Aspect</th><th>Traditional Blockchain</th><th>ZTB</th></tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>Block Linking</td>
-                    <td>Cryptographic hashes (SHA-256)</td>
-                    <td>ZOSCII pointer encoding</td>
-                </tr>
-                <tr>
-                    <td>Security Basis</td>
-                    <td>Computational difficulty</td>
-                    <td>Combinatorial impossibility</td>
-                </tr>
-                <tr>
-                    <td>Quantum Threat</td>
-                    <td>Vulnerable</td>
-                    <td>Immune</td>
-                </tr>
-                <tr>
-                    <td>Data Structure</td>
-                    <td>Linear chain</td>
-                    <td>Tree (trunk + branches)</td>
-                </tr>
-                <tr>
-                    <td>Decoding Speed</td>
-                    <td>Hash verification</td>
-                    <td>O(1) pointer lookup</td>
-                </tr>
+                <tr><td>Block Linking</td><td>Cryptographic hashes (SHA-256)</td><td>ZOSCII pointer encoding</td></tr>
+                <tr><td>Security Basis</td><td>Computational difficulty</td><td>Combinatorial impossibility</td></tr>
+                <tr><td>Quantum Threat</td><td>Vulnerable</td><td>Immune</td></tr>
+                <tr><td>Data Structure</td><td>Linear chain</td><td>Tree (trunk + branches)</td></tr>
+                <tr><td>Decoding Speed</td><td>Hash verification</td><td>O(1) pointer lookup</td></tr>
             </tbody>
         </table>
 
@@ -134,7 +110,7 @@
         <div class="tool-section">
             <h3>1. ztbcreate - Genesis ROM Creator</h3>
             <p>Creates the 64KB high-entropy Genesis ROM file.</p>
-            <pre><code>ztbcreate &lt;entropyfile1&gt; [&lt;entropyfile2&gt;] [&lt;entropyfile3&gt;]&lt;output_genesis_rom_file&gt;</code></pre>
+            <pre><code>ztbcreate &lt;entropyfile1&gt; [&lt;entropyfile2&gt;] [&lt;entropyfile3&gt;] &lt;output_genesis_rom&gt;</code></pre>
             <p><strong>Example:</strong></p>
             <pre><code>ztbcreate selfie.jpg genesis.rom</code></pre>
             <div class="warning">
@@ -146,31 +122,39 @@
             <h3>2. ztbaddblock - Block Creator</h3>
             <p>Adds a new block to an existing chain (trunk or branch).</p>
             <pre><code># Add text block
-ztbaddblock &lt;genesis_rom&gt; &lt;chain_id&gt; -t "text string" [-x1]
+ztbaddblock &lt;genesis_rom&gt; &lt;chain_id&gt; -t "text string" [-x1] [-x2] [-i &lt;block_id&gt;]
 
 # Add file block
-ztbaddblock &lt;genesis_rom&gt; &lt;chain_id&gt; -f &lt;file_path&gt; [-x1]</code></pre>
+ztbaddblock &lt;genesis_rom&gt; &lt;chain_id&gt; -f &lt;file_path&gt; [-x1] [-x2] [-i &lt;block_id&gt;]</code></pre>
             <p><strong>Examples:</strong></p>
             <pre><code># First block creates new trunk
 ztbaddblock genesis.rom MyTrunk -t "Genesis block"
 
-# Add subsequent blocks
-ztbaddblock genesis.rom MyTrunk -t "Block 2"
-ztbaddblock genesis.rom MyTrunk -f invoice.pdf</code></pre>
+# Add subsequent blocks with custom ID
+ztbaddblock genesis.rom MyTrunk -t "Block 2" -i 1
+ztbaddblock genesis.rom MyTrunk -f invoice.pdf -i "invoice-001"</code></pre>
+            <p><strong>Options:</strong></p>
+            <ul>
+                <li><code>-i "id"</code> - Supply custom block ID (max 36 chars, truncated if longer)</li>
+                <li><code>-t "text"</code> - Add text string as payload</li>
+                <li><code>-f filename</code> - Add file contents as payload</li>
+                <li><code>-x1</code> - X1 extended security: prev-block CRC binding, no on-disk XOR</li>
+                <li><code>-x2</code> - X2 extended security: prev-block CRC binding + on-disk XOR</li>
+            </ul>
         </div>
 
         <div class="tool-section">
             <h3>3. ztbaddbranch - Branch Creator</h3>
             <p>Creates a new branch splitting from a trunk block.</p>
-            <pre><code>ztbaddbranch &lt;genesis_rom&gt; &lt;trunk_id&gt; &lt;new_branch_id&gt; -t "text" [-x1]
-ztbaddbranch &lt;genesis_rom&gt; &lt;trunk_id&gt; &lt;new_branch_id&gt; -f &lt;file&gt; [-x1]</code></pre>
+            <pre><code>ztbaddbranch &lt;genesis_rom&gt; &lt;trunk_id&gt; &lt;new_branch_id&gt; -t "text" [-x1] [-x2] [-i &lt;block_id&gt;]
+ztbaddbranch &lt;genesis_rom&gt; &lt;trunk_id&gt; &lt;new_branch_id&gt; -f &lt;file&gt; [-x1] [-x2] [-i &lt;block_id&gt;]</code></pre>
             <p><strong>Example:</strong></p>
             <pre><code># Create trunk
 ztbaddblock genesis.rom CompanyLedger -t "2025 Books"
 
 # Branch off for departments
 ztbaddbranch genesis.rom CompanyLedger Sales -t "Sales Genesis"
-ztbaddbranch genesis.rom CompanyLedger Marketing -t "Marketing Genesis"</code></pre>
+ztbaddbranch genesis.rom CompanyLedger Marketing -t "Marketing Genesis" -i "marketing-root"</code></pre>
         </div>
 
         <div class="tool-section">
@@ -221,10 +205,11 @@ ztbcheckpoint genesis.rom FY2024 checkpoint.rom</code></pre>
         </ul>
 
         <h3>Block Filename Convention</h3>
-        <pre><code>&lt;chain_id&gt;_&lt;index&gt;_&lt;block_guid&gt;.ztb</code></pre>
+        <pre><code>&lt;chain_id&gt;_&lt;index&gt;_&lt;block_id&gt;.ztb</code></pre>
         <p><strong>Examples:</strong></p>
         <pre><code>MyTrunk_0001_A0B9845E-1234-4567-89AB-CDEF01234567.ztb
-ClientA_0002_B1C0956F-2345-5678-9ABC-DEF012345678.ztb</code></pre>
+ClientA_0002_1.ztb
+Sales_0010_invoice-001.ztb</code></pre>
 
         <h2 id="rolling-rom">Rolling ROM Construction</h2>
         
@@ -266,56 +251,42 @@ ClientA_0002_B1C0956F-2345-5678-9ABC-DEF012345678.ztb</code></pre>
             <p><strong>This is combinatorially infeasible</strong> - not just hard, but information-theoretically impossible.</p>
         </div>
 
-        <h3>X1 Extended Security Mode</h3>
+        <h3>X1 and X2 Extended Security Modes</h3>
         <div class="info">
-            <p>X1 mode adds an additional binding layer on top of the standard tamper-evidence. Each block is XOR'd against the entire previous block file as it sits on disk. Two CRC32 values are committed to in every block's prefix:</p>
+            <p>Both modes add a dual-CRC binding layer on top of standard tamper-evidence. Every X1/X2 block commits to two CRC32 values in its prefix:</p>
             <ol>
                 <li><strong>Current block CRC</strong> — over the ZOSCII-encoded block data.</li>
-                <li><strong>Previous block on-disk CRC</strong> — over the complete previous block file (fully encoded and XOR'd), committed to by the <em>current</em> block and verified by the <em>next</em>.</li>
+                <li><strong>Previous block on-disk CRC</strong> — over the complete previous block file (fully encoded, including prefix), committed to by the <em>current</em> block and verified by the <em>next</em>.</li>
             </ol>
-            <p>An attacker modifying block N must simultaneously satisfy both interdependent CRC targets. The second target is over non-deterministically encoded on-disk data, making it practically infeasible to satisfy independently of the first.</p>
-            <p><strong>1KB threshold:</strong> The rolling ROM samples the first 1KB of each block. For payloads under 1KB the entire block is captured in the rolling ROM — the combinatorial tamper-evidence applies to the full payload without X1. For payloads exceeding 1KB, content beyond that boundary is protected only by CRC32 in normal mode. X1 closes this gap. Use normal mode for short records (invoices, transactions, log entries). Use <code>-x1</code> for large files such as PDFs, images, or contracts where full payload integrity beyond 1KB is required.</p>
-            <p><strong>Trunk block 1 exception:</strong> The first block of a trunk has no predecessor and is stored plain even in X1 mode. Its prev-block CRC is zero. This is by design and handled correctly by all tools.</p>
+            <p>The difference between the two modes:</p>
+            <ul>
+                <li><strong><code>-x1</code></strong> — dual-CRC binding only. No on-disk XOR.</li>
+                <li><strong><code>-x2</code></strong> — dual-CRC binding <em>plus</em> the output block is physically XOR'd against the previous block file on disk.</li>
+            </ul>
+            <p><strong>1KB threshold:</strong> The rolling ROM samples the first 1KB of each block. For payloads under 1KB the entire block is captured in the rolling ROM — the combinatorial tamper-evidence applies to the full payload without either mode. For payloads exceeding 1KB, content beyond that boundary is protected only by CRC32 in normal mode. X1 and X2 both close this gap.</p>
+            <p><strong>Trunk block 1 exception:</strong> The first block of a trunk has no predecessor and is stored plain even in X1/X2 mode. Its prev-block CRC is zero. This is by design and handled correctly by all tools.</p>
         </div>
 
-        <h3>Why Quantum-Resistant?</h3>
+        <h3>Why Quantum-Proof?</h3>
+        <table>
             <thead>
-                <tr>
-                    <th>Attack Vector</th>
-                    <th>Traditional Blockchain</th>
-                    <th>ZTB</th>
-                </tr>
+                <tr><th>Attack Vector</th><th>Traditional Blockchain</th><th>ZTB</th></tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>Shor's Algorithm</td>
-                    <td>Breaks PKI</td>
-                    <td>No PKI to break</td>
-                </tr>
-                <tr>
-                    <td>Grover's Algorithm</td>
-                    <td>Weakens hashing</td>
-                    <td>No hashing used</td>
-                </tr>
-                <tr>
-                    <td>Brute Force</td>
-                    <td>2^256 operations</td>
-                    <td>10^152900 permutations</td>
-                </tr>
-                <tr>
-                    <td>Quantum Computer</td>
-                    <td>Eventually vulnerable</td>
-                    <td>Immune</td>
-                </tr>
+                <tr><td>Shor's Algorithm</td><td>Breaks PKI</td><td>No PKI to break</td></tr>
+                <tr><td>Grover's Algorithm</td><td>Weakens hashing</td><td>No hashing used</td></tr>
+                <tr><td>Brute Force</td><td>2^256 operations</td><td>10^152900 permutations</td></tr>
+                <tr><td>Quantum Computer</td><td>Eventually vulnerable</td><td>Immune</td></tr>
             </tbody>
         </table>
 
         <h2 id="build">Build Instructions</h2>
-        <pre><code># Compile all tools
-make
+        <pre><code># Windows (Visual Studio)
+init.bat
+build.bat
 
-# Clean build artifacts
-make clean
+# Linux/macOS (using Make)
+make
 
 # Individual compilation
 gcc -o ztbcreate ztbcreate.c -O2
@@ -334,7 +305,7 @@ gcc -o ztbcheckpoint ztbcheckpoint.c -O2</code></pre>
 
 # 2. Create trunk chain
 ./ztbaddblock genesis.rom MyTrunk -t "Block 1"
-./ztbaddblock genesis.rom MyTrunk -t "Block 2"
+./ztbaddblock genesis.rom MyTrunk -t "Block 2" -i 2
 ./ztbaddblock genesis.rom MyTrunk -t "Block 3"
 
 # 3. Verify
@@ -357,7 +328,7 @@ gcc -o ztbcheckpoint ztbcheckpoint.c -O2</code></pre>
 ./ztbaddbranch genesis.rom CompanyLedger Marketing -t "Marketing Dept"
 
 # 4. Add department records
-./ztbaddblock genesis.rom Sales -f invoice_001.pdf
+./ztbaddblock genesis.rom Sales -f invoice_001.pdf -i "inv-001"
 ./ztbaddblock genesis.rom Marketing -f campaign_q1.doc
 
 # 5. Verify everything
@@ -373,6 +344,7 @@ gcc -o ztbcheckpoint ztbcheckpoint.c -O2</code></pre>
                 <li><strong>Entropy Matters</strong> - Must contain all 256 byte values</li>
                 <li><strong>No Backwards Compatibility</strong> - Version control carefully</li>
                 <li><strong>Storage: 2× Size</strong> - Encoded blocks are double the raw size</li>
+                <li><strong>Block ID Limit:</strong> Max 36 characters (truncated if longer)</li>
             </ul>
         </div>
 
@@ -381,24 +353,24 @@ gcc -o ztbcheckpoint ztbcheckpoint.c -O2</code></pre>
             <ul>
                 <li>Regular verification (daily/weekly)</li>
                 <li>Genesis ROM: 3+ copies, offline storage</li>
-                <li>Descriptive chain IDs</li>
+                <li>Descriptive chain IDs and block IDs</li>
                 <li>Monitor verification failures</li>
                 <li>Secure Genesis ROM with encryption</li>
             </ul>
         </div>
-	</div>
-	
-	<div class="footer">
-		<h3>License & Information</h3>
-		<p><strong>MIT License</strong> - (c) 2026 Cyborg Unicorn Pty Ltd</p>
-		<p>
-			<a href="https://zoscii.com" target="_blank" style="color: #007bff;">zoscii.com</a> |
-			<a href="https://github.com/PrimalNinja/cyborgzoscii" target="_blank" style="color: #007bff;">GitHub Repository</a> |
-		</p>
-		<p style="margin-top: 20px; font-size: 0.9em;">
-			For technical questions, security concerns, or implementation assistance,<br>
-			please visit the project website or file an issue on GitHub.
-		</p>
-	</div>
+    </div>
+    
+    <div class="footer">
+        <h3>License & Information</h3>
+        <p><strong>MIT License</strong> - (c) 2026 Cyborg Unicorn Pty Ltd</p>
+        <p>
+            <a href="https://zoscii.com" target="_blank">zoscii.com</a> |
+            <a href="https://github.com/PrimalNinja/cyborgzoscii" target="_blank">GitHub Repository</a>
+        </p>
+        <p style="margin-top: 20px; font-size: 0.9em;">
+            For technical questions, security concerns, or implementation assistance,<br>
+            please visit the project website or file an issue on GitHub.
+        </p>
+    </div>
 </body>
 </html>

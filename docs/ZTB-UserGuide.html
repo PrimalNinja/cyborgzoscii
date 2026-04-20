@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ZOSCII Tamperproof Blockchain - User Guide</title>
-	<link rel="stylesheet" type="text/css" href="cu-styles.css">
+    <link rel="stylesheet" type="text/css" href="cu-styles.css">
 </head>
 <body>
     <div class="container">
@@ -37,10 +37,9 @@
             
             <h3>Example:</h3>
             <pre><code>ztbcreate selfie.jpg genesis.rom</code></pre>
-			
-			<p>ztbcreate &lt;entropyfile1&gt; [&lt;entropyfile2&gt;] [&lt;entropyfile3&gt;]&lt;output_genesis_rom_file&gt;<br><br>
-Note: 1 to 3 entropy files are recommended to be JPEGs or MP3s or some other capture of real-world physics.
-			</p>
+            
+            <p>ztbcreate &lt;entropyfile1&gt; [&lt;entropyfile2&gt;] [&lt;entropyfile3&gt;] &lt;output_genesis_rom&gt;<br><br>
+            Note: 1 to 3 entropy files are recommended to be JPEGs or MP3s or some other capture of real-world physics.</p>
         </div>
 
         <div class="command-section">
@@ -61,25 +60,39 @@ Note: 1 to 3 entropy files are recommended to be JPEGs or MP3s or some other cap
                 <li>Pads it to minimum size if needed</li>
                 <li>Builds a Rolling ROM from previous blocks + Genesis</li>
                 <li>Encodes your data using ZOSCII (makes it tamperproof)</li>
-                <li>Creates a new block file: <code>chainid_0001_blockguid.ztb</code></li>
+                <li>Creates a new block file: <code>chainid_index_blockid.ztb</code></li>
             </ul>
             
             <h3>Options:</h3>
             <ul>
+                <li><code>-i "id"</code> - Supply a custom block ID (max 36 characters, truncated if longer)</li>
                 <li><code>-t "text"</code> - Add a text string</li>
                 <li><code>-f filename</code> - Add a file's contents</li>
-                <li><code>-x1</code> - Enable X1 extended security mode (see Key Concepts)</li>
+                <li><code>-x1</code> - X1 extended security: prev-block CRC binding, no on-disk XOR (see Key Concepts)</li>
+                <li><code>-x2</code> - X2 extended security: prev-block CRC binding + on-disk XOR (see Key Concepts)</li>
             </ul>
             
-            <h3>Example:</h3>
+            <h3>Examples:</h3>
             <pre><code># First block on a new trunk
-ztbaddblock genesis.rom MyTrunk -t "Invoice #001"
+ztbaddblock genesis.rom MyTrunk -t "Invoice #001" -i 1
 
-# Second block
+# Or with quotes
+ztbaddblock genesis.rom MyTrunk -t "Invoice #001" -i "1"
+
+# Using a text label
+ztbaddblock genesis.rom MyTrunk -t "Welcome message" -i "genesis"
+
+# Second block (auto-generated ID)
 ztbaddblock genesis.rom MyTrunk -t "Invoice #002"
 
-# Add a file
-ztbaddblock genesis.rom MyTrunk -f contract.pdf</code></pre>
+# Add a file with custom ID
+ztbaddblock genesis.rom MyTrunk -f contract.pdf -i "contract-2024-001"
+
+# Enable X1 mode for large files (CRC binding, no XOR)
+ztbaddblock genesis.rom MyTrunk -f large_document.pdf -x1 -i "large-doc"
+
+# Enable X2 mode for maximum security (CRC binding + on-disk XOR)
+ztbaddblock genesis.rom MyTrunk -f large_document.pdf -x2 -i "large-doc"</code></pre>
         </div>
 
         <div class="command-section">
@@ -103,18 +116,21 @@ ztbaddblock genesis.rom MyTrunk -f contract.pdf</code></pre>
                 <li>Future blocks can be added to this branch using <code>ztbaddblock</code></li>
             </ul>
             
-            <h3>Example:</h3>
+            <h3>Examples:</h3>
             <pre><code># Create main company trunk
 ztbaddblock genesis.rom CompanyLedger -t "2024 Books"
 
-# Branch off for departments
+# Branch off for departments (auto-generated IDs)
 ztbaddbranch genesis.rom CompanyLedger Sales -t "Sales Q1"
 ztbaddbranch genesis.rom CompanyLedger Marketing -t "Marketing Q1"
 
+# Branch with custom ID
+ztbaddbranch genesis.rom CompanyLedger Engineering -t "Engineering Dept" -i "eng-root"
+
 # Now add blocks to branches
 ztbaddblock genesis.rom Sales -t "Sale #001"
-ztbaddblock genesis.rom Marketing -t "Campaign #001"</code></pre>
-            <p><strong>Note:</strong> Add <code>-x1</code> to any <code>ztbaddbranch</code> or <code>ztbaddblock</code> call to enable X1 mode for that block. All blocks in a chain should use the same mode consistently.</p>
+ztbaddblock genesis.rom Marketing -t "Campaign #001" -i "campaign-summer"</code></pre>
+            <p><strong>Note:</strong> Add <code>-x1</code> to any <code>ztbaddbranch</code> or <code>ztbaddblock</code> call for X1 mode (CRC binding, no XOR), or <code>-x2</code> for X2 mode (CRC binding + on-disk XOR). All blocks in a chain should use the same mode consistently.</p>
         </div>
 
         <div class="command-section">
@@ -138,9 +154,12 @@ ztbaddblock genesis.rom Marketing -t "Campaign #001"</code></pre>
                 <li>Shows you the decoded payload</li>
             </ul>
             
-            <h3>Example:</h3>
+            <h3>Examples:</h3>
             <pre><code># Fetch block 3 from MyTrunk
 ztbfetch genesis.rom MyTrunk 3
+
+# Fetch from a branch
+ztbfetch genesis.rom Sales 2
 
 # Output shows:
 # - Block metadata (ID, timestamp, etc.)
@@ -183,7 +202,7 @@ ztbfetch genesis.rom MyTrunk 3
                 <li><code>-bb</code> - Verify all branches only (skip trunk)</li>
             </ul>
             
-            <h3>Example:</h3>
+            <h3>Examples:</h3>
             <pre><code># Verify everything
 ztbverify genesis.rom MyTrunk
 
@@ -240,18 +259,18 @@ ztbcheckpoint genesis.rom MyTrunk checkpoint.rom
 ztbcreate selfie.jpg genesis.rom
 
 # 2. Create main trunk for 2025
-ztbaddblock genesis.rom FY2025 -t "Financial Year 2025"
+ztbaddblock genesis.rom FY2025 -t "Financial Year 2025" -i "fy2025-root"
 
 # 3. Create branches for different accounts
-ztbaddbranch genesis.rom FY2025 ClientA -t "Client A Account"
+ztbaddbranch genesis.rom FY2025 ClientA -t "Client A Account" -i "clientA-root"
 ztbaddbranch genesis.rom FY2025 ClientB -t "Client B Account"
 
-# 4. Add invoices to Client A
-ztbaddblock genesis.rom ClientA -t "Invoice #1001"
-ztbaddblock genesis.rom ClientA -f invoice_1002.pdf
+# 4. Add invoices to Client A (with custom IDs)
+ztbaddblock genesis.rom ClientA -t "Invoice #1001" -i "inv-1001"
+ztbaddblock genesis.rom ClientA -f invoice_1002.pdf -i "inv-1002"
 
 # 5. Add invoices to Client B
-ztbaddblock genesis.rom ClientB -t "Invoice #2001"
+ztbaddblock genesis.rom ClientB -t "Invoice #2001" -i "inv-2001"
 
 # 6. Retrieve a specific invoice
 ztbfetch genesis.rom ClientA 2
@@ -271,9 +290,13 @@ ztbcheckpoint genesis.rom FY2025 checkpoint.rom
             <h3>Tamperproof</h3>
             <p>If you change ANY byte in block N, all blocks N+1 onwards fail verification. The ZOSCII pointer encoding makes forgery combinatorially impossible (10^152900 combinations).</p>
             
-            <h3>X1 Extended Security Mode</h3>
-            <p>X1 mode adds an additional layer on top of the standard tamper-evidence. Each block is XOR'd against the entire previous block file as it sits on disk, and every block commits to a CRC32 of the previous block's complete on-disk content. An attacker attempting to forge block N must simultaneously satisfy two interdependent integrity checks, making forgery practically infeasible even beyond the standard combinatorial guarantee.</p>
-            <p><strong>When to use X1:</strong> The rolling ROM samples the first 1KB of each block. For payloads under 1KB, the entire block is captured in that sample and the combinatorial tamper-evidence applies to the full payload — X1 is not needed. For payloads larger than 1KB, content beyond that boundary is protected only by CRC32 in normal mode. X1 closes this gap. Use normal mode for short records (invoices, transactions, log entries). Use <code>-x1</code> when storing large files such as PDFs, images, or contracts where full payload integrity matters and the modest performance cost is acceptable. The first block of a trunk is always stored plain even in X1 mode — this is by design.</p>
+            <h3>Custom Block IDs (-i parameter)</h3>
+            <p>You can assign your own block IDs instead of auto-generated GUIDs. Use any string up to 36 characters. Examples: <code>-i 1</code>, <code>-i "invoice-001"</code>, <code>-i "fred"</code>, <code>-i "my-block-1"</code>. If you exceed 36 characters, the ID is silently truncated.</p>
+            
+            <h3>X1 and X2 Extended Security Modes</h3>
+            <p>Both X1 (<code>-x1</code>) and X2 (<code>-x2</code>) add an additional layer on top of the standard tamper-evidence: every block commits to a CRC32 of the previous block's complete on-disk content, creating a dual-CRC constraint that makes forgery practically infeasible even beyond the standard combinatorial guarantee.</p>
+            <p>The difference is that X2 also physically XOR's the output block against the previous block file on disk. X1 gives you the dual-CRC binding without the XOR. X2 gives you both.</p>
+            <p><strong>When to use X1/X2:</strong> The rolling ROM samples the first 1KB of each block. For payloads under 1KB, the entire block is captured in that sample and the combinatorial tamper-evidence applies to the full payload — neither mode is needed. For payloads larger than 1KB, content beyond that boundary is protected only by CRC32 in normal mode. X1 and X2 both close this gap. Use normal mode for short records (invoices, transactions, log entries). Use <code>-x1</code> or <code>-x2</code> when storing large files such as PDFs, images, or contracts. The first block of a trunk is always stored plain even in X1/X2 mode — this is by design.</p>
             
             <h3>No Decryption Needed</h3>
             <p>This isn't encryption - it's addressing. The data is encoded as pointers into the Rolling ROM. Without the exact Rolling ROM, the pointers are meaningless.</p>
@@ -284,19 +307,34 @@ ztbcheckpoint genesis.rom FY2025 checkpoint.rom
             <h3>Branch Organization</h3>
             <p>Use branches like folders. Trunk = main timeline, branches = parallel sub-timelines. All verified together.</p>
         </div>
+
+        <div class="quick-ref">
+            <h2>Quick Reference</h2>
+            </table>
+                <thead><tr><th>Command</th><th>Purpose</th><th>Example</th></tr></thead>
+                <tbody>
+                    <tr><td>ztbcreate</td><td>Create Genesis ROM</td><td><code>ztbcreate selfie.jpg genesis.rom</code></td></tr>
+                    <tr><td>ztbaddblock</td><td>Add data block</td><td><code>ztbaddblock genesis.rom chain -t "text" -i "myid"</code></td></tr>
+                    <tr><td>ztbaddbranch</td><td>Create new branch</td><td><code>ztbaddbranch genesis.rom trunk branch -t "text"</code></td></tr>
+                    <tr><td>ztbfetch</td><td>Read block data</td><td><code>ztbfetch genesis.rom chain 3</code></td></tr>
+                    <tr><td>ztbverify</td><td>Verify integrity</td><td><code>ztbverify genesis.rom trunk</code></td></tr>
+                    <tr><td>ztbcheckpoint</td><td>Archive boundary</td><td><code>ztbcheckpoint genesis.rom chain checkpoint.rom</code></td></tr>
+                </tbody>
+            </table>
+        </div>
     </div>
-	
-	<div class="footer">
-		<h3>License & Information</h3>
-		<p><strong>MIT License</strong> - (c) 2026 Cyborg Unicorn Pty Ltd</p>
-		<p>
-			<a href="https://zoscii.com" target="_blank" style="color: #007bff;">zoscii.com</a> |
-			<a href="https://github.com/PrimalNinja/cyborgzoscii" target="_blank" style="color: #007bff;">GitHub Repository</a> |
-		</p>
-		<p style="margin-top: 20px; font-size: 0.9em;">
-			For technical questions, security concerns, or implementation assistance,<br>
-			please visit the project website or file an issue on GitHub.
-		</p>
-	</div>
+    
+    <div class="footer">
+        <h3>License & Information</h3>
+        <p><strong>MIT License</strong> - (c) 2026 Cyborg Unicorn Pty Ltd</p>
+        <p>
+            <a href="https://zoscii.com" target="_blank">zoscii.com</a> |
+            <a href="https://github.com/PrimalNinja/cyborgzoscii" target="_blank">GitHub Repository</a>
+        </p>
+        <p style="margin-top: 20px; font-size: 0.9em;">
+            For technical questions, security concerns, or implementation assistance,<br>
+            please visit the project website or file an issue on GitHub.
+        </p>
+    </div>
 </body>
 </html>

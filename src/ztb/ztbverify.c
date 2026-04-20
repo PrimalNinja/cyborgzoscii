@@ -95,10 +95,10 @@ int verify_single_block(const char *strGenesisRomFile_a,
                     free(byModeDecoded);
                 }
 
-                // Un-XOR the file buffer if X1 and a previous block exists.
-                // Trunk block 1 has no previous block and was written plain even in X1 — skip XOR.
+                // Un-XOR the file buffer if X2 and a previous block exists.
+                // Trunk block 1 has no previous block and was written plain even in X2 — skip XOR.
                 int intDataReady = 1;
-                if (byMode == MODE_X1 && strPrevBlockFilename != NULL)
+                if (byMode == MODE_X2 && strPrevBlockFilename != NULL)
                 {
                     if (!xor_buffer_with_file(byFileData, intFileLen, strPrevBlockFilename))
                     {
@@ -122,7 +122,7 @@ int verify_single_block(const char *strGenesisRomFile_a,
                         free(byCrcDecoded);
 
                         int intPrevCrcOk = 1;
-                        if (byMode == MODE_X1 && intStoredPrevCrc != 0 && strPrevBlockFilename)
+                        if ((byMode == MODE_X1 || byMode == MODE_X2) && intStoredPrevCrc != 0 && strPrevBlockFilename)
                         {
                             uint32_t intCalcPrevCrc = calculate_file_checksum(strPrevBlockFilename);
                             intPrevCrcOk = (intCalcPrevCrc == intStoredPrevCrc) ? 1 : 0;

@@ -179,7 +179,7 @@ int main(int argc, char *argv[])
         {
             printf("Rolling ROM reconstructed\n");
 
-            // --- 7. Find previous block filename for X1 mode ---
+            // --- 7. Find previous block filename for X2 mode ---
             // For a trunk block N>1: previous block is chain block N-1.
             // For a branch block 1: previous block is trunk's last block.
             // For trunk block 1 or branch block 1 with no trunk: no previous block.
@@ -225,21 +225,26 @@ int main(int argc, char *argv[])
 
                 if (byMode == MODE_X1)
                 {
-                    printf("Mode: X1 (extended security)\n");
+                    printf("Mode: X1 (extended security, CRC binding)\n");
+                }
+
+                if (byMode == MODE_X2)
+                {
+                    printf("Mode: X2 (extended security, CRC binding + XOR)\n");
 
                     if (strPrevBlockFilename == NULL)
                     {
                         // Block 1 of a trunk has no previous block and was written plain.
-                        printf("X1: No previous block (block 1 of trunk) - stored plain\n");
+                        printf("X2: No previous block (block 1 of trunk) - stored plain\n");
                     }
                     else if (!xor_buffer_with_file(byFileData, intFileLen, strPrevBlockFilename))
                     {
-                        fprintf(stderr, "Error: X1 un-XOR failed\n");
+                        fprintf(stderr, "Error: X2 un-XOR failed\n");
                         intResult = 1;
                     }
                     else
                     {
-                        printf("X1: File data un-XOR'd with previous block\n");
+                        printf("X2: File data un-XOR'd with previous block\n");
                         // Bytes 0-1 are now doubly-XOR'd but we already have byMode.
                         // Bytes 2-17 (the two CRCs) are correctly un-XOR'd.
                     }
@@ -266,7 +271,7 @@ int main(int argc, char *argv[])
                                            (byCrcDecoded[6] << 16) | (byCrcDecoded[7] << 24);
                         free(byCrcDecoded);
 
-                        if (byMode == MODE_X1 && intStoredPrevCrc != 0 && strPrevBlockFilename)
+                        if ((byMode == MODE_X1 || byMode == MODE_X2) && intStoredPrevCrc != 0 && strPrevBlockFilename)
                         {
                             uint32_t intCalcPrevCrc = calculate_file_checksum(strPrevBlockFilename);
                             printf("Stored prev CRC32:     0x%08X\n", intStoredPrevCrc);

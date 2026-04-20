@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ZOSCII Tamperproof Blockchain - Whitepaper</title>
-	<link rel="stylesheet" type="text/css" href="cu-styles.css">
+    <link rel="stylesheet" type="text/css" href="cu-styles.css">
 </head>
 <body>
     <div class="container">
@@ -12,11 +12,16 @@
         
         <div class="header-meta">
             <p><em>(c) 2026 Cyborg Unicorn Pty Ltd - MIT License</em></p>
+            <p>
+                <span class="badge badge-success">Quantum Proof</span>
+                <span class="badge badge-info">Information-Theoretic Security</span>
+                <span class="badge badge-success">Combinatorial Impossibility</span>
+            </p>
         </div>
 
         <div class="abstract">
             <h2>Abstract</h2>
-            <p>The ZOSCII Tamperproof Blockchain introduces a revolutionary security model for Distributed Ledger Technology (DLT), decoupling structural integrity from data confidentiality. By leveraging Information-Theoretically Secure (ITS) encoding and Combinatorial Security, this blockchain is inherently Quantum Resistant and does not rely on traditional, computationally intensive ciphers (like SHA-256) or mathematically difficult problems (like factoring). Its unique pointer-based block linking, anchored by a high-entropy ORIGINAL ROM, makes the entire ledger history tamperproof through combinatorial infeasibility, while new side-chain architecture enables unprecedented scalability and indexing efficiency.</p>
+            <p>The ZOSCII Tamperproof Blockchain introduces a revolutionary security model for Distributed Ledger Technology (DLT), decoupling structural integrity from data confidentiality. By leveraging Information-Theoretically Secure (ITS) encoding and Combinatorial Security, this blockchain is inherently Quantum Proof and does not rely on traditional, computationally intensive ciphers (like SHA-256) or mathematically difficult problems (like factoring). Its unique pointer-based block linking, anchored by a high-entropy ORIGINAL ROM, makes the entire ledger history tamperproof through combinatorial impossibility, while new branch-chain architecture enables unprecedented scalability and indexing efficiency.</p>
         </div>
 
         <h2>1. Introduction: The Quantum and Scalability Challenges</h2>
@@ -33,17 +38,31 @@
             <p><strong>Solution:</strong> The ZOSCII Tamperproof Blockchain solves these by shifting the security burden from computationally difficult proofs to mathematically guaranteed combinatorial impossibility and introducing a scalable architecture optimized for verification.</p>
         </div>
 
-        <h2>2. Core Security Mechanism: ITS and Combinatorial Infeasibility</h2>
+        <h2>2. Core Security Mechanism: ITS and Combinatorial Impossibility</h2>
 
         <p>The security of the ZOSCII Tamperproof Blockchain relies on three interlocking components:</p>
 
         <h3>A. The Genesis Anchor (ORIGINAL ROM)</h3>
         <p>The chain begins with a <span class="technical-term">Genesis Block</span> defined by a 64KB file of high-entropy random data, referred to as the ORIGINAL ROM. This file acts as the immutable, unpredictable root of trust for the entire system. All subsequent block consensus checks must ultimately trace their integrity back to this starting point.</p>
 
+        <div class="info-box">
+            <strong>Critical Requirement:</strong> The Genesis ROM must contain all 256 byte values (0-255). Loss of this file makes the entire blockchain unrecoverable.
+        </div>
+
         <h3>B. The Rolling Chain of Custody (ROLLING ROM)</h3>
         <p>Subsequent blocks do not link via a single cryptographic hash. Instead, each new block incorporates a 64KB <span class="technical-term">ROLLING ROM</span>, which is a composite sample of up to 1KB of data drawn from each previous block in its branch.</p>
 
         <p>This process creates a dynamic, explicit, and verifiable genetic code for the new block, directly linking it to the entire lineage.</p>
+
+        <div class="architecture-note">
+            <strong>Rolling ROM Construction Priority:</strong>
+            <ul>
+                <li>First: Sample from branch blocks (most recent first)</li>
+                <li>Second: Sample from trunk blocks (if branch)</li>
+                <li>Third: Fill remainder with Genesis ROM</li>
+            </ul>
+            <p>Maximum 64 blocks contribute (64KB ÷ 1KB per block).</p>
+        </div>
 
         <h3>C. The Non-Reproducible Pointer Encoding</h3>
         <p>The payload data within a block is encoded using a unique ZOSCII method that utilizes the previous block's ROLLING ROM as an address table:</p>
@@ -55,37 +74,179 @@
         <div class="formula">
             <strong>The Tamperproof Guarantee:</strong><br><br>
             If an attacker alters the data in Block N, they would need to reconstruct Block N+1 such that its 2-byte pointers still coincidentally align to the correct 1-byte values in the altered Block N's ROLLING ROM.<br><br>
-            Number of valid permutations: ~10^152900<br><br>
-            This is combinatorially infeasible, even for quantum computers.
+            Number of valid permutations: ~10^152,900<br><br>
+            This is combinatorially infeasible — not just hard, but information-theoretically impossible, even for quantum computers.
         </div>
 
         <p>The security is based on the non-reproducible randomness of the address selection during encoding.</p>
 
-        <h3>D. X1 Extended Security Mode (Optional)</h3>
-        <p>In X1 mode each block is additionally XOR'd against the entire previous block file as it exists on disk — fully encoded, complete with its own prefix and CRC fields. The current block stores a CRC32 of its own encoded data, and also commits to a CRC32 of the previous block's complete on-disk content.</p>
-        <p>This creates a dual-CRC constraint: an attacker attempting to forge block N must simultaneously satisfy two interdependent integrity checks. The second CRC target is over the previous block's on-disk form, which is itself a product of non-deterministic ZOSCII encoding. Because the attacker cannot predict or control the encoded output, satisfying the second constraint is practically infeasible independently of the first.</p>
-        <p>The 1KB rolling ROM sample size is the natural threshold for this decision. Payloads under 1KB are fully captured in the rolling ROM sample, meaning the combinatorial tamper-evidence of the pointer encoding applies to the entire payload without X1. Payloads exceeding 1KB benefit from X1 to extend strong integrity guarantees beyond the sampled boundary. The first block of a trunk has no predecessor and is stored plain even in X1 mode.</p>
+        <h3>D. X1 and X2 Extended Security Modes (Optional)</h3>
+        
+        <div class="security-note">
+            <strong>X1/X2 Mode Overview:</strong>
+            <p>Both modes add a dual-CRC binding layer on top of standard tamper-evidence. Every X1/X2 block commits to a CRC32 of its own encoded data and a CRC32 of the previous block's complete on-disk content. The difference: <code>-x1</code> provides this dual-CRC binding only, with no on-disk XOR. <code>-x2</code> provides the dual-CRC binding <em>plus</em> physically XOR's the output block against the previous block file on disk.</p>
+        </div>
 
-        <h2>3. Scalable Architecture: Wallet and Transaction Chains</h2>
+        <p>This creates a <strong>dual-CRC constraint</strong>: an attacker attempting to forge block N must simultaneously satisfy two interdependent integrity checks. The second CRC target is over the previous block's on-disk form, which is itself a product of non-deterministic ZOSCII encoding. Because the attacker cannot predict or control the encoded output, satisfying the second constraint is practically infeasible independently of the first. In X2 mode, the on-disk XOR adds a further layer: the forged block must additionally un-XOR correctly against the previous block's exact on-disk content.</p>
+
+        <div class="architecture-note">
+            <strong>When to Use X1 or X2 Mode:</strong>
+            <p>The 1KB rolling ROM sample size is the natural threshold for this decision:</p>
+            <ul>
+                <li><strong>Payloads under 1KB:</strong> Fully captured in the rolling ROM sample. The combinatorial tamper-evidence of the pointer encoding applies to the entire payload. Normal mode is sufficient.</li>
+                <li><strong>Payloads exceeding 1KB:</strong> Content beyond the first 1KB is protected only by CRC32 in normal mode. X1 or X2 closes this gap, extending strong integrity guarantees beyond the sampled boundary.</li>
+            </ul>
+            <p>Choose <code>-x1</code> for dual-CRC binding without on-disk XOR. Choose <code>-x2</code> for dual-CRC binding plus on-disk XOR for the strongest available protection.</p>
+            <p><strong>Exception:</strong> The first block of a trunk has no predecessor and is stored plain even in X1/X2 mode. Its prev-block CRC is zero.</p>
+        </div>
+
+        <h2>3. Scalable Architecture: Branch and Trunk Chains</h2>
 
         <p>The ZOSCII Tamperproof Blockchain introduces a branching architecture for enhanced scalability:</p>
 
-        <h3>A. Wallet Genesis Blocks (WGB)</h3>
-        <p>Every new wallet is created as a unique <span class="technical-term">WALLET GENESIS BLOCK</span> on the main chain. This WGB serves as the wallet's anchor point, tethering its transaction history to the main chain.</p>
-
-        <h3>B. Sideways Transaction Blocks</h3>
-        <p>Transactions originating from a WGB are recorded in a separate, dedicated Sideways Transaction Block chain.</p>
-
-        <div class="architecture-note">
-            <p><strong>Efficiency:</strong> This structure allows for near-instantaneous retrieval of a wallet's entire history by querying its dedicated side chain, eliminating the need for full chain scans common in UTXO models.</p>
-            
-            <p><strong>Integrity:</strong> Each sideways block draws its ROLLING ROM from its WGB and the current main chain block, ensuring its security is fully integrated with the network's tamperproof history.</p>
+        <div class="formula">
+            Genesis ROM (64KB random data)
+                    ↓
+                Trunk Block 1
+                    ↓
+                Trunk Block 2
+                    ├─→ Branch A Block 1
+                    │       ↓
+                    │   Branch A Block 2
+                    │
+                    ├─→ Branch B Block 1
+                    │       ↓
+                    │   Branch B Block 2
+                    ↓
+                Trunk Block 3
         </div>
 
-        <h2>4. Security, Confidentiality, and Consensus</h2>
+        <h3>A. Trunk Chain</h3>
+        <p>The main chain that serves as the authoritative timeline. All branches anchor to trunk blocks, and consensus reconciliation selects the canonical trunk during synchronization.</p>
 
-        <h3>A. Quantum Resistance</h3>
-        <p>The ZOSCII Tamperproof Blockchain is <span class="technical-term">Quantum Resistant by Design</span>. Its security is rooted in the combinatorial explosion of the pointer-encoding keyspace and Information-Theoretic Security (due to the high-entropy ROMs and non-reproducible encoding), which are immune to known quantum algorithms like Shor's.</p>
+        <h3>B. Branch Chains</h3>
+        <p>Independent chains that split from the trunk at specific points. Each branch:</p>
+        <ul>
+            <li>Has its own chain ID and block numbering starting at 1</li>
+            <li>Stores a reference to its parent trunk ID</li>
+            <li>Builds Rolling ROM from: branch history → trunk history → Genesis</li>
+            <li>Can be verified independently or together with the trunk</li>
+        </ul>
+
+        <div class="architecture-note">
+            <strong>Use Cases for Branches:</strong>
+            <ul>
+                <li><strong>Wallets:</strong> Each wallet has its own transaction chain</li>
+                <li><strong>Departments:</strong> Company trunk with departmental branches</li>
+                <li><strong>Projects:</strong> Main project trunk with sub-project branches</li>
+                <li><strong>Time Periods:</strong> Financial year trunk with quarterly branches</li>
+            </ul>
+        </div>
+
+        <h2>4. Technical Specifications</h2>
+
+        <h3>Genesis ROM</h3>
+        <ul>
+            <li><strong>Size:</strong> 64KB (65,536 bytes)</li>
+            <li><strong>Content:</strong> High-entropy random data</li>
+            <li><strong>Coverage:</strong> All 256 byte values (0-255) must be present</li>
+            <li><strong>Purpose:</strong> Immutable root of trust</li>
+        </ul>
+
+        <h3>Rolling ROM</h3>
+        <ul>
+            <li><strong>Size:</strong> 64KB (65,536 bytes)</li>
+            <li><strong>Construction:</strong> Samples from up to 64 previous blocks (1KB each)</li>
+            <li><strong>Sampling Priority:</strong> Branch blocks → Trunk blocks → Genesis ROM</li>
+            <li><strong>Purpose:</strong> Dynamic encoding table for each new block</li>
+        </ul>
+
+        <h3>Block Encoding</h3>
+        <ul>
+            <li><strong>Input:</strong> 1 byte of data</li>
+            <li><strong>Output:</strong> 2-byte pointer (address in Rolling ROM)</li>
+            <li><strong>Selection:</strong> Random from all available addresses for that byte value</li>
+            <li><strong>Decoding:</strong> Single O(1) lookup operation</li>
+        </ul>
+
+        <h3>Security Guarantee</h3>
+        <ul>
+            <li><strong>Tamper Probability:</strong> ~10^-152,900 (combinatorially infeasible)</li>
+            <li><strong>Quantum Proof:</strong> Yes (no mathematical problems to attack)</li>
+            <li><strong>Information-Theoretic:</strong> Yes (security independent of computation)</li>
+        </ul>
+
+        <h2>5. Key Advantages</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th>Traditional Blockchain</th>
+                    <th>ZOSCII Tamperproof Blockchain</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Security Basis</td>
+                    <td>Computational difficulty</td>
+                    <td>Combinatorial impossibility</td>
+                </tr>
+                <tr>
+                    <td>Quantum Threat</td>
+                    <td>Vulnerable (Shor's, Grover's)</td>
+                    <td>Immune (no math problems to solve)</td>
+                </tr>
+                <tr>
+                    <td>Block Linking</td>
+                    <td>Cryptographic hash</td>
+                    <td>Pointer-based ZOSCII encoding</td>
+                </tr>
+                <tr>
+                    <td>Verification Speed</td>
+                    <td>Hash computation</td>
+                    <td>O(1) pointer lookups</td>
+                </tr>
+                <tr>
+                    <td>Scalability</td>
+                    <td>Linear chain (full scan)</td>
+                    <td>Branching architecture (indexed)</td>
+                </tr>
+                <tr>
+                    <td>Tamper Detection</td>
+                    <td>Hash mismatch</td>
+                    <td>Pointer misalignment (10^152900 impossibility)</td>
+                </tr>
+                <tr>
+                    <td>X1/X2 Mode</td>
+                    <td>N/A</td>
+                    <td>X1: dual-CRC binding; X2: dual-CRC binding + on-disk XOR</td>
+                </tr>
+                <tr>
+                    <td>Attack Resistance</td>
+                    <td>Computationally hard</td>
+                    <td>Information-theoretically impossible</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>6. Use Cases</h2>
+
+        <ul>
+            <li><strong>Financial Records:</strong> Tamperproof audit trails for accounting</li>
+            <li><strong>Legal Documents:</strong> Verifiable timestamps and integrity proofs</li>
+            <li><strong>Supply Chain:</strong> Immutable product provenance tracking</li>
+            <li><strong>Identity Verification:</strong> Credential attestation without centralized authority</li>
+            <li><strong>Healthcare Records:</strong> Patient data with guaranteed integrity</li>
+            <li><strong>Academic Credentials:</strong> Diploma verification and transcript validation</li>
+            <li><strong>IoT Data Logging:</strong> Sensor data with tamperproof history</li>
+            <li><strong>Voting Systems:</strong> Transparent, verifiable ballot records</li>
+        </ul>
+
+        <h2>7. Security, Confidentiality, and Consensus</h2>
+
+        <h3>A. Quantum Proof</h3>
+        <p>The ZOSCII Tamperproof Blockchain is <span class="technical-term">Quantum Proof by Design</span>. Its security is rooted in the combinatorial explosion of the pointer-encoding keyspace and Information-Theoretic Security (due to the high-entropy ROMs and non-reproducible encoding), which are immune to known quantum algorithms like Shor's.</p>
 
         <h3>B. Flexible Payload Security</h3>
         <p>The integrity of the chain structure is secured separately from the confidentiality of the data payload. The data packet area of a block can contain:</p>
@@ -101,29 +262,29 @@
 
         <ul>
             <li>The new block's structure correctly utilizes the previous block's ROLLING ROM pointers.</li>
-            <li>The new block is fully traceable back to the ORIGINAL ROM and, if applicable, the WALLET GENESIS BLOCK.</li>
+            <li>The new block is fully traceable back to the ORIGINAL ROM and, if applicable, the branch's anchor block.</li>
         </ul>
 
         <h3>D. Application: The 'Proof of Something' Chain</h3>
         <p>The architecture is ideal for a <span class="technical-term">Generic 'Proof of Something' Chain</span>. A real-world document (e.g., a university degree) can contain an identifier that points directly to a block. Verification simply requires checking the block against the chain's integrity rules, providing publicly verifiable and transparent proof of a claim's integrity since the moment it was recorded.</p>
 
         <div class="conclusion">
-            <h2>5. Conclusion and Open Licensing</h2>
-            <p>The ZOSCII Tamperproof Blockchain represents a fundamental shift in DLT security, offering a mathematically robust, quantum-resistant, and highly scalable foundation. In the spirit of transparency, peer review, and rapid adoption, this specification is released under the permissive <strong>MIT License</strong>, encouraging developers and enterprises globally to study, build, and deploy implementations of this next-generation DLT.</p>
+            <h2>8. Conclusion and Open Licensing</h2>
+            <p>The ZOSCII Tamperproof Blockchain represents a fundamental shift in DLT security, offering a mathematically robust, quantum-proof, and highly scalable foundation. In the spirit of transparency, peer review, and rapid adoption, this specification is released under the permissive <strong>MIT License</strong>, encouraging developers and enterprises globally to study, build, and deploy implementations of this next-generation DLT.</p>
         </div>
     </div>
-	
-	<div class="footer">
-		<h3>License & Information</h3>
-		<p><strong>MIT License</strong> - (c) 2026 Cyborg Unicorn Pty Ltd</p>
-		<p>
-			<a href="https://zoscii.com" target="_blank" style="color: #007bff;">zoscii.com</a> |
-			<a href="https://github.com/PrimalNinja/cyborgzoscii" target="_blank" style="color: #007bff;">GitHub Repository</a> |
-		</p>
-		<p style="margin-top: 20px; font-size: 0.9em;">
-			For technical questions, security concerns, or implementation assistance,<br>
-			please visit the project website or file an issue on GitHub.
-		</p>
-	</div>
+    
+    <div class="footer">
+        <h3>License & Information</h3>
+        <p><strong>MIT License</strong> - (c) 2026 Cyborg Unicorn Pty Ltd</p>
+        <p>
+            <a href="https://zoscii.com" target="_blank" style="color: #007bff;">zoscii.com</a> |
+            <a href="https://github.com/PrimalNinja/cyborgzoscii" target="_blank" style="color: #007bff;">GitHub Repository</a>
+        </p>
+        <p style="margin-top: 20px; font-size: 0.9em;">
+            For technical questions, security concerns, or implementation assistance,<br>
+            please visit the project website or file an issue on GitHub.
+        </p>
+    </div>
 </body>
 </html>

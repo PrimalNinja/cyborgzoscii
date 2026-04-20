@@ -1,9 +1,9 @@
 @echo off
 REM ============================================================
-REM  ZTB Test Suite v20260420 (X1 Mode)
+REM  ZTB Test Suite v20260420 (X2 Mode)
 REM  (c) 2026 Cyborg Unicorn Pty Ltd - MIT License
 REM
-REM  Comprehensive test of all ZTB tools (X1 Mode):
+REM  Comprehensive test of all ZTB tools (X2 Mode):
 REM    Test 1: Genesis ROM creation
 REM    Test 2: 100-block trunk chain
 REM    Test 3: Branch creation and population
@@ -16,7 +16,7 @@ REM    Test 9: File payload test
 REM    Test 10: Tamper detection test
 REM    Test 11: Mixed mode chain
 REM    Test 12: Edge cases
-REM    Test 13: Supplied block ID (-i parameter) in X1 and normal mode
+REM    Test 13: Supplied block ID (-i parameter) in X2 and normal mode
 REM ============================================================
 
 setlocal enabledelayedexpansion
@@ -26,15 +26,15 @@ set FAIL=0
 set TOTAL=0
 
 echo ============================================================
-echo  ZTB Test Suite v20260420 (X1 Mode)
+echo  ZTB Test Suite v20260420 (X2 Mode)
 echo  ^(c^) 2026 Cyborg Unicorn Pty Ltd - MIT License
 echo ============================================================
 echo.
 
 REM --- Clean up any previous test data ---
-if exist testdata_x1 rd /s /q testdata_x1
-mkdir testdata_x1
-cd testdata_x1
+if exist testdata_x2 rd /s /q testdata_x2
+mkdir testdata_x2
+cd testdata_x2
 
 REM ============================================================
 REM  TEST 1: Genesis ROM Creation
@@ -71,7 +71,7 @@ echo --- TEST 2: 100-Block Trunk Chain ---
 
 set TRUNK_ERRORS=0
 for /L %%N in (1,1,100) do (
-    ..\ztbaddblock genesis.rom MainTrunk -t "Trunk block %%N of 100 - timestamp test data padding to ensure reasonable payload size" -x1 > nul 2>&1
+    ..\ztbaddblock genesis.rom MainTrunk -t "Trunk block %%N of 100 - timestamp test data padding to ensure reasonable payload size" -x2 > nul 2>&1
     if errorlevel 1 (
         set /a TRUNK_ERRORS+=1
     )
@@ -106,7 +106,7 @@ REM ============================================================
 echo --- TEST 3: Branch Creation and Population ---
 
 REM Create 3 branches
-..\ztbaddbranch genesis.rom MainTrunk Sales -t "Sales department branch" -x1 > nul 2>&1
+..\ztbaddbranch genesis.rom MainTrunk Sales -t "Sales department branch" -x2 > nul 2>&1
 if not errorlevel 1 (
     echo   [PASS] Branch 'Sales' created
     set /a PASS+=1
@@ -116,7 +116,7 @@ if not errorlevel 1 (
 )
 set /a TOTAL+=1
 
-..\ztbaddbranch genesis.rom MainTrunk Engineering -t "Engineering department branch" -x1 > nul 2>&1
+..\ztbaddbranch genesis.rom MainTrunk Engineering -t "Engineering department branch" -x2 > nul 2>&1
 if not errorlevel 1 (
     echo   [PASS] Branch 'Engineering' created
     set /a PASS+=1
@@ -126,7 +126,7 @@ if not errorlevel 1 (
 )
 set /a TOTAL+=1
 
-..\ztbaddbranch genesis.rom MainTrunk Legal -t "Legal department branch" -x1 > nul 2>&1
+..\ztbaddbranch genesis.rom MainTrunk Legal -t "Legal department branch" -x2 > nul 2>&1
 if not errorlevel 1 (
     echo   [PASS] Branch 'Legal' created
     set /a PASS+=1
@@ -139,7 +139,7 @@ set /a TOTAL+=1
 REM Add 20 blocks to Sales
 set SALES_ERRORS=0
 for /L %%N in (1,1,20) do (
-    ..\ztbaddblock genesis.rom Sales -t "Sales invoice %%N - customer order processing record" -x1 > nul 2>&1
+    ..\ztbaddblock genesis.rom Sales -t "Sales invoice %%N - customer order processing record" -x2 > nul 2>&1
     if errorlevel 1 set /a SALES_ERRORS+=1
 )
 
@@ -158,7 +158,7 @@ set /a TOTAL+=1
 REM Add 15 blocks to Engineering
 set ENG_ERRORS=0
 for /L %%N in (1,1,15) do (
-    ..\ztbaddblock genesis.rom Engineering -t "Engineering commit %%N - build artifact record" -x1 > nul 2>&1
+    ..\ztbaddblock genesis.rom Engineering -t "Engineering commit %%N - build artifact record" -x2 > nul 2>&1
     if errorlevel 1 set /a ENG_ERRORS+=1
 )
 
@@ -177,7 +177,7 @@ set /a TOTAL+=1
 REM Add 10 blocks to Legal
 set LEGAL_ERRORS=0
 for /L %%N in (1,1,10) do (
-    ..\ztbaddblock genesis.rom Legal -t "Legal document %%N - compliance filing record" -x1 > nul 2>&1
+    ..\ztbaddblock genesis.rom Legal -t "Legal document %%N - compliance filing record" -x2 > nul 2>&1
     if errorlevel 1 set /a LEGAL_ERRORS+=1
 )
 
@@ -385,7 +385,7 @@ echo --- TEST 7: Post-Checkpoint Chain ---
 REM Add 30 blocks using checkpoint ROM
 set POSTCP_ERRORS=0
 for /L %%N in (1,1,30) do (
-    ..\ztbaddblock checkpoint.rom MainTrunk -t "Post-checkpoint block %%N - new era data record" -x1 > nul 2>&1
+    ..\ztbaddblock checkpoint.rom MainTrunk -t "Post-checkpoint block %%N - new era data record" -x2 > nul 2>&1
     if errorlevel 1 set /a POSTCP_ERRORS+=1
 )
 
@@ -424,7 +424,7 @@ if not errorlevel 1 (
 set /a TOTAL+=1
 
 REM Create a branch on the post-checkpoint chain
-..\ztbaddbranch checkpoint.rom MainTrunk PostCPBranch -t "Post-checkpoint branch" -x1 > nul 2>&1
+..\ztbaddbranch checkpoint.rom MainTrunk PostCPBranch -t "Post-checkpoint branch" -x2 > nul 2>&1
 if not errorlevel 1 (
     echo   [PASS] Post-checkpoint branch created
     set /a PASS+=1
@@ -436,7 +436,7 @@ set /a TOTAL+=1
 
 REM Add blocks to post-checkpoint branch
 for /L %%N in (1,1,5) do (
-    ..\ztbaddblock checkpoint.rom PostCPBranch -t "Post-CP branch block %%N" -x1 > nul 2>&1
+    ..\ztbaddblock checkpoint.rom PostCPBranch -t "Post-CP branch block %%N" -x2 > nul 2>&1
 )
 
 set PCPB_COUNT=0
@@ -527,7 +527,7 @@ echo This is a test file with some content for ZTB blockchain storage. > testfil
 echo Line 2: More data to ensure the payload is meaningful. >> testfile.txt
 echo Line 3: ZOSCII Tamperproof Blockchain test payload. >> testfile.txt
 
-..\ztbaddblock checkpoint.rom MainTrunk -f testfile.txt -x1 > nul 2>&1
+..\ztbaddblock checkpoint.rom MainTrunk -f testfile.txt -x2 > nul 2>&1
 if not errorlevel 1 (
     echo   [PASS] File payload block created
     set /a PASS+=1
@@ -559,9 +559,9 @@ mkdir tampertest
 pushd tampertest
 copy ..\genesis.rom . > nul 2>&1
 
-..\..\ztbaddblock genesis.rom TamperChain -t "Block one - original data" -x1 > nul 2>&1
-..\..\ztbaddblock genesis.rom TamperChain -t "Block two - original data" -x1 > nul 2>&1
-..\..\ztbaddblock genesis.rom TamperChain -t "Block three - original data" -x1 > nul 2>&1
+..\..\ztbaddblock genesis.rom TamperChain -t "Block one - original data" -x2 > nul 2>&1
+..\..\ztbaddblock genesis.rom TamperChain -t "Block two - original data" -x2 > nul 2>&1
+..\..\ztbaddblock genesis.rom TamperChain -t "Block three - original data" -x2 > nul 2>&1
 
 REM Verify before tampering
 ..\..\ztbverify genesis.rom TamperChain -t > nul 2>&1
@@ -599,7 +599,7 @@ REM ============================================================
 echo --- TEST 11: Edge Cases ---
 
 REM Try to create a branch that already exists (should fail)
-..\ztbaddbranch checkpoint.rom MainTrunk PostCPBranch -t "Duplicate branch" -x1 > nul 2>&1
+..\ztbaddbranch checkpoint.rom MainTrunk PostCPBranch -t "Duplicate branch" -x2 > nul 2>&1
 if errorlevel 1 (
     echo   [PASS] Correctly rejected duplicate branch name
     set /a PASS+=1
@@ -610,7 +610,7 @@ if errorlevel 1 (
 set /a TOTAL+=1
 
 REM Try to create a branch from non-existent trunk (should fail)
-..\ztbaddbranch checkpoint.rom NonExistent NewBranch -t "Bad branch" -x1 > nul 2>&1
+..\ztbaddbranch checkpoint.rom NonExistent NewBranch -t "Bad branch" -x2 > nul 2>&1
 if errorlevel 1 (
     echo   [PASS] Correctly rejected non-existent trunk
     set /a PASS+=1
@@ -633,7 +633,7 @@ set /a TOTAL+=1
 echo.
 
 REM ============================================================
-REM  TEST 13: Supplied Block ID (-i parameter) — X1 and normal mode
+REM  TEST 13: Supplied Block ID (-i parameter) — X2 and normal mode
 REM ============================================================
 echo --- TEST 13: Supplied Block ID ^(-i parameter^) ---
 
@@ -666,23 +666,23 @@ if exist "IDChain_0001_%TEST_GUID_1%.ztb" (
 )
 set /a TOTAL+=1
 
-REM Supply a valid block ID in X1 mode (block 2 — has a previous block to XOR with)
-..\..\ztbaddblock genesis.rom IDChain -t "X1 block with supplied ID" -x1 -i %TEST_GUID_2% > nul 2>&1
+REM Supply a valid block ID in X2 mode (block 2 — has a previous block to XOR with)
+..\..\ztbaddblock genesis.rom IDChain -t "X2 block with supplied ID" -x2 -i %TEST_GUID_2% > nul 2>&1
 if not errorlevel 1 (
-    echo   [PASS] X1 mode block created with supplied ID
+    echo   [PASS] X2 mode block created with supplied ID
     set /a PASS+=1
 ) else (
-    echo   [FAIL] X1 mode block creation with supplied ID failed
+    echo   [FAIL] X2 mode block creation with supplied ID failed
     set /a FAIL+=1
 )
 set /a TOTAL+=1
 
-REM Confirm X1 block file named with supplied GUID
+REM Confirm X2 block file named with supplied GUID
 if exist "IDChain_0002_%TEST_GUID_2%.ztb" (
-    echo   [PASS] X1 mode block filename contains supplied GUID
+    echo   [PASS] X2 mode block filename contains supplied GUID
     set /a PASS+=1
 ) else (
-    echo   [FAIL] X1 mode block filename does not contain supplied GUID
+    echo   [FAIL] X2 mode block filename does not contain supplied GUID
     set /a FAIL+=1
 )
 set /a TOTAL+=1
@@ -710,20 +710,20 @@ set /a TOTAL+=1
 
 ..\..\ztbfetch genesis.rom IDChain 2 > fetchout2.txt 2>&1
 if not errorlevel 1 (
-    echo   [PASS] X1 block with supplied ID fetched successfully
+    echo   [PASS] X2 block with supplied ID fetched successfully
     set /a PASS+=1
 ) else (
-    echo   [FAIL] Fetch of X1 block with supplied ID failed
+    echo   [FAIL] Fetch of X2 block with supplied ID failed
     set /a FAIL+=1
 )
 set /a TOTAL+=1
 
 findstr /i "%TEST_GUID_2%" fetchout2.txt > nul 2>&1
 if not errorlevel 1 (
-    echo   [PASS] Fetched header contains correct supplied ID for X1 block
+    echo   [PASS] Fetched header contains correct supplied ID for X2 block
     set /a PASS+=1
 ) else (
-    echo   [FAIL] Fetched header does not contain supplied ID for X1 block
+    echo   [FAIL] Fetched header does not contain supplied ID for X2 block
     set /a FAIL+=1
 )
 set /a TOTAL+=1
@@ -739,40 +739,40 @@ if not errorlevel 1 (
 )
 set /a TOTAL+=1
 
-REM Supply a valid block ID when creating an X1 branch
-..\..\ztbaddbranch genesis.rom IDChain IDBranch -t "X1 branch with supplied ID" -x1 -i %TEST_GUID_1% > nul 2>&1
+REM Supply a valid block ID when creating an X2 branch
+..\..\ztbaddbranch genesis.rom IDChain IDBranch -t "X2 branch with supplied ID" -x2 -i %TEST_GUID_1% > nul 2>&1
 if not errorlevel 1 (
-    echo   [PASS] X1 branch created with supplied ID
+    echo   [PASS] X2 branch created with supplied ID
     set /a PASS+=1
 ) else (
-    echo   [FAIL] X1 branch creation with supplied ID failed
+    echo   [FAIL] X2 branch creation with supplied ID failed
     set /a FAIL+=1
 )
 set /a TOTAL+=1
 
 REM Confirm branch file named with supplied GUID
 if exist "IDBranch_0001_%TEST_GUID_1%.ztb" (
-    echo   [PASS] X1 branch filename contains supplied GUID
+    echo   [PASS] X2 branch filename contains supplied GUID
     set /a PASS+=1
 ) else (
-    echo   [FAIL] X1 branch filename does not contain supplied GUID
+    echo   [FAIL] X2 branch filename does not contain supplied GUID
     set /a FAIL+=1
 )
 set /a TOTAL+=1
 
-REM Verify X1 branch with supplied ID
+REM Verify X2 branch with supplied ID
 ..\..\ztbverify genesis.rom IDChain -b IDBranch > nul 2>&1
 if not errorlevel 1 (
-    echo   [PASS] X1 branch with supplied ID verifies correctly
+    echo   [PASS] X2 branch with supplied ID verifies correctly
     set /a PASS+=1
 ) else (
-    echo   [FAIL] X1 branch with supplied ID failed verification
+    echo   [FAIL] X2 branch with supplied ID failed verification
     set /a FAIL+=1
 )
 set /a TOTAL+=1
 
 REM Reject an invalid GUID (should fail)
-REM ..\..\ztbaddblock genesis.rom IDChain -t "Bad ID" -x1 -i %TEST_GUID_BAD% > nul 2>&1
+REM ..\..\ztbaddblock genesis.rom IDChain -t "Bad ID" -x2 -i %TEST_GUID_BAD% > nul 2>&1
 REM if errorlevel 1 (
 REM     echo   [PASS] Correctly rejected invalid block ID
 REM     set /a PASS+=1
@@ -783,7 +783,7 @@ REM )
 REM set /a TOTAL+=1
 
 REM Reject -i with no argument (should fail)
-..\..\ztbaddblock genesis.rom IDChain -t "Missing ID" -x1 -i > nul 2>&1
+..\..\ztbaddblock genesis.rom IDChain -t "Missing ID" -x2 -i > nul 2>&1
 if errorlevel 1 (
     echo   [PASS] Correctly rejected -i with no argument
     set /a PASS+=1
@@ -819,6 +819,6 @@ echo ============================================================
 
 REM Clean up
 cd ..
-REM rd /s /q testdata_x1
+REM rd /s /q testdata_x2
 
 endlocal
