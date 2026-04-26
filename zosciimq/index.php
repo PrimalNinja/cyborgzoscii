@@ -143,28 +143,13 @@ function handleFetch($strQueueName_a, $strAfterName_a, $intOffset_a, $intLength_
 			sort($arrAllFiles);
 			$strNextMessagePath = null;
 
-			$blnFoundAfter = false;
-			// Check if client is requesting from the start (empty 'after')
-			if (empty($strAfterName_a)) 
-			{
-				$blnFoundAfter = true;
-			}
-
-			// Find the next message after the 'after' pointer
-			// Loop variable $strFullPath is correctly typed (string full path)
 			foreach ($arrAllFiles as $strFullPath) 
 			{
 				$strName = basename($strFullPath);
-				if ($blnFoundAfter) 
+				if ($strName > $strAfterName_a) 
 				{
-					// This is the first file after the 'after' pointer
 					$strNextMessagePath = $strFullPath;
 					break;
-				}
-				if ($strName >= $strAfterName_a) 
-				{
-					// Found the pointer; the next iteration's file will be the message to return.
-					$blnFoundAfter = true;
 				}
 			}
 
