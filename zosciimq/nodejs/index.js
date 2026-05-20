@@ -577,7 +577,8 @@ class Handlers {
         Utils.sendJSONResponse(res, '', '', '', arrResult);
     }
     
-    static async handleStore(res, strNonce, intRetentionDays, binMessage) {
+    static async handleStore(res, strNonce, intRetentionDays, binMessage, blnUnidentified) {
+        blnUnidentified = blnUnidentified || false;
         // Format RRRR, e.g., 3 becomes 0003
         const strRetentionDays = intRetentionDays.toString().padStart(4, '0');
         
@@ -606,6 +607,13 @@ class Handlers {
             const strDir2 = strTempName.substring(1, 2);
             const strDir3 = strTempName.substring(2, 3);
             const strStorePath = CONFIG.STORE_ROOT + strDir1 + path.sep + strDir2 + path.sep + strDir3 + path.sep;
+            
+            if (blnUnidentified)
+            {
+                var strExt = path.extname(strName);
+                var strBase = path.basename(strName, strExt);
+                strName = strBase + '-u' + strExt;
+            }
             
             strFullPath = strStorePath + strName;
             
@@ -662,6 +670,7 @@ async function handleRequest(req, res) {
     let strOffset = '';
     let strQueueName = '';
     let strRetentionDays = '';
+    let strUnidentified = '';
     
     if (CONFIG.ALLOW_GET) {
         if (query.action) strAction = query.action;
@@ -694,6 +703,7 @@ async function handleRequest(req, res) {
         if (!strOffset && postData.offset) strOffset = postData.offset;
         if (!strQueueName && postData.q) strQueueName = postData.q;
         if (!strRetentionDays && postData.r) strRetentionDays = postData.r;
+        if (!strUnidentified && postData.u) strUnidentified = postData.u;
     }
     
     let arrNames = [];
@@ -760,7 +770,8 @@ async function handleRequest(req, res) {
             
         case 'store':
             if (CONFIG.ALLOW_STORE) {
-                await Handlers.handleStore(res, strNonce, intRetentionDays, binMessage);
+                var blnUnidentified = (strUnidentified === '1');
+                await Handlers.handleStore(res, strNonce, intRetentionDays, binMessage, blnUnidentified);
             }
             break;
             

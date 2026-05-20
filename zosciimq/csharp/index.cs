@@ -696,7 +696,7 @@ namespace CyborgUnicorn.ZosciiMQ
             Utils.SendJSONResponse(response, "", "", "", arrResult);
         }
         
-        public static void HandleStore(HttpListenerResponse response, string strNonce, int intRetentionDays, byte[] binMessage)
+        public static void HandleStore(HttpListenerResponse response, string strNonce, int intRetentionDays, byte[] binMessage, bool blnUnidentified = false)
         {
             // Format RRRR, e.g., 3 becomes 0003
             string strRetentionDays = intRetentionDays.ToString("D4");
@@ -723,6 +723,13 @@ namespace CyborgUnicorn.ZosciiMQ
                 string strDir3 = strTempName.Substring(2, 1);
                 string strStorePath = Constants.STORE_ROOT + strDir1 + Path.DirectorySeparatorChar + 
                                     strDir2 + Path.DirectorySeparatorChar + strDir3 + Path.DirectorySeparatorChar;
+                
+                if (blnUnidentified)
+                {
+                    string strExt = Path.GetExtension(strName);
+                    string strBase = Path.GetFileNameWithoutExtension(strName);
+                    strName = strBase + "-u" + strExt;
+                }
                 
                 strFullPath = strStorePath + strName;
                 
