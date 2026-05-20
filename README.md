@@ -18,6 +18,7 @@ CyborgZOSCII is an alternative to ASCII/PETSCII that uses direct ROM addressing 
 ## Developer Resources
 
 - CyborgUnicorn.ZOSCII nuget source
+(also visit https://www.nuget.org/profiles/cyborgunicornau)
 
 ## Browser Applications
 
