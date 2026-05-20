@@ -15,6 +15,10 @@ An innovative character encoding system that eliminates lookup table overhead wh
 
 CyborgZOSCII is an alternative to ASCII/PETSCII that uses direct ROM addressing instead of traditional character-to-value mapping. This approach provides significant advantages for resource-constrained systems while offering unique security properties.
 
+## Developer Resources
+
+- CyborgUnicorn.ZOSCII nuget source
+
 ## Browser Applications
 
 - ZOSCII MQ Web Radio, federated radio station / music distribution platform

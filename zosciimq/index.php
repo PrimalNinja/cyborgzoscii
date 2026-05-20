@@ -409,7 +409,7 @@ function handleScan()
 	sendJSONResponse("", "", "", $arrResult);
 }
 
-function handleStore($strNonce_a, $intRetentionDays_a, $binMessage_a)
+function handleStore($strNonce_a, $intRetentionDays_a, $binMessage_a, $blnUnidentified_a = false)
 {
     // Format RRRR, e.g., 3 becomes 0003
     $strRetentionDays = sprintf('%04d', $intRetentionDays_a);
@@ -434,7 +434,14 @@ function handleStore($strNonce_a, $intRetentionDays_a, $binMessage_a)
 		$strDir2 = substr($strTempName, 1, 1);
 		$strDir3 = substr($strTempName, 2, 1);
 		$strStorePath = STORE_ROOT . $strDir1 . '/' . $strDir2 . '/' . $strDir3 . '/';
-		
+
+		if ($blnUnidentified_a)
+		{
+			$strExt = pathinfo($strName, PATHINFO_EXTENSION);
+			$strBase = substr($strName, 0, strlen($strName) - strlen($strExt) - 1);
+			$strName = $strBase . '-u.' . $strExt;
+		}
+
 		$strFullPath = $strStorePath . $strName;
 		
 		if (!is_dir($strStorePath)) 
@@ -481,6 +488,7 @@ $strNonce = '';
 $strOffset = '';
 $strQueueName = '';
 $strRetentionDays = '';
+$strUnidentified = '';
 
 if (ALLOW_GET === 'TRUE')
 {
@@ -518,6 +526,7 @@ if (strlen($strNonce) === 0)		{ if (isset($_POST['n'])) 		{ $strNonce = $_POST['
 if (strlen($strOffset) === 0)		{ if (isset($_POST['offset']))  { $strOffset = $_POST['offset']; } }
 if (strlen($strQueueName) === 0)	{ if (isset($_POST['q'])) 		{ $strQueueName = $_POST['q']; } }
 if (strlen($strRetentionDays) === 0){ if (isset($_POST['r'])) 		{ $strRetentionDays = $_POST['r']; } }
+if (strlen($strUnidentified) === 0)	{ if (isset($_POST['u'])) 		{ $strUnidentified = $_POST['u']; } }
 
 $arrNames = [];
 if (strlen($strNames) > 0)
@@ -588,7 +597,8 @@ switch ($strAction)
 	case 'store':
 		if (ALLOW_STORE === 'TRUE')
 		{
-			handleStore($strNonce, $intRetentionDays, $binMessage);
+			$blnUnidentified = ($strUnidentified === '1');
+		handleStore($strNonce, $intRetentionDays, $binMessage, $blnUnidentified);
 		}
 		break;
 		
