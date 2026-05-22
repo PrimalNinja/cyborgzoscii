@@ -79,6 +79,11 @@ Identify returns string[] (identified names) or null on failure
 var mq = new MQClient();              // default 60s timeout
 var mq = new MQClient(120);           // custom timeout
 
+// User-Agent control (default: random GUID per request)
+mq.SetUserAgentRandom();              // fresh GUID on every request (default)
+mq.SetUserAgentNone();                // omit User-Agent header entirely
+mq.SetUserAgent("MyApp/1.0");        // fixed string until changed
+
 string strQueueServer = "https://your-server/index.php";
 
 // Queue
