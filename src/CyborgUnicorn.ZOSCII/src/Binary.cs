@@ -2,7 +2,7 @@
 // BVerify, BSplit, BJoin
 // Format-agnostic binary comparison and PENTAGONE 3-of-5 redundancy
 // Compatible with uverify.c / usplit.c / ujoin.c
-// (c) 2026 Cyborg Unicorn Pty Ltd - UNINTELLIGENCE License
+// (c) 2026 Cyborg Unicorn Pty Ltd - MIT License
 
 using System;
 using System.Collections.Generic;

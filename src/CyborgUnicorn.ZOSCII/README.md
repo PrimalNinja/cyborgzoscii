@@ -111,6 +111,33 @@ MQPublishResult rep = mq.Replicate(remoteURL, remoteQueue, strQueueServer, "",
 
 ---
 
+## ZRollingHash
+
+BRAINLESS rolling hash — 4-pass XOR chain, 32-bit (4-byte) output.
+Two modes: reverse (default, requires complete payload) and forward (streamable).
+Forward and reverse produce different hashes for the same input.
+No ROM required. Works on bytes or files.
+
+```csharp
+// Hash bytes — reverse (default, requires full payload)
+byte[] arrHash = ZRollingHash.Bytes(arrData);
+
+// Hash bytes — forward (streamable)
+byte[] arrHash = ZRollingHash.Bytes(arrData, true);
+
+// Hash a file
+byte[] arrHash = ZRollingHash.File("data.bin");
+byte[] arrHash = ZRollingHash.File("data.bin", true);  // forward
+
+// Verify
+bool blnOk = ZRollingHash.Verify(arrData, arrHash);
+bool blnOk = ZRollingHash.Verify(arrData, arrHash, true);  // forward
+bool blnOk = ZRollingHash.VerifyFile("data.bin", arrHash);
+bool blnOk = ZRollingHash.VerifyFile("data.bin", arrHash, true);  // forward
+```
+
+---
+
 ## Source
 
 Extracts the embedded source code archive for this package.
