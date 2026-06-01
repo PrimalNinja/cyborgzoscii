@@ -24,6 +24,8 @@ byte[] encoded   = ZEncode.Bytes(data, rom);
 byte[] decoded   = ZDecode.Bytes(encoded, rom);
 byte[] chain     = ZEncode.Chain(data, new[] { rom1, rom2, rom3 });
 byte[] unchained = ZDecode.Chain(chain, new[] { rom1, rom2, rom3 });
+byte[] tango     = ZEncode.Chain(data, new[] { rom1, rom2, rom3 }, true);   // Tango: round-robin ROMs per byte, 2x expansion, up to 3x entropy
+byte[] untango   = ZDecode.Chain(tango, new[] { rom1, rom2, rom3 }, true);  // must match encode
 bool   ok        = ZEncode.ChainFile("input.bin", "output.zoc", new[] { rom1, rom2, rom3 });
 bool   ok        = ZDecode.ChainFile("output.zoc", "recovered.bin", new[] { rom1, rom2, rom3 });
 ZEncode.File("input.bin", "output.zoc", rom);
