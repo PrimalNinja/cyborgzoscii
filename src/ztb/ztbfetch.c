@@ -257,7 +257,7 @@ int main(int argc, char *argv[])
                     uint8_t *byCrcDecoded = zoscii_decode_block(byRollingRom, byFileData + 2,
                                                                  CRC_PREFIX_ENCODED_SIZE,
                                                                  &intCrcDecodedLen);
-                    if (!byCrcDecoded || intCrcDecodedLen < CRC32_SIZE * 2)
+                    if (!byCrcDecoded || intCrcDecodedLen < BLOCK_TYPE_SIZE + BLOCK_VERSION_SIZE + HASH_TYPE_SIZE + HASH_SIZE * 2)
                     {
                         fprintf(stderr, "Error: Failed to decode CRC fields\n");
                         intResult = 1;
@@ -265,10 +265,11 @@ int main(int argc, char *argv[])
                     }
                     else
                     {
-                        intStoredCrc     = byCrcDecoded[0] | (byCrcDecoded[1] << 8) |
-                                           (byCrcDecoded[2] << 16) | (byCrcDecoded[3] << 24);
-                        intStoredPrevCrc = byCrcDecoded[4] | (byCrcDecoded[5] << 8) |
-                                           (byCrcDecoded[6] << 16) | (byCrcDecoded[7] << 24);
+                        /* [0]=block_type [1]=hash_type [2-5]=hash [6-9]=prevHash */
+                        intStoredCrc     = byCrcDecoded[3] | (byCrcDecoded[4] << 8) |
+                                           (byCrcDecoded[5] << 16) | (byCrcDecoded[6] << 24);
+                        intStoredPrevCrc = byCrcDecoded[7] | (byCrcDecoded[8] << 8) |
+                                           (byCrcDecoded[9] << 16) | (byCrcDecoded[10] << 24);
                         free(byCrcDecoded);
 
                         if ((byMode == MODE_X1 || byMode == MODE_X2) && intStoredPrevCrc != 0 && strPrevBlockFilename)

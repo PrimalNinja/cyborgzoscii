@@ -36,21 +36,45 @@
 #define CRC32_ENCODED_SIZE 8            // 4 bytes * 2 (ZOSCII encoded)
 #define MODE_SIZE 1                     // 1 byte mode value
 #define MODE_ENCODED_SIZE 2             // 1 byte * 2 (ZOSCII encoded)
-#define CRC_PREFIX_ENCODED_SIZE 16      // Two CRC32 values, ZOSCII encoded
-#define BLOCK_PREFIX_ENCODED_SIZE 18    // Mode byte + two CRC32 values, ZOSCII encoded
+#define BLOCK_TYPE_SIZE 1               // 1 byte block type value
+#define BLOCK_VERSION_SIZE 1            // 1 byte block version value (currently always 1)
+#define BLOCK_VERSION_DEFAULT 1         // current block version
+#define HASH_TYPE_SIZE 1                // 1 byte hash type value
+#define HASH_SIZE 4                     // 4 bytes hash value
+#define CRC_PREFIX_ENCODED_SIZE 22      // block_type(1)+block_version(1)+hash_type(1)+hash(4)+prevHash(4) = 11 raw * 2
+#define BLOCK_PREFIX_ENCODED_SIZE 24    // mode(1)+block_type(1)+block_version(1)+hash_type(1)+hash(4)+prevHash(4) = 12 raw * 2
 #define MODE_NORMAL 0
 #define MODE_X1 1                       // prev-block CRC binding, no XOR
 #define MODE_X2 2                       // prev-block CRC binding + on-disk XOR
 
+// --- Block types ---
+#define BLOCK_TYPE_NORMAL     0         // Standard data block
+#define BLOCK_TYPE_CHECKPOINT 1         // Checkpoint marker, optional label payload
+#define BLOCK_TYPE_TRUNCATION 2         // Truncation marker, 64KB rolling ROM payload
+#define BLOCK_TYPE_FINALISE   3         // Soft finalise, no further blocks allowed
+#define BLOCK_TYPE_BRIDGE     4         // Reserved: cross-chain bridge
+
+// --- Hash types (C implementation supports CRC32 only) ---
+#define HASH_TYPE_CRC32_FULL  0         // CRC32 over full encoded block (default)
+#define HASH_TYPE_CRC32_1KB   1         // CRC32 over first 1KB of encoded block
+#define HASH_TYPE_ROLL_FULL   2         // ZRollingHash over full block (C#/future)
+#define HASH_TYPE_ROLL_1KB    3         // ZRollingHash over first 1KB (C#/future)
+
 // --- Prefix layout (raw, before ZOSCII encoding) ---
-// Byte  0:    mode flag (MODE_NORMAL, MODE_X1, or MODE_X2)  <-- FIRST, always readable unXOR'd
-// Bytes 1-4:  CRC32 of current encoded block (all modes)
-// Bytes 5-8:  CRC32 of previous block's on-disk data (X1/X2 mode; zero for normal or block 1)
+// Byte  0:     mode flag (MODE_NORMAL, MODE_X1, or MODE_X2) -- FIRST, always readable unXOR'd
+// Byte  1:     block_type (BLOCK_TYPE_NORMAL etc.)
+// Byte  2:     block_version (BLOCK_VERSION_DEFAULT=1; reserved for future format changes)
+// Byte  3:     hash_type  (HASH_TYPE_CRC32_FULL etc.; C only writes 0)
+// Bytes 4-7:   hash of current encoded block
+// Bytes 8-11:  hash of previous block's on-disk data (X1/X2; zero for normal or block 1)
 //
 // On disk (ZOSCII encoded, 2 bytes per raw byte):
-// Bytes  0-1:  mode  (never XOR'd in X2 mode — always readable without context)
-// Bytes  2-9:  CRC32 of current block
-// Bytes 10-17: CRC32 of previous block
+// Bytes  0-1:  mode          (never XOR'd in X2 mode)
+// Bytes  2-3:  block_type
+// Bytes  4-5:  block_version
+// Bytes  6-7:  hash_type
+// Bytes  8-15: hash of current block
+// Bytes 16-23: hash of previous block
 
 // --- Block Header Structure ---
 typedef struct {

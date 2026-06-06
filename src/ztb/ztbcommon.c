@@ -596,12 +596,11 @@ static int try_decode_block1(const uint8_t *byRom_a, const char *strFilename_a,
                     uint8_t *byPrefixDecoded = zoscii_decode_block(byRom_a, byFileData + 2,
                                                                     CRC_PREFIX_ENCODED_SIZE,
                                                                     &intPrefixDecodedLen);
-                    if (byPrefixDecoded && intPrefixDecodedLen >= CRC32_SIZE * 2)
+                    if (byPrefixDecoded && intPrefixDecodedLen >= BLOCK_TYPE_SIZE + BLOCK_VERSION_SIZE + HASH_TYPE_SIZE + HASH_SIZE * 2)
                     {
-                        // byPrefixDecoded[0..3] = CRC32 of current encoded block
-                        // byPrefixDecoded[4..7] = CRC32 of previous block (zero for block 1)
-                        uint32_t intStoredCrc = byPrefixDecoded[0] | (byPrefixDecoded[1] << 8) |
-                                                (byPrefixDecoded[2] << 16) | (byPrefixDecoded[3] << 24);
+                        // [0]=block_type [1]=block_version [2]=hash_type [3-6]=hash [7-10]=prevHash
+                        uint32_t intStoredCrc = byPrefixDecoded[3] | (byPrefixDecoded[4] << 8) |
+                                                (byPrefixDecoded[5] << 16) | (byPrefixDecoded[6] << 24);
                         free(byPrefixDecoded);
 
                         // Verify CRC32 over the encoded block data (after prefix)

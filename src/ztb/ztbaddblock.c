@@ -357,16 +357,20 @@ int main(int argc, char *argv[])
                     // --- 9. Assemble and encode prefix with plain rolling ROM ---
                     // Mode byte is first (bytes 0-1 encoded) so readers can always
                     // identify the mode without any prior context.
-                    uint8_t arrPrefixRaw[MODE_SIZE + CRC32_SIZE * 2];
-                    arrPrefixRaw[0] = byMode;
-                    arrPrefixRaw[1] = intCrc & 0xFF;
-                    arrPrefixRaw[2] = (intCrc >> 8) & 0xFF;
-                    arrPrefixRaw[3] = (intCrc >> 16) & 0xFF;
-                    arrPrefixRaw[4] = (intCrc >> 24) & 0xFF;
-                    arrPrefixRaw[5] = intPrevCrc & 0xFF;
-                    arrPrefixRaw[6] = (intPrevCrc >> 8) & 0xFF;
-                    arrPrefixRaw[7] = (intPrevCrc >> 16) & 0xFF;
-                    arrPrefixRaw[8] = (intPrevCrc >> 24) & 0xFF;
+                    /* mode(1)+block_type(1)+block_version(1)+hash_type(1)+hash(4)+prevHash(4) = 12 bytes */
+                    uint8_t arrPrefixRaw[MODE_SIZE + BLOCK_TYPE_SIZE + BLOCK_VERSION_SIZE + HASH_TYPE_SIZE + HASH_SIZE * 2];
+                    arrPrefixRaw[0]  = byMode;
+                    arrPrefixRaw[1]  = BLOCK_TYPE_NORMAL;
+                    arrPrefixRaw[2]  = BLOCK_VERSION_DEFAULT;
+                    arrPrefixRaw[3]  = HASH_TYPE_CRC32_FULL;
+                    arrPrefixRaw[4]  = intCrc & 0xFF;
+                    arrPrefixRaw[5]  = (intCrc >> 8) & 0xFF;
+                    arrPrefixRaw[6]  = (intCrc >> 16) & 0xFF;
+                    arrPrefixRaw[7]  = (intCrc >> 24) & 0xFF;
+                    arrPrefixRaw[8]  = intPrevCrc & 0xFF;
+                    arrPrefixRaw[9]  = (intPrevCrc >> 8) & 0xFF;
+                    arrPrefixRaw[10] = (intPrevCrc >> 16) & 0xFF;
+                    arrPrefixRaw[11] = (intPrevCrc >> 24) & 0xFF;
 
                     size_t intPrefixEncodedLen;
                     byPrefixEncoded = zoscii_encode_block(byRollingRom, arrPrefixRaw,

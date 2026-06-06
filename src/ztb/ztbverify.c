@@ -113,12 +113,13 @@ int verify_single_block(const char *strGenesisRomFile_a,
                     uint8_t *byCrcDecoded = zoscii_decode_block(byRollingRom, byFileData + 2,
                                                                  CRC_PREFIX_ENCODED_SIZE,
                                                                  &intCrcDecodedLen);
-                    if (byCrcDecoded && intCrcDecodedLen >= CRC32_SIZE * 2)
+                    if (byCrcDecoded && intCrcDecodedLen >= BLOCK_TYPE_SIZE + BLOCK_VERSION_SIZE + HASH_TYPE_SIZE + HASH_SIZE * 2)
                     {
-                        uint32_t intStoredCrc     = byCrcDecoded[0] | (byCrcDecoded[1] << 8) |
-                                                    (byCrcDecoded[2] << 16) | (byCrcDecoded[3] << 24);
-                        uint32_t intStoredPrevCrc = byCrcDecoded[4] | (byCrcDecoded[5] << 8) |
-                                                    (byCrcDecoded[6] << 16) | (byCrcDecoded[7] << 24);
+                        /* [0]=block_type [1]=block_version [2]=hash_type [3-6]=hash [7-10]=prevHash */
+                        uint32_t intStoredCrc     = byCrcDecoded[3] | (byCrcDecoded[4] << 8) |
+                                                    (byCrcDecoded[5] << 16) | (byCrcDecoded[6] << 24);
+                        uint32_t intStoredPrevCrc = byCrcDecoded[7] | (byCrcDecoded[8] << 8) |
+                                                    (byCrcDecoded[9] << 16) | (byCrcDecoded[10] << 24);
                         free(byCrcDecoded);
 
                         int intPrevCrcOk = 1;
