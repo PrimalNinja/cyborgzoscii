@@ -103,7 +103,7 @@
             </tbody>
         </table>
 
-        <p>The ZRollingHash variants (2 and 3) are implemented in the C# reference library. The C command-line tools currently recognize these values but compute them as a stub (returning zero); only CRC32Full and CRC321KB are functionally implemented in C at this time.</p>
+        <p>The ZRollingHash variants (2 and 3) are implemented in the C# reference library. The C hashing primitive (<code>hash_bytes</code>) recognizes all four values and correctly computes <code>CRC321KB</code> if called with it, but the C command-line tools never call it with anything other than <code>CRC32Full</code> — there is currently no flag on any C tool to select a different hash type, and <code>RollingFull</code>/<code>Rolling1KB</code> compute as a stub (returning zero) since ZRollingHash itself is not ported to C. <code>CRC32Full</code> is therefore the only hash type the C tooling actually produces, and is used for cross-compatibility with it; the C# reference library defaults to <code>RollingFull</code> when no hash type is specified.</p>
 
         <div class="architecture-note">
             <strong>1KB Windows — Related but Distinct:</strong>
@@ -112,12 +112,44 @@
                 <li><strong>Payload tampering, any hash type:</strong> caught by the current-block hash directly (in full under the Full variants, within the first 1KB under the windowed variants), and reinforced by the rolling ROM's own combinatorial tamper-evidence for whatever portion it samples.</li>
                 <li><strong>Header/metadata tampering (prev_block_id, trunk_id, is_branch, block_id):</strong> not covered by the current-block hash under any hash type, since that hash is payload-only. Protected instead by the rolling ROM: the header is always within the first 1KB of a block's on-disk bytes, so it is always sampled into dependent blocks' rolling ROMs, making it subject to the same combinatorial guarantee as payload content within that window.</li>
             </ul>
-            <p><code>Rolling1KB</code> is particularly well-aligned architecturally: it applies the same ZRollingHash algorithm used in the ZOSCII encoding itself, keeping the security model internally consistent. <code>CRC32Full</code> is the default and the algorithm implemented across both the C# and C tooling.</p>
+            <p><code>Rolling1KB</code> is particularly well-aligned architecturally: it applies the same ZRollingHash algorithm used in the ZOSCII encoding itself, keeping the security model internally consistent.</p>
         </div>
+
+        <h3>F. Hashing Is Detection, Not Security</h3>
+
+        <p>It is worth being precise about what the hash fields do and do not provide. <strong>The security guarantee — the ~10^152900 combinatorial impossibility described in Section C — comes entirely from ZOSCII's pointer-based encoding against the rolling ROM, and does not depend on hashing at all.</strong> A correctly-chosen tampered byte cannot be predicted to decode to any particular value without already knowing the rolling ROM it was encoded against; that property holds with the hash fields removed from the format entirely.</p>
+
+        <p>What the hash fields add is <em>cheap, early detection</em>. Without them, a tamper outside the region any rolling ROM actually samples (beyond the first 1KB of a block's on-disk bytes) would decode silently to altered content, undetected, unless and until some other check happened to notice. The hash gives an immediate, inexpensive way to catch tampering within its window — a single comparison, rather than an attempted decode — at the cost of only protecting the bytes it actually examines.</p>
+
+        <div class="security-note">
+            <strong>Why the Stored Hash Cannot Simply Be Rewritten:</strong>
+            <p>The hash value itself lives inside the first 1KB of a block's on-disk bytes — the same region the rolling ROM samples into every dependent block. This makes the stored hash <em>readable but not freely rewritable</em>: an attacker cannot quietly overwrite the hash field to match a tampered payload, because any edit within that region is itself subject to the combinatorial tamper-evidence of Section C. The attacker's only avenue is the reverse — leave the stored hash untouched, and search for a tampered payload, confined to the region the hash does <em>not</em> visibly protect, that happens to still produce the same fixed hash value.</p>
+        </div>
+
+        <p>Because every block also commits to a hash of the block before it (<strong>Section D</strong>), a tamper to block N is checked against two independent, fixed targets rather than one: N's own current-block hash (if the tamper falls within N's payload-hash window) and N+1's prevHash (if the tamper falls within the on-disk window N+1 committed to). A successful forgery of N must satisfy both targets that apply to it, computed over two different, only partially overlapping windows of N's bytes.</p>
+
+        <h3>G. Why ZRollingHash, Not CRC32, for This Role</h3>
+
+        <p>CRC32 is built on a fixed, public, universal structure: a single polynomial constant (<code>0xEDB88320</code>) applied identically to every input, for every block, in every chain, forever. An attacker does not need access to any specific block's data to study how CRC32 responds to edits — the function's behavior can be characterized once, in isolation, and that knowledge applies everywhere. CRC32's linearity over GF(2) means that, given a target checksum, it is a known and practical technique to compute compensating byte edits that leave the checksum unchanged — CRC32 was designed to catch accidental, random bit errors, not to resist an adversary deliberately searching for collisions.</p>
+
+        <p>ZRollingHash has no equivalent external structure. Its four-pass construction folds the input against <em>itself</em> — pass <code>p</code> XORs together every byte at stride-4 positions <code>p, p+4, p+8, ...</code> — with no polynomial, no table, no seed, and no constant of any kind. The hash's sensitivity to any given edit is a property of that block's own bytes alone; there is nothing fixed for an attacker to pre-study independent of the specific data being attacked.</p>
+
+        <div class="formula">
+            <strong>The Stride Misalignment:</strong><br><br>
+            ZOSCII encoding groups bytes in pairs: each payload byte becomes a 2-byte address. ZRollingHash groups bytes in fours, by position modulo 4, with no fixed relationship to where any address pair begins or ends. A single tampered on-disk byte — really, one half of one 2-byte address — lands in exactly one of the four stride classes, perturbing only that pass's running XOR fold. To leave the stored hash unchanged, an attacker needs a second edit, in the <em>same</em> stride class, that folds the first edit's effect back out — while that second edit must <em>also</em> remain a valid ZOSCII address, must not disturb whichever of N's own hash window or N+1's prevHash window it falls into, and must not bleed into any of the other three stride classes.<br><br>
+            Where CRC32's linear algebra would let an attacker solve directly for such a compensating edit, ZRollingHash offers no such shortcut. The attacker is left with an unstructured search across four simultaneous fold constraints, not one solvable equation.
+        </div>
+
+        <h3>H. Can a Forgery Be Meaningful?</h3>
+
+        <p>Suppose, hypothetically, an attacker found a tampered byte sequence that satisfied both applicable hash targets. This is not the same as having produced <em>useful</em> forged content. Surviving a hash check only means the forged bytes happened to fold to a specific fixed 4-byte (or 4-byte CRC32) target — it says nothing about what those bytes decode to as a payload. Most block payloads in this format are not plaintext; they are structured data of some kind, with their own internal validity rules (field types, lengths, embedded checksums, expected formats). A successful forgery that is also <em>meaningful</em> — readable, parseable, or exploitable by whatever consumes the payload — requires separately satisfying that structural validity, on top of the hash collision and on top of the ROM-address constraints of Section C.</p>
+
+        <p>These three requirements — valid ROM addressing, hash-target collision, and application-level semantic validity — are structurally unrelated to one another. Success against one provides no leverage toward the others. A meaningful forgery is not merely improbable; it requires simultaneously winning three independent searches, none of which share a common shortcut.</p>
 
         <h2>3. Scalable Architecture: Branch and Trunk Chains</h2>
 
         <p>The ZOSCII Tamperproof Blockchain introduces a branching architecture for enhanced scalability:</p>
+
 
         <div class="formula">
             Genesis Block (64KB, byte[0]=0)
@@ -183,7 +215,7 @@
             <li><strong>Output:</strong> 2-byte pointer (address in Rolling ROM)</li>
             <li><strong>Selection:</strong> random from all available addresses holding that byte value</li>
             <li><strong>Decoding:</strong> single O(1) lookup operation</li>
-            <li><strong>Padding:</strong> minimum payload size 512 bytes; padding bytes are not zero-filled in the C# reference (xorshift32-derived) and zero-filled in the C tools — padding content has no security role, only the declared payload length is meaningful</li>
+            <li><strong>Padding:</strong> the payload is padded with random bytes (XorShift32-derived in both the C# and C implementations — not zero-filled) whenever needed so the complete on-disk block (raw header + 2x the encoded-section header and payload) reaches at least 1024 bytes, matching the rolling ROM's per-block sample size; the smallest payload that needs no padding is 440 bytes, so padding only ever applies to very small payloads. Padding content has no security role — only the declared payload length is meaningful.</li>
         </ul>
 
         <h3>Block Types</h3>
@@ -254,7 +286,7 @@
                 <tr>
                     <td>Block Integrity</td>
                     <td>Single hash (fixed algorithm)</td>
-                    <td>Dual-hash binding (always active): current block + prev block serialized bytes; algorithm configurable (CRC32Full/CRC321KB implemented; RollingFull/Rolling1KB defined, C# only)</td>
+                    <td>Dual-hash binding (always active): current block + prev block serialized bytes; algorithm configurable in the C# reference (CRC32Full/CRC321KB/RollingFull/Rolling1KB all selectable); C tools always produce CRC32Full only</td>
                 </tr>
                 <tr>
                     <td>Attack Resistance</td>

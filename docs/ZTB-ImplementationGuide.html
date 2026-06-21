@@ -3,340 +3,508 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZOSCII Tamperproof Blockchain - Whitepaper</title>
+    <title>ZOSCII Tamperproof Blockchain - Implementation Guide</title>
     <link rel="stylesheet" type="text/css" href="cu-styles.css">
 </head>
 <body>
     <div class="container">
-        <h1>ZOSCII Tamperproof Blockchain: A New Model for Secure Distributed Ledger Technology</h1>
+        <h1>ZOSCII Tamperproof Blockchain</h1>
+        <div class="subtitle">Implementation Guide for Developers</div>
+        <p><em>(c) 2026 Cyborg Unicorn Pty Ltd - MIT License</em></p>
+
+        <div class="success">
+            <strong>Key Features:</strong>
+            <span class="badge badge-success">Quantum Proof</span>
+            <span class="badge badge-info">Information-Theoretic Security</span>
+            <span class="badge badge-success">Fast Verification</span>
+            <span class="badge badge-info">Scalable Architecture</span>
+        </div>
+
+        <div class="toc">
+            <h3>Table of Contents</h3>
+            <ul>
+                <li><a href="#overview">1. Overview</a></li>
+                <li><a href="#key-concepts">2. Key Concepts</a></li>
+                <li><a href="#architecture">3. Architecture</a></li>
+                <li><a href="#csharp-api">4. C# Library API</a></li>
+                <li><a href="#tools">5. Command-Line Tools</a></li>
+                <li><a href="#file-formats">6. File Formats</a></li>
+                <li><a href="#rolling-rom">7. Rolling ROM Construction</a></li>
+                <li><a href="#security">8. Security Model</a></li>
+                <li><a href="#build">9. Build Instructions</a></li>
+                <li><a href="#examples">10. Example Workflows</a></li>
+                <li><a href="#notes">11. Important Notes</a></li>
+            </ul>
+        </div>
+
+        <h2 id="overview">Overview</h2>
+        <p>The ZOSCII Tamperproof Blockchain (ZTB) provides:</p>
+        <ul>
+            <li>✅ <strong>Quantum Proof</strong> - Security based on combinatorial impossibility, not computational difficulty</li>
+            <li>✅ <strong>Scalable Architecture</strong> - Trunk and branch chains for efficient organization</li>
+            <li>✅ <strong>Tamperproof Guarantee</strong> - ~10^152900 impossibility of forgery</li>
+            <li>✅ <strong>Fast Verification</strong> - O(1) lookups, no complex cryptography</li>
+            <li>✅ <strong>Information-Theoretic Security</strong> - Immune to quantum algorithms</li>
+        </ul>
+        <p>The reference implementation is a C# library (<code>clsZTB</code> / <code>ZTBChain</code>). The C command-line tools described in this guide are a binary-compatible implementation of the same on-disk format, intended for scripting, automation, and environments without a .NET runtime.</p>
+
+        <h2 id="key-concepts">Key Concepts</h2>
         
-        <div class="header-meta">
-            <p><em>(c) 2026 Cyborg Unicorn Pty Ltd - MIT License</em></p>
-            <p>
-                <span class="badge badge-success">Quantum Proof</span>
-                <span class="badge badge-info">Information-Theoretic Security</span>
-                <span class="badge badge-success">Combinatorial Impossibility</span>
-            </p>
-        </div>
-
-        <div class="abstract">
-            <h2>Abstract</h2>
-            <p>The ZOSCII Tamperproof Blockchain introduces a revolutionary security model for Distributed Ledger Technology (DLT), decoupling structural integrity from data confidentiality. By leveraging Information-Theoretically Secure (ITS) encoding and Combinatorial Security, this blockchain is inherently Quantum Proof and does not rely on traditional, computationally intensive ciphers (like SHA-256) or mathematically difficult problems (like factoring). Its unique pointer-based block linking, anchored by a high-entropy GENESIS BLOCK, makes the entire ledger history tamperproof through combinatorial impossibility, while a branch-chain architecture enables unprecedented scalability and indexing efficiency.</p>
-        </div>
-
-        <h2>1. Introduction: The Quantum and Scalability Challenges</h2>
-        
-        <p>Traditional blockchain security is predicated on <span class="technical-term">computational difficulty</span>—the idea that the work required to forge a block (finding a valid hash) is computationally impractical. This foundation faces two existential threats:</p>
-
-        <h3>Quantum Threat</h3>
-        <p>Algorithms like Shor's could compromise the underlying Public Key Cryptography (used for key exchange and digital signatures), while Grover's algorithm could significantly diminish the effective security of hashing functions, potentially breaking current Proof-of-Work systems.</p>
-
-        <h3>Scalability</h3>
-        <p>Linear chain architectures require all nodes to process and store all data, leading to slow synchronization and burdensome wallet lookups.</p>
-
-        <div class="security-note">
-            <p><strong>Solution:</strong> The ZOSCII Tamperproof Blockchain solves these by shifting the security burden from computationally difficult proofs to mathematically guaranteed combinatorial impossibility and introducing a scalable architecture optimized for verification.</p>
-        </div>
-
-        <h2>2. Core Security Mechanism: ITS and Combinatorial Impossibility</h2>
-
-        <p>The security of the ZOSCII Tamperproof Blockchain relies on three interlocking components:</p>
-
-        <h3>A. The Genesis Anchor (GENESIS BLOCK)</h3>
-        <p>The chain begins with a <span class="technical-term">Genesis Block</span>: a 65,536-byte file whose first byte marks it as the genesis type, with the remaining 65,535 bytes being high-entropy data. This file acts as the immutable, unpredictable root of trust for the entire system. All subsequent block consensus checks must ultimately trace their integrity back to this starting point — either directly, or via a Truncation block that has assumed its role for an archived chain.</p>
-
-        <div class="info-box">
-            <strong>Critical Requirement:</strong> The genesis entropy region should contain a good spread of all 256 byte values. Loss of this file (before a checkpoint and truncation establish a new self-contained root) makes the entire blockchain unrecoverable.
-        </div>
-
-        <h3>B. The Rolling Chain of Custody (ROLLING ROM)</h3>
-        <p>Subsequent blocks do not link via a single cryptographic hash alone. Instead, each new block is encoded using a 64KB <span class="technical-term">ROLLING ROM</span>, which is a composite sample of up to 1KB of each block's complete serialized bytes, drawn from each of up to 64 previous blocks in its lineage, walking backwards via each block's recorded previous-block ID.</p>
-
-        <p>This process creates a dynamic, explicit, and verifiable genetic code for the new block, directly linking it to its entire lineage.</p>
-
-        <div class="architecture-note">
-            <strong>Rolling ROM Construction Priority:</strong>
-            <ul>
-                <li>First: walk backwards via prev_block_id, sampling 1KB from each block in order (most recent contributes last in the walk, oldest first into the buffer)</li>
-                <li>Second: if a Truncation block is reached, its stored 64KB ROM snapshot fills any remaining space</li>
-                <li>Third: otherwise, fill any remaining space from the Genesis Block</li>
-            </ul>
-            <p>Maximum 64 blocks contribute (64KB ÷ 1KB per block).</p>
-        </div>
-
-        <h3>C. The Non-Reproducible Pointer Encoding</h3>
-        <p>The payload data within a block is encoded using a unique ZOSCII method that utilizes the block's own ROLLING ROM (built from its predecessors) as an address table:</p>
-
-        <p><strong>Encoding:</strong> A 1-byte data value (from the payload) is encoded as a 2-byte address pointer. The system takes the 1-byte value and finds a random location within the 64KB ROLLING ROM that contains that desired value. The 2-byte address of that random location becomes the encoded value in the new block.</p>
-
-        <p><strong>Decoding:</strong> Decoding is extremely fast, requiring only a simple lookup of the 2-byte address pointer in the ROLLING ROM to retrieve the original 1-byte value.</p>
-
-        <div class="formula">
-            <strong>The Tamperproof Guarantee:</strong><br><br>
-            If an attacker alters the serialized bytes of Block N, every block whose ROLLING ROM sampled Block N would need its 2-byte pointers to still coincidentally resolve to the same original values against the altered bytes.<br><br>
-            Number of valid permutations: ~10^152,900<br><br>
-            This is combinatorially infeasible — not just hard, but information-theoretically impossible, even for quantum computers.
-        </div>
-
-        <p>The security is based on the non-reproducible randomness of the address selection during encoding.</p>
-
-        <h3>D. Dual-Hash Block Binding</h3>
-
-        <div class="security-note">
-            <strong>Always-Active Integrity:</strong>
-            <p>Every block commits to two integrity hashes within its ZOSCII-encoded section: a hash over the padded payload <em>only</em> — not the raw header, not the link/length metadata — computed before ZOSCII encoding is applied; and a hash of the previous block's complete serialized bytes (the whole on-disk file, header included). Both use the same algorithm, determined by the <code>hash_type</code> byte stored alongside them. This dual-hash binding is a standard feature of all blocks — not an optional mode. The asymmetry is deliberate: the current block's payload may eventually be hashed incrementally as it streams in, so it must never be hashed together with the header, which is always small and fully materialized in memory; the previous block, by the time it is hashed, is already a finished and fully-committed artifact, so hashing it whole carries no such constraint. The prevHash field is zero for the first block of a chain (no predecessor).</p>
-        </div>
-
-        <p>This creates a <strong>dual-hash constraint</strong>: an attacker attempting to forge block N must simultaneously satisfy two interdependent integrity checks. The second hash target is over the previous block's serialized form, which is itself a product of non-deterministic ZOSCII encoding. Because the attacker cannot predict or control the encoded output, satisfying the second constraint is practically infeasible independently of the first. The current-block hash being payload-only does not weaken protection of the header fields (prev_block_id, trunk_id, is_branch, block_id): those are instead protected by the rolling ROM, since the header sits within the first 1KB of each block's on-disk bytes that gets sampled into every dependent block's rolling ROM, subjecting header tampering to the same combinatorial tamper-evidence described in Section C.</p>
-
-        <h3>E. Hash Algorithm Selection</h3>
-
-        <p>The hash algorithm and scope are stored alongside the hash values and read back by all tools, enabling future algorithm agility without breaking the format. Four options are defined:</p>
-
-        <table>
-            <thead><tr><th>Value</th><th>Name</th><th>Algorithm</th><th>Scope</th></tr></thead>
-            <tbody>
-                <tr><td>0</td><td>CRC32Full</td><td>CRC32 (0xEDB88320)</td><td>Full padded payload — default, implemented by both the C# reference and the C command-line tools</td></tr>
-                <tr><td>1</td><td>CRC321KB</td><td>CRC32</td><td>First 1KB of the padded payload</td></tr>
-                <tr><td>2</td><td>RollingFull</td><td>ZRollingHash</td><td>Full padded payload</td></tr>
-                <tr><td>3</td><td>Rolling1KB</td><td>ZRollingHash</td><td>First 1KB of the padded payload</td></tr>
-            </tbody>
-        </table>
-
-        <p>The ZRollingHash variants (2 and 3) are implemented in the C# reference library. The C command-line tools currently recognize these values but compute them as a stub (returning zero); only CRC32Full and CRC321KB are functionally implemented in C at this time. <code>CRC32Full</code> is the algorithm implemented by the C tooling and used for cross-compatibility with it; the C# reference library defaults to <code>RollingFull</code> when no hash type is specified.</p>
-
-        <div class="architecture-note">
-            <strong>1KB Windows — Related but Distinct:</strong>
-            <p>The rolling ROM samples exactly 1KB from each previous block's complete serialized bytes — the 111-byte header plus the start of the encoded section. <code>CRC321KB</code> and <code>Rolling1KB</code> hash a different 1KB window: the first 1024 bytes of the padded payload alone, with no header mixed in. The two windows are related in spirit — both exist to bound the cost of full-block processing — but they are not byte-identical, since one always includes the header and the other never does.</p>
-            <ul>
-                <li><strong>Payload tampering, any hash type:</strong> caught by the current-block hash directly (in full under the Full variants, within the first 1KB under the windowed variants), and reinforced by the rolling ROM's own combinatorial tamper-evidence for whatever portion it samples.</li>
-                <li><strong>Header/metadata tampering (prev_block_id, trunk_id, is_branch, block_id):</strong> not covered by the current-block hash under any hash type, since that hash is payload-only. Protected instead by the rolling ROM: the header is always within the first 1KB of a block's on-disk bytes, so it is always sampled into dependent blocks' rolling ROMs, making it subject to the same combinatorial guarantee as payload content within that window.</li>
-            </ul>
-            <p><code>Rolling1KB</code> is particularly well-aligned architecturally: it applies the same ZRollingHash algorithm used in the ZOSCII encoding itself, keeping the security model internally consistent.</p>
-        </div>
-
-        <h3>F. Hashing Is Detection, Not Security</h3>
-
-        <p>It is worth being precise about what the hash fields do and do not provide. <strong>The security guarantee — the ~10^152900 combinatorial impossibility described in Section C — comes entirely from ZOSCII's pointer-based encoding against the rolling ROM, and does not depend on hashing at all.</strong> A correctly-chosen tampered byte cannot be predicted to decode to any particular value without already knowing the rolling ROM it was encoded against; that property holds with the hash fields removed from the format entirely.</p>
-
-        <p>What the hash fields add is <em>cheap, early detection</em>. Without them, a tamper outside the region any rolling ROM actually samples (beyond the first 1KB of a block's on-disk bytes) would decode silently to altered content, undetected, unless and until some other check happened to notice. The hash gives an immediate, inexpensive way to catch tampering within its window — a single comparison, rather than an attempted decode — at the cost of only protecting the bytes it actually examines.</p>
-
-        <div class="security-note">
-            <strong>Why the Stored Hash Cannot Simply Be Rewritten:</strong>
-            <p>The hash value itself lives inside the first 1KB of a block's on-disk bytes — the same region the rolling ROM samples into every dependent block. This makes the stored hash <em>readable but not freely rewritable</em>: an attacker cannot quietly overwrite the hash field to match a tampered payload, because any edit within that region is itself subject to the combinatorial tamper-evidence of Section C. The attacker's only avenue is the reverse — leave the stored hash untouched, and search for a tampered payload, confined to the region the hash does <em>not</em> visibly protect, that happens to still produce the same fixed hash value.</p>
-        </div>
-
-        <p>Because every block also commits to a hash of the block before it (<strong>Section D</strong>), a tamper to block N is checked against two independent, fixed targets rather than one: N's own current-block hash (if the tamper falls within N's payload-hash window) and N+1's prevHash (if the tamper falls within the on-disk window N+1 committed to). A successful forgery of N must satisfy both targets that apply to it, computed over two different, only partially overlapping windows of N's bytes.</p>
-
-        <h3>G. Why ZRollingHash, Not CRC32, for This Role</h3>
-
-        <p>CRC32 is built on a fixed, public, universal structure: a single polynomial constant (<code>0xEDB88320</code>) applied identically to every input, for every block, in every chain, forever. An attacker does not need access to any specific block's data to study how CRC32 responds to edits — the function's behavior can be characterized once, in isolation, and that knowledge applies everywhere. CRC32's linearity over GF(2) means that, given a target checksum, it is a known and practical technique to compute compensating byte edits that leave the checksum unchanged — CRC32 was designed to catch accidental, random bit errors, not to resist an adversary deliberately searching for collisions.</p>
-
-        <p>ZRollingHash has no equivalent external structure. Its four-pass construction folds the input against <em>itself</em> — pass <code>p</code> XORs together every byte at stride-4 positions <code>p, p+4, p+8, ...</code> — with no polynomial, no table, no seed, and no constant of any kind. The hash's sensitivity to any given edit is a property of that block's own bytes alone; there is nothing fixed for an attacker to pre-study independent of the specific data being attacked.</p>
-
-        <div class="formula">
-            <strong>The Stride Misalignment:</strong><br><br>
-            ZOSCII encoding groups bytes in pairs: each payload byte becomes a 2-byte address. ZRollingHash groups bytes in fours, by position modulo 4, with no fixed relationship to where any address pair begins or ends. A single tampered on-disk byte — really, one half of one 2-byte address — lands in exactly one of the four stride classes, perturbing only that pass's running XOR fold. To leave the stored hash unchanged, an attacker needs a second edit, in the <em>same</em> stride class, that folds the first edit's effect back out — while that second edit must <em>also</em> remain a valid ZOSCII address, must not disturb whichever of N's own hash window or N+1's prevHash window it falls into, and must not bleed into any of the other three stride classes.<br><br>
-            Where CRC32's linear algebra would let an attacker solve directly for such a compensating edit, ZRollingHash offers no such shortcut. The attacker is left with an unstructured search across four simultaneous fold constraints, not one solvable equation.
-        </div>
-
-        <h3>H. Can a Forgery Be Meaningful?</h3>
-
-        <p>Suppose, hypothetically, an attacker found a tampered byte sequence that satisfied both applicable hash targets. This is not the same as having produced <em>useful</em> forged content. Surviving a hash check only means the forged bytes happened to fold to a specific fixed 4-byte (or 4-byte CRC32) target — it says nothing about what those bytes decode to as a payload. Most block payloads in this format are not plaintext; they are structured data of some kind, with their own internal validity rules (field types, lengths, embedded checksums, expected formats). A successful forgery that is also <em>meaningful</em> — readable, parseable, or exploitable by whatever consumes the payload — requires separately satisfying that structural validity, on top of the hash collision and on top of the ROM-address constraints of Section C.</p>
-
-        <p>These three requirements — valid ROM addressing, hash-target collision, and application-level semantic validity — are structurally unrelated to one another. Success against one provides no leverage toward the others. A meaningful forgery is not merely improbable; it requires simultaneously winning three independent searches, none of which share a common shortcut.</p>
-
-        <h2>3. Scalable Architecture: Branch and Trunk Chains</h2>
-
-        <p>The ZOSCII Tamperproof Blockchain introduces a branching architecture for enhanced scalability:</p>
-
-
-        <div class="formula">
-            Genesis Block (64KB, byte[0]=0)
-                    ↓
-                Trunk Block 1
-                    ↓
-                Trunk Block 2
-                    ├─→ Branch A Block 1
-                    │       ↓
-                    │   Branch A Block 2
-                    │
-                    ├─→ Branch B Block 1
-                    │       ↓
-                    │   Branch B Block 2
-                    ↓
-                Trunk Block 3
-        </div>
-
-        <h3>A. Trunk Chain</h3>
-        <p>The main chain that serves as the authoritative timeline. All branches anchor to a block on the trunk, and consensus reconciliation selects the canonical trunk during synchronization.</p>
-
-        <h3>B. Branch Chains</h3>
-        <p>Chains that split from any existing block — typically a trunk block. A branch block is structurally identical to a normal block (<code>block_type = Normal</code>); what distinguishes it is two fields in its raw header. Each branch:</p>
-        <ul>
-            <li>Sets <code>is_branch = 1</code> in its raw header</li>
-            <li>Records its parent trunk's chain ID in the <code>trunk_id</code> field</li>
-            <li>Builds its Rolling ROM the same way as any block — walking backwards via <code>prev_block_id</code>, which naturally passes from the branch's own history into the trunk's history once it reaches the branch's first block</li>
-            <li>Can be verified independently or together with the trunk, by walking back through it</li>
-        </ul>
-
-        <div class="architecture-note">
-            <strong>Use Cases for Branches:</strong>
-            <ul>
-                <li><strong>Wallets:</strong> Each wallet has its own transaction chain</li>
-                <li><strong>Departments:</strong> Company trunk with departmental branches</li>
-                <li><strong>Projects:</strong> Main project trunk with sub-project branches</li>
-                <li><strong>Time Periods:</strong> Financial year trunk with quarterly branches</li>
-            </ul>
-        </div>
-
-        <h2>4. Technical Specifications</h2>
-
-        <h3>Genesis Block</h3>
-        <ul>
-            <li><strong>Size:</strong> 64KB (65,536 bytes) exactly — this is how every tool identifies it on disk</li>
-            <li><strong>Byte 0:</strong> block type marker, value <code>0</code></li>
-            <li><strong>Bytes 1–65535:</strong> high-entropy data, XOR-blended from 1–3 source files</li>
-            <li><strong>Coverage:</strong> the entropy region should contain a good spread of all 256 byte values</li>
-            <li><strong>Purpose:</strong> immutable root of trust</li>
-        </ul>
-
-        <h3>Rolling ROM</h3>
-        <ul>
-            <li><strong>Size:</strong> 64KB (65,536 bytes)</li>
-            <li><strong>Construction:</strong> samples from up to 64 previous blocks (1KB each, from their complete serialized bytes), reached by walking backwards via <code>prev_block_id</code></li>
-            <li><strong>Fill order:</strong> walked-back block history, then a Truncation block's stored ROM snapshot if one is reached, otherwise the Genesis Block</li>
-            <li><strong>Purpose:</strong> dynamic encoding/decoding table, specific to each individual block</li>
-        </ul>
-
-        <h3>Block Encoding</h3>
-        <ul>
-            <li><strong>Input:</strong> 1 byte of data</li>
-            <li><strong>Output:</strong> 2-byte pointer (address in Rolling ROM)</li>
-            <li><strong>Selection:</strong> random from all available addresses holding that byte value</li>
-            <li><strong>Decoding:</strong> single O(1) lookup operation</li>
-            <li><strong>Padding:</strong> minimum payload size 512 bytes; padding bytes are not zero-filled in the C# reference (xorshift32-derived) and zero-filled in the C tools — padding content has no security role, only the declared payload length is meaningful</li>
-        </ul>
-
-        <h3>Block Types</h3>
-        <ul>
-            <li><strong>Genesis (0)</strong> — The 64KB root-of-trust block</li>
-            <li><strong>Normal (1)</strong> — Standard data block; also used for branch blocks, which are distinguished by the <code>is_branch</code>/<code>trunk_id</code> header fields rather than a distinct type</li>
-            <li><strong>Checkpoint (2)</strong> — Documented anchor point, payload is a label string</li>
-            <li><strong>Truncation (3)</strong> — Written by the truncation operation; payload is a raw, unencoded 64KB rolling ROM snapshot. Chain walks stop here; the chain above is self-contained without the original genesis block.</li>
-            <li><strong>Finalise (4)</strong> — Soft close marker, payload is a label string; signals no further blocks should be appended</li>
-            <li><strong>Bridge (5)</strong> — Reserved for future cross-chain linking</li>
-        </ul>
-
-        <h3>Block Filename and Layout</h3>
-        <ul>
-            <li><strong>Filename:</strong> <code>&lt;blockID&gt;.ztb</code> — no chain ID or index is encoded in the filename; chain membership and position live entirely in the block's own header fields</li>
-            <li><strong>Layout (non-genesis, non-truncation):</strong> 111-byte raw, unencoded header (block_type, block_version, is_branch, trunk_id, block_id, prev_block_id) followed by a ZOSCII-encoded section (hash_type, hash, prev_hash, payload_len, padded_len, payload)</li>
-            <li><strong>Layout (truncation):</strong> the same 111-byte raw header, followed directly by a raw, unencoded 65,536-byte rolling ROM snapshot</li>
-        </ul>
-
-        <h3>Security Guarantee</h3>
-        <ul>
-            <li><strong>Tamper Probability:</strong> ~10^-152,900 (combinatorially infeasible)</li>
-            <li><strong>Quantum Proof:</strong> Yes (no mathematical problems to attack)</li>
-            <li><strong>Information-Theoretic:</strong> Yes (security independent of computation)</li>
-        </ul>
-
-        <h2>5. Key Advantages</h2>
-
+        <h3>Traditional Blockchains vs ZTB</h3>
         <table>
             <thead>
-                <tr>
-                    <th>Feature</th>
-                    <th>Traditional Blockchain</th>
-                    <th>ZOSCII Tamperproof Blockchain</th>
-                </tr>
+                <tr><th>Aspect</th><th>Traditional Blockchain</th><th>ZTB</th></tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>Security Basis</td>
-                    <td>Computational difficulty</td>
-                    <td>Combinatorial impossibility</td>
-                </tr>
-                <tr>
-                    <td>Quantum Threat</td>
-                    <td>Vulnerable (Shor's, Grover's)</td>
-                    <td>Immune (no math problems to solve)</td>
-                </tr>
-                <tr>
-                    <td>Block Linking</td>
-                    <td>Cryptographic hash</td>
-                    <td>Pointer-based ZOSCII encoding</td>
-                </tr>
-                <tr>
-                    <td>Verification Speed</td>
-                    <td>Hash computation</td>
-                    <td>O(1) pointer lookups</td>
-                </tr>
-                <tr>
-                    <td>Scalability</td>
-                    <td>Linear chain (full scan)</td>
-                    <td>Branching architecture (indexed)</td>
-                </tr>
-                <tr>
-                    <td>Tamper Detection</td>
-                    <td>Hash mismatch</td>
-                    <td>Pointer misalignment (10^152900 impossibility)</td>
-                </tr>
-                <tr>
-                    <td>Block Integrity</td>
-                    <td>Single hash (fixed algorithm)</td>
-                    <td>Dual-hash binding (always active): current block + prev block serialized bytes; algorithm configurable (CRC32Full/CRC321KB implemented; RollingFull/Rolling1KB defined, C# only)</td>
-                </tr>
-                <tr>
-                    <td>Attack Resistance</td>
-                    <td>Computationally hard</td>
-                    <td>Information-theoretically impossible</td>
-                </tr>
+                <tr><td>Block Linking</td><td>Cryptographic hashes (SHA-256)</td><td>ZOSCII pointer encoding</td></tr>
+                <tr><td>Security Basis</td><td>Computational difficulty</td><td>Combinatorial impossibility</td></tr>
+                <tr><td>Quantum Threat</td><td>Vulnerable</td><td>Immune</td></tr>
+                <tr><td>Data Structure</td><td>Linear chain</td><td>Tree (trunk + branches)</td></tr>
+                <tr><td>Decoding Speed</td><td>Hash verification</td><td>O(1) pointer lookup</td></tr>
             </tbody>
         </table>
 
-        <h2>6. Use Cases</h2>
+        <h3>Core Components</h3>
+        <div class="info">
+            <h4>1. Genesis Block (64KB)</h4>
+            <p>Immutable root of trust. A file of exactly 65,536 bytes whose first byte is the block type marker (<code>0</code> = Genesis); the remaining 65,535 bytes are high-entropy data containing all 256 byte values. Identified on disk purely by its size — there is no separate magic header.</p>
+            <p><strong>⚠️ Lost Genesis Block = Unrecoverable Blockchain</strong> (unless a checkpoint + truncation has already established a self-contained root further up the chain — see Section 4, ztbtruncate)</p>
+        </div>
 
+        <div class="info">
+            <h4>2. Rolling ROM (64KB)</h4>
+            <p>Built from samples of previous blocks (up to 64 blocks × 1KB each, taken from the start of each block's complete serialized bytes — raw header plus ZOSCII-encoded section), with any remaining space filled from the genesis block (or, below a truncation marker, from the truncation block's stored ROM payload). Acts as the encoding/decoding table for one specific block. In the C# reference, block bytes are fetched through a pluggable callback — disk is only the default fallback when no callback is supplied; the same chain logic works equally over a database, an in-memory store, cloud blob storage, or a web service call, since <code>clsZTB</code> never assumes a specific transport. The C tools always read from disk directly, since no callback mechanism exists in C.</p>
+        </div>
+
+        <div class="info">
+            <h4>3. ZOSCII Encoding</h4>
+            <p>Each byte (1 byte) → pointer (2 bytes) into the Rolling ROM. Random selection among all matching addresses creates non-deterministic encoding — the same payload encodes differently every time it is written.</p>
+        </div>
+
+        <h2 id="architecture">Architecture</h2>
+        
+        <div class="example">
+            <h3>Chain Structure</h3>
+            <pre><code>Genesis Block (64KB, byte[0]=0)
+        ↓
+    Trunk Block 1
+        ↓
+    Trunk Block 2
+        ├─→ Branch A Block 1
+        │       ↓
+        │   Branch A Block 2
+        │
+        ├─→ Branch B Block 1
+        │       ↓
+        │   Branch B Block 2
+        ↓
+    Trunk Block 3</code></pre>
+        </div>
+
+        <h3>Block Types</h3>
+        <p>Every block carries a <code>block_type</code> byte in its raw header:</p>
+        <table>
+            <thead><tr><th>Value</th><th>Name</th><th>Purpose</th></tr></thead>
+            <tbody>
+                <tr><td>0</td><td>Genesis</td><td>The 64KB root-of-trust block</td></tr>
+                <tr><td>1</td><td>Normal</td><td>Standard data block (also used for branch blocks — see below)</td></tr>
+                <tr><td>2</td><td>Checkpoint</td><td>Documented anchor point, payload is a label string</td></tr>
+                <tr><td>3</td><td>Truncation</td><td>Written by Truncate(); payload is a raw 64KB rolling ROM snapshot</td></tr>
+                <tr><td>4</td><td>Finalise</td><td>Soft close marker; payload is a label string</td></tr>
+                <tr><td>5</td><td>Bridge</td><td>Reserved for future cross-chain linking</td></tr>
+            </tbody>
+        </table>
+        <p>A separate <code>is_branch</code> flag and <code>trunk_id</code> field in the raw header (not the block type) distinguish a branch block from a trunk block. <strong>Branch blocks are written with <code>block_type = Normal</code></strong> — branching is orthogonal to block type.</p>
+
+        <h2 id="csharp-api">C# Library API</h2>
+        <p>The C# <code>ZTBChain</code> class (over the <code>clsZTB</code> engine) is the primary, canonical interface. All examples below use the same block IDs as the CLI examples further down, so the two can be compared directly.</p>
+
+        <div class="tool-section">
+            <h3>Open a chain</h3>
+            <pre><code>ZTBChain objChain = ZTBChain.Open(strWorkDir, "MyTrunk");
+// Optional third argument selects the hash algorithm; defaults to ZTBHashType.RollingFull
+ZTBChain objChain2 = ZTBChain.Open(strWorkDir, "MyTrunk", ZTBHashType.CRC32Full);</code></pre>
+            <p><code>strChainID</code> here is, like the C tools' <code>chain_id</code>, a label for your own bookkeeping — it is not written into any block file. Note the default hash algorithm is <code>RollingFull</code> in C#, whereas the C tools always write <code>CRC32Full</code> — open with <code>ZTBHashType.CRC32Full</code> explicitly if blocks need to be readable by the C tools. (The C hashing primitive can compute <code>CRC321KB</code> if called with that value, but none of the C command-line tools currently expose a way to select it — they always request <code>CRC32Full</code>.)</p>
+        </div>
+
+        <div class="tool-section">
+            <h3>Pluggable storage</h3>
+            <p>A <code>ZTBChain</code> instance reads and writes blocks through three optional callback fields. When left null, the chain falls back to plain disk I/O against <code>strWorkDir</code>. Setting any of them redirects that operation to wherever you want — a database, an in-memory store, cloud blob storage, a web service call — with no change to the rest of the chain logic, since <code>clsZTB</code> never assumes a specific transport.</p>
+            <pre><code>objChain.OnLoadBlock = (strFilename) =>
+{
+    // Return the raw bytes for strFilename (e.g. "<blockID>.ztb"), or null if not found
+    return myDatabase.ReadBlockBytes(strFilename);
+};
+
+objChain.OnSaveBlock = (objResult, arrBytes, strFilepath) =>
+{
+    // Persist arrBytes however you like; return true on success
+    return myDatabase.WriteBlockBytes(strFilepath, arrBytes);
+};
+
+objChain.OnFindGenesis = (strUnused) =>
+{
+    // Return the genesis block's bytes (the one 65,536-byte block), or null to fall back to disk
+    return myDatabase.ReadGenesisBytes();
+};</code></pre>
+            <p>All three are independent — you can override just <code>OnLoadBlock</code> for a read-only mirror, for instance, while leaving saves on disk. The C command-line tools have no equivalent: they always read and write the working directory directly, since C has no callback/delegate mechanism to plug in.</p>
+        </div>
+
+        <div class="tool-section">
+            <h3>Add blocks</h3>
+            <pre><code>ZTBBlockResult objR1 = objChain.AddBlockText(
+    "3CEA0E03-1632-4531-A75B-78AE04C0522C", clsZTB.NULL_GUID, "Genesis block");
+
+ZTBBlockResult objR2 = objChain.AddBlockText(
+    "9F1A2B3C-4D5E-4F60-8172-839405A6B7C8", objR1.BlockID, "Block 2");
+
+ZTBBlockResult objR3 = objChain.AddBlockFile(
+    "1A2B3C4D-5E6F-4071-8293-A4B5C6D7E8F9", objR2.BlockID, "invoice.pdf");
+
+if (!objR3.Success) { /* handle failure */ }</code></pre>
+            <p><code>AddBlock</code> takes a raw <code>byte[]</code> payload directly; <code>AddBlockText</code> and <code>AddBlockFile</code> are convenience wrappers around it.</p>
+        </div>
+
+        <div class="tool-section">
+            <h3>Branches, checkpoints, truncation, finalise</h3>
+            <pre><code>// Branch off an existing trunk block
+ZTBBlockResult objBranch = objChain.AddBranch(
+    "2B3C4D5E-6F70-4182-93A4-B5C6D7E8F9A0", objR2.BlockID,
+    Encoding.UTF8.GetBytes("Sales Genesis"), "CompanyLedger");
+
+// Checkpoint, then truncate immediately, before adding further blocks above it
+ZTBBlockResult objCP = objChain.AddCheckpoint(
+    "4D5E6F70-8192-4304-B5C6-D7E8F9A0B1C2", objR3.BlockID, "End of financial year");
+ZTBBlockResult objTrunc = objChain.Truncate(Guid.NewGuid().ToString(), objCP.BlockID);
+
+// Soft-close a chain
+ZTBBlockResult objFin = objChain.Finalise(
+    "5E6F7081-92A3-4415-C6D7-E8F9A0B1C2D3", objCP.BlockID, "Chain closed");</code></pre>
+        </div>
+
+        <div class="tool-section">
+            <h3>Fetch and verify</h3>
+            <pre><code>ZTBBlockResult objFetched = objChain.FetchBlock("9F1A2B3C-4D5E-4F60-8172-839405A6B7C8");
+if (objFetched.Success)
+{
+    string strText = Encoding.UTF8.GetString(objFetched.Payload);
+}
+
+// blnWalk = true walks backwards through the whole chain; false checks only this block
+ZTBVerifyResult objVerify = objChain.Verify("1A2B3C4D-5E6F-4071-8293-A4B5C6D7E8F9", true);
+if (objVerify.Success)
+{
+    Console.WriteLine(objVerify.VerifiedBlocks + " blocks verified, " +
+                       objVerify.FailedBlocks + " failed");
+}</code></pre>
+        </div>
+
+        <h2 id="tools">Command-Line Tools</h2>
+        <p>The C command-line tools below are a binary-compatible implementation of the same on-disk format used by <code>ZTBChain</code> above — files written by one can be read by the other, provided the C# chain was opened with <code>ZTBHashType.CRC32Full</code> (the C tools' only implemented algorithm). They exist for scripting, automation, and environments without a .NET runtime.</p>
+        <p>All tools operate against a working directory containing one genesis block and any number of <code>&lt;blockID&gt;.ztb</code> files. There is no chain-ID-based filename scanning — every operation is addressed by explicit block ID (a GUID or any string you choose), matching the C# API's block-ID-based model exactly.</p>
+
+        <div class="tool-section">
+            <h3>1. ztbcreate - Genesis Block Creator</h3>
+            <p>Creates the 64KB high-entropy genesis block file.</p>
+            <pre><code>ztbcreate &lt;source1&gt; [source2] [source3] &lt;workdir&gt; &lt;new_block_id&gt;</code></pre>
+            <p><strong>Example:</strong></p>
+            <pre><code>ztbcreate selfie.jpg . A1B2C3D4-E5F6-4A7B-8C9D-E0F1A2B3C4D5</code></pre>
+            <p>1–3 source files are XOR-blended byte-for-byte across the genesis block to produce the entropy. Recommended sources are JPEGs, MP3s, or any other capture of real-world physical data.</p>
+            <div class="warning">
+                <strong>⚠️ CRITICAL:</strong> Keep this file secure and backed up. Loss = unrecoverable blockchain.
+            </div>
+        </div>
+
+        <div class="tool-section">
+            <h3>2. ztbaddblock - Block Creator</h3>
+            <p>Adds a new normal block to an existing chain (trunk or branch).</p>
+            <pre><code>ztbaddblock &lt;workdir&gt; &lt;chain_id&gt; &lt;new_block_id&gt; &lt;prev_block_id&gt; -t "text string"
+ztbaddblock &lt;workdir&gt; &lt;chain_id&gt; &lt;new_block_id&gt; &lt;prev_block_id&gt; -f &lt;file_path&gt;</code></pre>
+            <p><code>chain_id</code> is a free-text label for your own bookkeeping — it is not written into the file or used for lookups. <code>prev_block_id</code> is the GUID of the block this one links to; use <code>00000000-0000-0000-0000-000000000000</code> for the first block in a chain.</p>
+            <p><strong>Examples:</strong></p>
+            <pre><code># First block of a new trunk
+ztbaddblock . MyTrunk 3CEA0E03-1632-4531-A75B-78AE04C0522C 00000000-0000-0000-0000-000000000000 -t "Genesis block"
+
+# Add a second block, linked to the first
+ztbaddblock . MyTrunk 9F1A2B3C-4D5E-4F60-8172-839405A6B7C8 3CEA0E03-1632-4531-A75B-78AE04C0522C -t "Block 2"
+
+# Add a file as payload
+ztbaddblock . MyTrunk 1A2B3C4D-5E6F-4071-8293-A4B5C6D7E8F9 9F1A2B3C-4D5E-4F60-8172-839405A6B7C8 -f invoice.pdf</code></pre>
+            <p><strong>Options:</strong></p>
+            <ul>
+                <li><code>-t "text"</code> - Add a UTF-8 text string as payload</li>
+                <li><code>-f filename</code> - Add a file's contents as payload</li>
+            </ul>
+        </div>
+
+        <div class="tool-section">
+            <h3>3. ztbaddbranch - Branch Block Creator</h3>
+            <p>Writes a block with <code>is_branch = 1</code> and a <code>trunk_id</code> reference, splitting a new branch chain off from any existing block (typically a trunk block).</p>
+            <pre><code>ztbaddbranch &lt;workdir&gt; &lt;trunk_chain_id&gt; &lt;branch_chain_id&gt; &lt;new_block_id&gt; &lt;prev_block_id&gt; -t "text"
+ztbaddbranch &lt;workdir&gt; &lt;trunk_chain_id&gt; &lt;branch_chain_id&gt; &lt;new_block_id&gt; &lt;prev_block_id&gt; -f &lt;file&gt;</code></pre>
+            <p><strong>Example:</strong></p>
+            <pre><code># Trunk block already exists at prev_block_id
+ztbaddbranch . CompanyLedger Sales 2B3C4D5E-6F70-4182-93A4-B5C6D7E8F9A0 9F1A2B3C-4D5E-4F60-8172-839405A6B7C8 -t "Sales Genesis"
+
+# Further blocks on the branch use the normal ztbaddblock tool
+ztbaddblock . Sales 3C4D5E6F-7081-4293-A4B5-C6D7E8F9A0B1 2B3C4D5E-6F70-4182-93A4-B5C6D7E8F9A0 -t "Sale #001"</code></pre>
+        </div>
+
+        <div class="tool-section">
+            <h3>4. ztbcheckpoint - Checkpoint Block Creator</h3>
+            <p>Adds a documented anchor point to a chain. Identical in every respect to <code>ztbaddblock</code> except the block type is <code>Checkpoint</code> and the payload is always a plain label string.</p>
+            <pre><code>ztbcheckpoint &lt;workdir&gt; &lt;chain_id&gt; &lt;new_block_id&gt; &lt;prev_block_id&gt; &lt;label&gt;</code></pre>
+            <p><strong>Example:</strong></p>
+            <pre><code>ztbcheckpoint . FY2025 4D5E6F70-8192-4304-B5C6-D7E8F9A0B1C2 3C4D5E6F-7081-4293-A4B5-C6D7E8F9A0B1 "End of financial year"</code></pre>
+        </div>
+
+        <div class="tool-section">
+            <h3>5. ztbtruncate - Chain Truncation</h3>
+            <p>Severs a chain at a checkpoint for archival. Reads the checkpoint's <code>prev_block_id</code> (call this block10), builds the rolling ROM exactly as block10's successor would have built it, then <strong>overwrites block10's own file</strong> with a Truncation block whose payload is that raw 64KB ROM snapshot — unencoded, since nothing below it remains to reference.</p>
+            <pre><code>ztbtruncate &lt;workdir&gt; &lt;checkpoint_block_id&gt;</code></pre>
+            <p><strong>Example:</strong></p>
+            <pre><code>ztbtruncate . 4D5E6F70-8192-4304-B5C6-D7E8F9A0B1C2</code></pre>
+            <div class="warning">
+                <strong>⚠️ Order matters:</strong> truncate <em>before</em> adding any new blocks above the checkpoint. Truncating after later blocks already exist silently changes the rolling-ROM fill source for those blocks (from genesis to the truncation payload) and will break their verification. Always: build chain → checkpoint → truncate → continue adding blocks.
+            </div>
+            <p>After truncation, all blocks below block10 (the original genesis included) can be moved to cold storage. The active chain remains fully self-contained and independently verifiable using only the files from the checkpoint upward.</p>
+        </div>
+
+        <div class="tool-section">
+            <h3>6. ztbfetch - Block Fetcher & Decoder</h3>
+            <p>Retrieves and decodes a specific block by ID, verifying its integrity.</p>
+            <pre><code>ztbfetch &lt;workdir&gt; &lt;block_id&gt;</code></pre>
+            <p><strong>Example:</strong></p>
+            <pre><code>ztbfetch . 9F1A2B3C-4D5E-4F60-8172-839405A6B7C8</code></pre>
+        </div>
+
+        <div class="tool-section">
+            <h3>7. ztbverify - Chain Verifier</h3>
+            <p>Verifies a single block, or walks backwards from a given block to the start of the chain (or to a truncation marker, whichever comes first), checking the integrity hash and previous-block hash binding at every step.</p>
+            <pre><code># Verify a single block only
+ztbverify &lt;workdir&gt; &lt;block_id&gt;
+
+# Walk backwards verifying the whole chain
+ztbverify &lt;workdir&gt; &lt;block_id&gt; -walk</code></pre>
+            <p><strong>Example:</strong></p>
+            <pre><code>ztbverify . 1A2B3C4D-5E6F-4071-8293-A4B5C6D7E8F9 -walk</code></pre>
+        </div>
+
+        <h2 id="file-formats">File Formats</h2>
+        
+        <h3>Genesis Block File</h3>
         <ul>
-            <li><strong>Financial Records:</strong> Tamperproof audit trails for accounting</li>
-            <li><strong>Legal Documents:</strong> Verifiable timestamps and integrity proofs</li>
-            <li><strong>Supply Chain:</strong> Immutable product provenance tracking</li>
-            <li><strong>Identity Verification:</strong> Credential attestation without centralized authority</li>
-            <li><strong>Healthcare Records:</strong> Patient data with guaranteed integrity</li>
-            <li><strong>Academic Credentials:</strong> Diploma verification and transcript validation</li>
-            <li><strong>IoT Data Logging:</strong> Sensor data with tamperproof history</li>
-            <li><strong>Voting Systems:</strong> Transparent, verifiable ballot records</li>
+            <li><strong>Size:</strong> exactly 65,536 bytes (64KB) — this size is how every tool identifies it, no extension or naming convention is required</li>
+            <li><strong>Byte 0:</strong> block type marker, always <code>0</code> (Genesis)</li>
+            <li><strong>Bytes 1–65535:</strong> high-entropy data, XOR-blended from 1–3 source files</li>
+            <li><strong>Requirements:</strong> the entropy region should contain a good spread of all 256 byte values</li>
         </ul>
 
-        <h2>7. Security, Confidentiality, and Consensus</h2>
+        <h3>Block Filename Convention</h3>
+        <pre><code>&lt;block_id&gt;.ztb</code></pre>
+        <p>There is no chain ID or index number in the filename. A block's chain membership and position are entirely determined by the <code>trunk_id</code> and <code>prev_block_id</code> fields inside its own raw header — the filename is just the block's own ID.</p>
+        <p><strong>Examples:</strong></p>
+        <pre><code>A0B9845E-1234-4567-89AB-CDEF01234567.ztb  ← genesis block (identified by 65536-byte size)
+3CEA0E03-1632-4531-A75B-78AE04C0522C.ztb  ← any other block</code></pre>
 
-        <h3>A. Quantum Proof</h3>
-        <p>The ZOSCII Tamperproof Blockchain is <span class="technical-term">Quantum Proof by Design</span>. Its security is rooted in the combinatorial explosion of the pointer-encoding keyspace and Information-Theoretic Security (due to the high-entropy ROMs and non-reproducible encoding), which are immune to known quantum algorithms like Shor's.</p>
+        <h3>Block File Format</h3>
+        <p>Every non-genesis <code>.ztb</code> file is structured as:</p>
+        <pre><code>[ 111 bytes: raw, unencoded header ][ N bytes: ZOSCII-encoded section ]</code></pre>
+        <p><strong>Exception — Truncation blocks:</strong> the 111-byte raw header is followed by a raw, <em>unencoded</em> 65,536-byte rolling ROM snapshot, since there is no prior block left to ZOSCII-encode against.</p>
 
-        <h3>B. Flexible Payload Security</h3>
-        <p>The integrity of the chain structure is secured separately from the confidentiality of the data payload. The data packet area of a block can contain:</p>
+        <h4>Raw Header (111 bytes, never encoded)</h4>
+        <table>
+            <thead><tr><th>Offset</th><th>Size</th><th>Field</th><th>Description</th></tr></thead>
+            <tbody>
+                <tr><td>0</td><td>1</td><td>block_type</td><td>Genesis=0, Normal=1, Checkpoint=2, Truncation=3, Finalise=4, Bridge=5</td></tr>
+                <tr><td>1</td><td>1</td><td>block_version</td><td>Format version (currently 1)</td></tr>
+                <tr><td>2</td><td>1</td><td>is_branch</td><td>1 if this block belongs to a branch chain, else 0</td></tr>
+                <tr><td>3–38</td><td>36</td><td>trunk_id</td><td>Trunk chain ID (ASCII, zero-padded); NULL_GUID for trunk blocks</td></tr>
+                <tr><td>39–74</td><td>36</td><td>block_id</td><td>This block's own ID (ASCII, zero-padded)</td></tr>
+                <tr><td>75–110</td><td>36</td><td>prev_block_id</td><td>Previous block's ID (ASCII, zero-padded); NULL_GUID for the first block of a chain</td></tr>
+            </tbody>
+        </table>
 
-        <ul>
-            <li><strong>Visible Data:</strong> Fully transparent records for public verification.</li>
-            <li><strong>ITS/ZOSCII Encoded Data:</strong> Data that is secure from eavesdroppers but quickly decoded by authorized ZOSCII systems.</li>
-            <li><strong>External Pointers/URLs:</strong> Metadata linking to data stored off-chain.</li>
-        </ul>
+        <h4>Encoded Section (17-byte header + payload, ZOSCII-encoded as a whole)</h4>
+        <table>
+            <thead><tr><th>Offset (decoded)</th><th>Size</th><th>Field</th><th>Description</th></tr></thead>
+            <tbody>
+                <tr><td>0</td><td>1</td><td>hash_type</td><td>CRC32Full=0, CRC321KB=1, RollingFull=2, Rolling1KB=3</td></tr>
+                <tr><td>1–4</td><td>4</td><td>hash</td><td>Hash of the padded payload only — not the header, not the link/length metadata. Computed before ZOSCII encoding is applied, little-endian</td></tr>
+                <tr><td>5–8</td><td>4</td><td>prev_hash</td><td>Hash of the previous block's complete serialized bytes, same algorithm; zero for the first block of a chain, little-endian</td></tr>
+                <tr><td>9–12</td><td>4</td><td>payload_len</td><td>Actual payload length in bytes, little-endian</td></tr>
+                <tr><td>13–16</td><td>4</td><td>padded_len</td><td>Padded payload length (minimum 440 bytes, the smallest value that guarantees the complete on-disk block reaches at least 1024 bytes — see Rolling ROM Construction), little-endian</td></tr>
+                <tr><td>17+</td><td>padded_len</td><td>payload</td><td>The payload, padded with random bytes (when needed to reach the minimum) up to padded_len</td></tr>
+            </tbody>
+        </table>
+        <p>The encoded section is ZOSCII-encoded as a single unit using the rolling ROM, expanding each raw byte to 2 bytes on disk.</p>
+        <p><strong>Hash algorithm note:</strong> the C command-line tools implement <code>CRC32Full</code> only; <code>RollingFull</code> and <code>Rolling1KB</code> are present as stubs (return 0) for forward compatibility with the C# reference, which implements the ZRollingHash algorithm in full.</p>
 
-        <h3>C. Consensus (Proof of Integrity)</h3>
-        <p>A consensus mechanism (which can be a light-weight Proof-of-Work or Proof-of-Stake to control block rate) layered on top of this format would primarily validate <span class="technical-term">Integrity and Validity</span>:</p>
+        <h2 id="rolling-rom">Rolling ROM Construction</h2>
+        
+        <div class="info">
+            <h3>Construction Algorithm</h3>
+            <ol>
+                <li>Start with an empty 64KB buffer</li>
+                <li>Walk backwards from the target block's <code>prev_block_id</code> via each block's own <code>prev_block_id</code>, collecting up to 64 blocks (stopping early if a Truncation block is reached)</li>
+                <li>For each collected block, oldest first, copy the first 1KB of its complete serialized bytes (raw header + encoded section) into the buffer</li>
+                <li>If a Truncation block was reached, its raw 64KB ROM payload supplies the fill for any remaining space</li>
+                <li>Otherwise, fill any remaining space from the genesis block (the one <code>.ztb</code> file in the working directory whose size is exactly 65,536 bytes)</li>
+            </ol>
+        </div>
 
-        <ul>
-            <li>The new block's structure correctly utilizes the rolling ROM derived from its lineage</li>
-            <li>The new block is fully traceable back to the Genesis Block (or an active Truncation block) and, if applicable, the branch's anchor block</li>
-        </ul>
+        <div class="warning">
+            <h4>Why the Encoded Bytes, Not the Decoded Payload?</h4>
+            <p>The 1KB sample is taken from each block's complete serialized form — raw header followed by ZOSCII-encoded section — not from the decoded payload. This is a reconstruction requirement, not a security one: the rolling ROM is not secret and provides no protection by being statistically random, since every verifier rebuilds it exactly the same way by walking the chain. The reason the encoded bytes are sampled is simpler — they are the bytes actually stored in the block, byte-for-byte identical for anyone reconstructing the chain. Sampling the decoded payload instead would require re-deriving it (decoding requires the very rolling ROM being built, making it circular), and would also expose the same 1KB of plaintext payload across every dependent block's ROM, which the encoded form avoids.</p>
+        </div>
 
-        <h3>D. Application: The 'Proof of Something' Chain</h3>
-        <p>The architecture is ideal for a <span class="technical-term">Generic 'Proof of Something' Chain</span>. A real-world document (e.g., a university degree) can contain an identifier that points directly to a block. Verification simply requires checking the block against the chain's integrity rules, providing publicly verifiable and transparent proof of a claim's integrity since the moment it was recorded.</p>
+        <h2 id="security">Security Model</h2>
+        
+        <h3>Tamperproof Guarantee</h3>
+        <div class="warning">
+            <p><strong>If an attacker modifies Block N:</strong></p>
+            <ol>
+                <li>Block N's encoded data changes</li>
+                <li>Any block built using a rolling ROM that sampled Block N now has pointers resolving against the altered bytes</li>
+                <li>Probability of pointers still resolving correctly: <strong>~10^-152900</strong></li>
+            </ol>
+            <p><strong>This is combinatorially infeasible</strong> - not just hard, but information-theoretically impossible.</p>
+        </div>
 
-        <div class="conclusion">
-            <h2>8. Conclusion and Open Licensing</h2>
-            <p>The ZOSCII Tamperproof Blockchain represents a fundamental shift in DLT security, offering a mathematically robust, quantum-proof, and highly scalable foundation. In the spirit of transparency, peer review, and rapid adoption, this specification is released under the permissive <strong>MIT License</strong>, encouraging developers and enterprises globally to study, build, and deploy implementations of this next-generation DLT.</p>
+        <h3>Dual-Hash Block Binding</h3>
+        <div class="info">
+            <p>Every block commits to two hash values in its encoded section:</p>
+            <ol>
+                <li><strong>Current block hash</strong> — hash over the padded payload <em>only</em>. The raw header (block_type, version, is_branch, trunk_id, block_id, prev_block_id) and the encoded-section metadata (hash_type, prev_hash, payload_len, padded_len) are <em>not</em> included. This is deliberate: keeping the hash payload-only means the payload portion can eventually be hashed incrementally as it streams in, without first requiring the (always small, always in-memory) header to be finalized. Folding the header into the hash would force the whole block to be materialized before hashing could begin, defeating any future streaming of large payloads. Under <code>CRC321KB</code>/<code>Rolling1KB</code> the hash is further clamped to the first 1024 bytes of the padded payload.</li>
+                <li><strong>Previous block hash</strong> — hash over the previous block's complete serialized bytes (the whole on-disk file: raw header plus encoded section), or, under <code>CRC321KB</code>/<code>Rolling1KB</code>, the first 1024 bytes of them. This one covers everything, header included, because by the time it's hashed the previous block is already a finished, fully-committed artifact with no streaming concern — unlike the current block's payload, which may not be.</li>
+            </ol>
+            <p>This dual-hash binding is always active — it is a standard feature of every block, not an optional mode. The first block of a chain has no predecessor; its prev-hash field is zero by design.</p>
+            <p>Because the current-block hash is payload-only, it does not by itself protect the header fields (prev_block_id, trunk_id, is_branch, block_id) from tampering. That protection instead comes from the rolling ROM: the header is part of each block's on-disk bytes, and the first 1KB of those bytes — header included — gets sampled into every dependent block's rolling ROM, making header tampering subject to the same combinatorial tamper-evidence as the payload, rather than the hash.</p>
+            <p><strong>1KB threshold:</strong> the rolling ROM samples the first 1KB of each block's complete serialized bytes (header + encoded section). The current-block hash, by contrast, only ever covers the padded payload — under <code>CRC32Full</code>/<code>RollingFull</code> all of it, under <code>CRC321KB</code>/<code>Rolling1KB</code> just the first 1024 bytes of it. These two 1KB windows are related but not identical: the rolling-ROM sample's 1KB includes the 111-byte header, while the hash's 1KB (under the windowed variants) is 1024 bytes of payload with no header mixed in.</p>
+        </div>
+
+        <h3>Why Quantum-Proof?</h3>
+        <table>
+            <thead>
+                <tr><th>Attack Vector</th><th>Traditional Blockchain</th><th>ZTB</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Shor's Algorithm</td><td>Breaks PKI</td><td>No PKI to break</td></tr>
+                <tr><td>Grover's Algorithm</td><td>Weakens hashing</td><td>Hashing is a secondary check, not the primary tamper-evidence mechanism</td></tr>
+                <tr><td>Brute Force</td><td>2^256 operations</td><td>10^152900 permutations</td></tr>
+                <tr><td>Quantum Computer</td><td>Eventually vulnerable</td><td>Immune</td></tr>
+            </tbody>
+        </table>
+
+        <h2 id="build">Build Instructions</h2>
+        <pre><code># Windows (Visual Studio Developer Command Prompt)
+cl /O2 /MT ztbcreate.c /link
+cl /O2 /MT ztbaddblock.c /link
+cl /O2 /MT ztbaddbranch.c /link
+cl /O2 /MT ztbcheckpoint.c /link
+cl /O2 /MT ztbtruncate.c /link
+cl /O2 /MT ztbfetch.c /link
+cl /O2 /MT ztbverify.c /link
+
+# Linux / macOS (gcc)
+gcc -O2 -o ztbcreate     ztbcreate.c
+gcc -O2 -o ztbaddblock   ztbaddblock.c
+gcc -O2 -o ztbaddbranch  ztbaddbranch.c
+gcc -O2 -o ztbcheckpoint ztbcheckpoint.c
+gcc -O2 -o ztbtruncate   ztbtruncate.c
+gcc -O2 -o ztbfetch      ztbfetch.c
+gcc -O2 -o ztbverify     ztbverify.c</code></pre>
+        <p>Each tool is a single self-contained <code>.c</code> file that includes <code>ztbcommon.c</code> directly — no separate linking step is needed for the shared code, and no external libraries are required.</p>
+
+        <h2 id="examples">Example Workflows</h2>
+        
+        <div class="example">
+            <h3>Basic Trunk Chain — C#</h3>
+            <pre><code>ZTBChain objChain = ZTBChain.Open(strWorkDir, "MyTrunk", ZTBHashType.CRC32Full);
+
+ZTBBlockResult objB1 = objChain.AddBlockText(
+    "A0000001-0000-4000-8000-000000000002", clsZTB.NULL_GUID, "Block 1");
+ZTBBlockResult objB2 = objChain.AddBlockText(
+    "A0000001-0000-4000-8000-000000000003", objB1.BlockID, "Block 2");
+ZTBBlockResult objB3 = objChain.AddBlockText(
+    "A0000001-0000-4000-8000-000000000004", objB2.BlockID, "Block 3");
+
+ZTBVerifyResult objV = objChain.Verify(objB3.BlockID, true);
+ZTBBlockResult  objFetched = objChain.FetchBlock(objB2.BlockID);</code></pre>
+        </div>
+
+        <div class="example">
+            <h3>Basic Trunk Chain — C Command-Line Tools</h3>
+            <pre><code># 1. Create the genesis block
+ztbcreate selfie.jpg . A0000001-0000-4000-8000-000000000001
+
+# 2. Create a trunk chain (each block's prev_block_id links to the one before)
+ztbaddblock . MyTrunk A0000001-0000-4000-8000-000000000002 00000000-0000-0000-0000-000000000000 -t "Block 1"
+ztbaddblock . MyTrunk A0000001-0000-4000-8000-000000000003 A0000001-0000-4000-8000-000000000002 -t "Block 2"
+ztbaddblock . MyTrunk A0000001-0000-4000-8000-000000000004 A0000001-0000-4000-8000-000000000003 -t "Block 3"
+
+# 3. Verify the whole chain
+ztbverify . A0000001-0000-4000-8000-000000000004 -walk
+
+# 4. Fetch a specific block
+ztbfetch . A0000001-0000-4000-8000-000000000003</code></pre>
+        </div>
+
+        <div class="example">
+            <h3>Hierarchical Organization with Branches</h3>
+            <pre><code># 1. Create genesis
+ztbcreate selfie.jpg . B0000001-0000-4000-8000-000000000001
+
+# 2. Create company trunk
+ztbaddblock . CompanyLedger B0000001-0000-4000-8000-000000000002 00000000-0000-0000-0000-000000000000 -t "FY2025 Genesis"
+
+# 3. Branch for departments (each anchored to the trunk block above)
+ztbaddbranch . CompanyLedger Sales     B0000001-0000-4000-8000-000000000003 B0000001-0000-4000-8000-000000000002 -t "Sales Dept"
+ztbaddbranch . CompanyLedger Marketing B0000001-0000-4000-8000-000000000004 B0000001-0000-4000-8000-000000000002 -t "Marketing Dept"
+
+# 4. Add department records (chained off the branch's own first block)
+ztbaddblock . Sales B0000001-0000-4000-8000-000000000005 B0000001-0000-4000-8000-000000000003 -f invoice_001.pdf
+
+# 5. Verify the branch back through the trunk
+ztbverify . B0000001-0000-4000-8000-000000000005 -walk</code></pre>
+        </div>
+
+        <div class="example">
+            <h3>Checkpoint and Truncate (Archival)</h3>
+            <pre><code># Build a chain, then checkpoint and truncate it
+ztbaddblock    . FYChain C0000001-...0002 00000000-...-000000000000 -t "Block 1"
+ztbaddblock    . FYChain C0000001-...0003 C0000001-...0002          -t "Block 2"
+ztbcheckpoint  . FYChain C0000001-...0004 C0000001-...0003          "End of FY2025"
+
+# Truncate FIRST, before adding any block above the checkpoint
+ztbtruncate    . C0000001-...0004
+
+# Now continue the chain — new blocks build on the truncated history correctly
+ztbaddblock    . FYChain C0000001-...0005 C0000001-...0004          -t "First FY2026 block"</code></pre>
+        </div>
+
+        <h2 id="notes">Important Notes</h2>
+        
+        <div class="warning">
+            <h3>Critical Requirements</h3>
+            <ul>
+                <li><strong>Genesis Block is Irreplaceable</strong> - back up to multiple locations until a checkpoint/truncate establishes a new self-contained root</li>
+                <li><strong>Entropy Matters</strong> - source files should together produce good coverage of all 256 byte values</li>
+                <li><strong>Truncate Before, Not After</strong> - truncate immediately after the checkpoint, before adding further blocks above it</li>
+                <li><strong>Storage: ~2× Size</strong> - the ZOSCII-encoded section is double the size of its decoded form, plus the fixed 111-byte raw header per block</li>
+                <li><strong>Block IDs are caller-supplied</strong> - every tool takes an explicit block ID; there is no auto-generation or filename-based discovery</li>
+            </ul>
+        </div>
+
+        <div class="success">
+            <h3>Best Practices</h3>
+            <ul>
+                <li>Regular verification (daily/weekly) with <code>ztbverify ... -walk</code></li>
+                <li>Genesis block: 3+ copies, offline storage</li>
+                <li>Keep your own external record mapping chain/branch names to their first block ID — the tools don't track this for you</li>
+                <li>Monitor verification failures</li>
+                <li>Checkpoint and truncate periodically to bound chain-history size for archival</li>
+            </ul>
         </div>
     </div>
     
@@ -344,8 +512,8 @@
         <h3>License & Information</h3>
         <p><strong>MIT License</strong> - (c) 2026 Cyborg Unicorn Pty Ltd</p>
         <p>
-            <a href="https://zoscii.com" target="_blank" style="color: #007bff;">zoscii.com</a> |
-            <a href="https://github.com/PrimalNinja/cyborgzoscii" target="_blank" style="color: #007bff;">GitHub Repository</a>
+            <a href="https://zoscii.com" target="_blank">zoscii.com</a> |
+            <a href="https://github.com/PrimalNinja/cyborgzoscii" target="_blank">GitHub Repository</a>
         </p>
         <p style="margin-top: 20px; font-size: 0.9em;">
             For technical questions, security concerns, or implementation assistance,<br>
