@@ -1,782 +1,453 @@
-// Cyborg ZTB Common Functions v20260420
+// Cyborg ZTB Common Functions v20260618
 // (c) 2026 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
 
 #include "ztbcommon.h"
 
-#ifndef _WIN32
-    #include <dirent.h>
-#endif
-
-// --- Global RNG State ---
-uint32_t g_rng_state = 0;
-
-// --- Initialize RNG from ROM content (like zencode.c) ---
-void init_rng(void)
-{
-    // Seeded later via init_rng_from_rom() when ROM is available.
-    // This fallback is used by ztbcreate before any ROM exists.
-    uint32_t intSeed = (uint32_t)time(NULL);
-    intSeed ^= (uint32_t)clock();
-#ifdef _WIN32
-    intSeed ^= (uint32_t)GetCurrentProcessId();
-    intSeed ^= (uint32_t)GetTickCount();
-#else
-    intSeed ^= (uint32_t)getpid();
-#endif
-    g_rng_state = intSeed;
-    int intI;
-    for (intI = 0; intI < 10; intI++) { get_random(); }
-}
-
-// --- Initialize RNG from ROM data (matches zencode.c buildLookupTable seed) ---
-void init_rng_from_rom(const uint8_t *byRomData_a, long lngRomSize_a)
-{
-    uint32_t intRomHash = 0;
-    long intI;
-    for (intI = 0; intI < lngRomSize_a; intI++)
-    {
-        intRomHash = (intRomHash * 33) + byRomData_a[intI];
-    }
-    intRomHash ^= (uint32_t)time(NULL);
-    g_rng_state = intRomHash;
-    // Warm up
-    int intJ;
-    for (intJ = 0; intJ < 10; intJ++) { get_random(); }
-}
-
-// --- Simple xorshift32 RNG ---
-uint32_t get_random(void)
-{
-    g_rng_state ^= g_rng_state << 13;
-    g_rng_state ^= g_rng_state >> 17;
-    g_rng_state ^= g_rng_state << 5;
-    return g_rng_state;
-}
-
-// --- GUID Generation ---
-void generate_guid(char *strBuffer_a)
-{
-    snprintf(strBuffer_a, GUID_LEN,
-             "%08X-%04X-%04X-%04X-%04X%08X",
-             get_random(),
-             get_random() & 0xFFFF,
-             (get_random() & 0x0FFF) | 0x4000,
-             (get_random() & 0x3FFF) | 0x8000,
-             get_random() & 0xFFFF,
-             get_random());
-}
-
-// --- CRC32 Checksum over a buffer ---
-uint32_t calculate_checksum(const uint8_t *byData_a, size_t intLen_a)
+// --- CRC32 (matches clsZTB.CalculateCRC32) ---
+uint32_t calculate_crc32(const uint8_t *byData_a, int intOffset_a, int intLen_a)
 {
     uint32_t intCrc = 0xFFFFFFFF;
-    size_t intI;
-    int intJ;
-    for (intI = 0; intI < intLen_a; intI++)
+    int intI        = intOffset_a;
+    int intEnd      = intOffset_a + intLen_a;
+
+    while (intI < intEnd)
     {
         intCrc ^= byData_a[intI];
-        for (intJ = 0; intJ < 8; intJ++)
+        int intJ = 0;
+        while (intJ < 8)
         {
-            if (intCrc & 1)
-            {
-                intCrc = (intCrc >> 1) ^ 0xEDB88320;
-            }
-            else
-            {
-                intCrc = intCrc >> 1;
-            }
+            if (intCrc & 1) { intCrc = (intCrc >> 1) ^ 0xEDB88320; }
+            else            { intCrc =  intCrc >> 1; }
+            intJ++;
         }
+        intI++;
     }
+
     return intCrc ^ 0xFFFFFFFF;
 }
 
-// --- CRC32 Checksum over an entire file ---
-uint32_t calculate_file_checksum(const char *strFilename_a)
+// --- XorShift32 (matches clsZTB.XorShift32) ---
+uint32_t xorshift32(uint32_t intState_a)
 {
-    uint32_t intCrc = 0xFFFFFFFF;
-    FILE *f = fopen(strFilename_a, "rb");
-    if (!f) { return 0; }
+    uint32_t intX = intState_a;
+    intX ^= intX << 13;
+    intX ^= intX >> 17;
+    intX ^= intX << 5;
+    return intX;
+}
 
-    uint8_t byBuf[4096];
-    size_t intRead;
-    int intJ;
+// --- Hash bytes (matches clsZTB.HashBytes) ---
+// Only CRC32 variants implemented; rolling hash is a stub returning 0.
+uint32_t hash_bytes(int intHashType_a, const uint8_t *byData_a, int intOffset_a,
+                    int intLen_a)
+{
+    uint32_t intResult = 0;
+    int intHashLen     = intLen_a;
 
-    while ((intRead = fread(byBuf, 1, sizeof(byBuf), f)) > 0)
+    if (intHashType_a == HASH_TYPE_CRC32_1KB || intHashType_a == HASH_TYPE_ROLL_1KB)
     {
-        size_t intI;
-        for (intI = 0; intI < intRead; intI++)
+        if (intHashLen > 1024) { intHashLen = 1024; }
+    }
+
+    if (intHashType_a == HASH_TYPE_CRC32_FULL || intHashType_a == HASH_TYPE_CRC32_1KB)
+    {
+        intResult = calculate_crc32(byData_a, intOffset_a, intHashLen);
+    }
+    // HASH_TYPE_ROLL_FULL / HASH_TYPE_ROLL_1KB: stub, returns 0
+
+    return intResult;
+}
+
+// --- Read fixed-length ASCII string from byte array ---
+void read_fixed_string(const uint8_t *byData_a, int intOffset_a, int intLen_a,
+                       char *strOut_a)
+{
+    int intEnd = intOffset_a;
+    while (intEnd < intOffset_a + intLen_a && byData_a[intEnd] != 0)
+    {
+        intEnd++;
+    }
+    int intCopy = intEnd - intOffset_a;
+    memcpy(strOut_a, byData_a + intOffset_a, intCopy);
+    strOut_a[intCopy] = '\0';
+}
+
+// --- Write fixed-length ASCII string into byte array (zero-padded) ---
+void write_fixed_string(uint8_t *byData_a, int intOffset_a, int intLen_a,
+                        const char *strValue_a)
+{
+    int intSrcLen = strValue_a ? (int)strlen(strValue_a) : 0;
+    int intCopy   = intSrcLen < intLen_a ? intSrcLen : intLen_a;
+    if (intCopy > 0) { memcpy(byData_a + intOffset_a, strValue_a, intCopy); }
+    int intI = intOffset_a + intCopy;
+    while (intI < intOffset_a + intLen_a)
+    {
+        byData_a[intI] = 0;
+        intI++;
+    }
+}
+
+// --- ZOSCII encode (matches ZEncode.Bytes) ---
+// Each raw byte is replaced by a 2-byte little-endian ROM address whose value equals that byte.
+// A random address is chosen among all addresses in the ROM that hold that value.
+// The RNG seed used here mirrors the C# pattern: seeded from time millis per call.
+uint8_t* zoscii_encode(const uint8_t *byRom_a, const uint8_t *byData_a,
+                       int intLen_a, int *intEncodedLen_a)
+{
+    *intEncodedLen_a = 0;
+
+    // Build lookup: for each byte value, collect all ROM addresses that hold it
+    int arrCounts[256];
+    memset(arrCounts, 0, sizeof(arrCounts));
+
+    int intIdx;
+    for (intIdx = 0; intIdx < ROM_SIZE; intIdx++)
+    {
+        arrCounts[byRom_a[intIdx]]++;
+    }
+
+    uint32_t *arrLookup[256];
+    int intV;
+    for (intV = 0; intV < 256; intV++)
+    {
+        arrLookup[intV] = NULL;
+        if (arrCounts[intV] > 0)
         {
-            intCrc ^= byBuf[intI];
-            for (intJ = 0; intJ < 8; intJ++)
+            arrLookup[intV] = (uint32_t*)malloc(arrCounts[intV] * sizeof(uint32_t));
+            if (!arrLookup[intV])
             {
-                if (intCrc & 1)
+                int intFree;
+                for (intFree = 0; intFree < intV; intFree++)
                 {
-                    intCrc = (intCrc >> 1) ^ 0xEDB88320;
+                    if (arrLookup[intFree]) { free(arrLookup[intFree]); }
                 }
-                else
-                {
-                    intCrc = intCrc >> 1;
-                }
+                return NULL;
             }
+            arrCounts[intV] = 0;
         }
     }
-    fclose(f);
-    return intCrc ^ 0xFFFFFFFF;
-}
 
-// --- Load ROM File ---
-uint8_t* load_rom(const char *strFilename_a)
-{
-    uint8_t *byRomData = NULL;
-    FILE *f = fopen(strFilename_a, "rb");
-    if (f)
+    for (intIdx = 0; intIdx < ROM_SIZE; intIdx++)
     {
-        byRomData = malloc(ROM_SIZE);
-        if (byRomData)
-        {
-            if (fread(byRomData, 1, ROM_SIZE, f) != ROM_SIZE)
-            {
-                free(byRomData);
-                byRomData = NULL;
-            }
-        }
-        fclose(f);
+        uint8_t byVal = byRom_a[intIdx];
+        arrLookup[byVal][arrCounts[byVal]++] = (uint32_t)intIdx;
     }
-    return byRomData;
-}
 
-// --- Load ROM and seed RNG from its content ---
-uint8_t* load_rom_and_seed_rng(const char *strFilename_a)
-{
-    uint8_t *byRomData = load_rom(strFilename_a);
-    if (byRomData)
-    {
-        init_rng_from_rom(byRomData, ROM_SIZE);
-    }
-    return byRomData;
-}
+    int intOutLen  = intLen_a * 2;
+    uint8_t *byOut = (uint8_t*)malloc(intOutLen);
 
-// --- Block Comparison for Sorting ---
-int compare_blocks(const void *varA_a, const void *varB_a)
-{
-    return ((BlockInfo *)varA_a)->index - ((BlockInfo *)varB_a)->index;
-}
+    if (!byOut)
+    {
+        for (intV = 0; intV < 256; intV++) { if (arrLookup[intV]) { free(arrLookup[intV]); } }
+        return NULL;
+    }
 
-// --- Parse a .ztb filename and add to block list if it matches the chain ---
-static int parse_ztb_filename(const char *strFilename_a, const char *strChainId_a,
-                               BlockInfo *arrList_a, int intCount_a)
-{
-    int intAdded = 0;
-    if (strstr(strFilename_a, strChainId_a) == strFilename_a &&
-        strstr(strFilename_a, ".ztb"))
-    {
-        char *strUnderscore1 = strchr(strFilename_a, '_');
-        if (strUnderscore1)
-        {
-            int intIndex = atoi(strUnderscore1 + 1);
-            char *strUnderscore2 = strchr(strUnderscore1 + 1, '_');
-            if (strUnderscore2)
-            {
-                char *strDot = strstr(strUnderscore2 + 1, ".ztb");
-                if (strDot)
-                {
-                    size_t intIdLen = strDot - (strUnderscore2 + 1);
-                    if (intIdLen >= GUID_LEN) { intIdLen = GUID_LEN - 1; }
-                    strncpy(arrList_a[intCount_a].block_id, strUnderscore2 + 1, intIdLen);
-                    arrList_a[intCount_a].block_id[intIdLen] = '\0';
-                    arrList_a[intCount_a].index = intIndex;
-                    strncpy(arrList_a[intCount_a].filename, strFilename_a, FILENAME_MAX - 1);
-                    arrList_a[intCount_a].filename[FILENAME_MAX - 1] = '\0';
-                    intAdded = 1;
-                }
-            }
-        }
-    }
-    return intAdded;
-}
+    // Seed xorshift from current time (matches C# DateTimeOffset.UtcNow millis seed)
+    uint32_t intSeed = (uint32_t)time(NULL);
+    intSeed = xorshift32(intSeed);
 
-// --- Collect unique chain IDs from .ztb filenames, excluding a given chain ---
-static int collect_candidate_chain_ids(const char *strExcludeChainId_a,
-                                        char arrCandidates_a[][GUID_LEN],
-                                        int intMaxCandidates_a)
-{
-    int intCount = 0;
-#ifdef _WIN32
-    WIN32_FIND_DATAA objFindData;
-    HANDLE hFind = FindFirstFileA("*.ztb", &objFindData);
-    if (hFind != INVALID_HANDLE_VALUE)
-    {
-        do
-        {
-            const char *strName = objFindData.cFileName;
-#else
-    DIR *d = opendir(".");
-    if (d)
-    {
-        struct dirent *dir;
-        while ((dir = readdir(d)) != NULL)
-        {
-            const char *strName = dir->d_name;
-#endif
-            if (strstr(strName, ".ztb"))
-            {
-                if (!strExcludeChainId_a || strstr(strName, strExcludeChainId_a) != strName)
-                {
-                    char *strUnderscore = strchr(strName, '_');
-                    if (strUnderscore)
-                    {
-                        size_t intIdLen = strUnderscore - strName;
-                        if (intIdLen < GUID_LEN)
-                        {
-                            char strCandId[GUID_LEN];
-                            strncpy(strCandId, strName, intIdLen);
-                            strCandId[intIdLen] = '\0';
-                            int intFound = 0;
-                            int intI;
-                            for (intI = 0; intI < intCount; intI++)
-                            {
-                                if (strcmp(arrCandidates_a[intI], strCandId) == 0) { intFound = 1; }
-                            }
-                            if (!intFound && intCount < intMaxCandidates_a)
-                            {
-                                strcpy(arrCandidates_a[intCount], strCandId);
-                                intCount++;
-                            }
-                        }
-                    }
-                }
-            }
-#ifdef _WIN32
-        } while (FindNextFileA(hFind, &objFindData) != 0);
-        FindClose(hFind);
-    }
-#else
-        }
-        closedir(d);
-    }
-#endif
-    return intCount;
-}
-
-// --- Scan Chain Blocks ---
-int scan_chain_blocks(const char *strChainId_a, BlockInfo *arrList_a, int intMaxBlocks_a)
-{
-    int intCount = 0;
-#ifdef _WIN32
-    WIN32_FIND_DATAA objFindData;
-    HANDLE hFind = FindFirstFileA("*.ztb", &objFindData);
-    if (hFind != INVALID_HANDLE_VALUE)
-    {
-        do
-        {
-            if (intCount < intMaxBlocks_a)
-            {
-                if (parse_ztb_filename(objFindData.cFileName, strChainId_a, arrList_a, intCount))
-                {
-                    intCount++;
-                }
-            }
-        } while (FindNextFileA(hFind, &objFindData) != 0);
-        FindClose(hFind);
-    }
-#else
-    DIR *d = opendir(".");
-    if (d)
-    {
-        struct dirent *dir;
-        while ((dir = readdir(d)) != NULL && intCount < intMaxBlocks_a)
-        {
-            if (parse_ztb_filename(dir->d_name, strChainId_a, arrList_a, intCount))
-            {
-                intCount++;
-            }
-        }
-        closedir(d);
-    }
-#endif
-    if (intCount > 0)
-    {
-        qsort(arrList_a, intCount, sizeof(BlockInfo), compare_blocks);
-    }
-    return intCount;
-}
-
-// --- ZOSCII Encode Entire Block ---
-uint8_t* zoscii_encode_block(const uint8_t *byRomData_a, const uint8_t *byRawBlock_a,
-                             size_t intRawLen_a, size_t *intEncodedLen_a)
-{
-    uint8_t *byEncoded = NULL;
+    int intFailed = 0;
     int intI;
-    size_t intIdx;
-    uint32_t arrCounts[256] = {0};
-    for (intIdx = 0; intIdx < ROM_SIZE; intIdx++) { arrCounts[byRomData_a[intIdx]]++; }
-
-    uint32_t **arrLookup = malloc(256 * sizeof(uint32_t*));
-    if (arrLookup)
+    for (intI = 0; intI < intLen_a && !intFailed; intI++)
     {
-        for (intI = 0; intI < 256; intI++)
+        uint8_t byVal = byData_a[intI];
+        if (arrCounts[byVal] == 0)
         {
-            arrLookup[intI] = malloc(arrCounts[intI] * sizeof(uint32_t));
-            arrCounts[intI] = 0;
+            fprintf(stderr, "Error: byte 0x%02X not in ROM\n", byVal);
+            intFailed = 1;
         }
-        for (intIdx = 0; intIdx < ROM_SIZE; intIdx++)
+        else
         {
-            uint8_t byVal = byRomData_a[intIdx];
-            arrLookup[byVal][arrCounts[byVal]++] = intIdx;
+            intSeed = xorshift32(intSeed);
+            uint32_t intRandIdx  = intSeed % (uint32_t)arrCounts[byVal];
+            uint32_t intAddr     = arrLookup[byVal][intRandIdx];
+            byOut[intI * 2]     = (uint8_t)(intAddr & 0xFF);
+            byOut[intI * 2 + 1] = (uint8_t)((intAddr >> 8) & 0xFF);
         }
-
-        *intEncodedLen_a = intRawLen_a * 2;
-        byEncoded = malloc(*intEncodedLen_a);
-        if (byEncoded)
-        {
-            int intEncodeFailed = 0;
-            for (intIdx = 0; intIdx < intRawLen_a && !intEncodeFailed; intIdx++)
-            {
-                uint8_t byVal = byRawBlock_a[intIdx];
-                if (arrCounts[byVal] == 0)
-                {
-                    fprintf(stderr, "Error: Byte 0x%02X not in ROM\n", byVal);
-                    intEncodeFailed = 1;
-                }
-                else
-                {
-                    uint32_t intRandIdx = get_random() % arrCounts[byVal];
-                    uint32_t intAddr = arrLookup[byVal][intRandIdx];
-                    uint16_t intPtr = (uint16_t)intAddr;
-                    byEncoded[intIdx * 2] = intPtr & 0xFF;
-                    byEncoded[intIdx * 2 + 1] = (intPtr >> 8) & 0xFF;
-                }
-            }
-            if (intEncodeFailed) { free(byEncoded); byEncoded = NULL; }
-        }
-        for (intI = 0; intI < 256; intI++) { free(arrLookup[intI]); }
-        free(arrLookup);
     }
-    return byEncoded;
+
+    for (intV = 0; intV < 256; intV++) { if (arrLookup[intV]) { free(arrLookup[intV]); } }
+
+    if (intFailed)
+    {
+        free(byOut);
+        return NULL;
+    }
+
+    *intEncodedLen_a = intOutLen;
+    return byOut;
 }
 
-// --- ZOSCII Decode Entire Block ---
-uint8_t* zoscii_decode_block(const uint8_t *byRomData_a, const uint8_t *byEncodedBlock_a,
-                             size_t intEncodedLen_a, size_t *intDecodedLen_a)
+// --- ZOSCII decode (matches ZDecode.Bytes) ---
+// Each 2-byte little-endian address is looked up in the ROM to recover the original byte.
+uint8_t* zoscii_decode(const uint8_t *byRom_a, const uint8_t *byData_a,
+                       int intOffset_a, int intLen_a, int *intDecodedLen_a)
 {
-    uint8_t *byDecoded = NULL;
-    *intDecodedLen_a = intEncodedLen_a / 2;
-    byDecoded = malloc(*intDecodedLen_a);
-    if (byDecoded)
+    *intDecodedLen_a = intLen_a / 2;
+    uint8_t *byOut   = (uint8_t*)malloc(*intDecodedLen_a);
+
+    if (!byOut) { return NULL; }
+
+    int intFailed = 0;
+    int intI;
+    for (intI = 0; intI < *intDecodedLen_a && !intFailed; intI++)
     {
-        int intDecodeFailed = 0;
-        size_t intI;
-        for (intI = 0; intI < *intDecodedLen_a && !intDecodeFailed; intI++)
+        int intSrc      = intOffset_a + intI * 2;
+        uint32_t intPtr = (uint32_t)(byData_a[intSrc] | (byData_a[intSrc + 1] << 8));
+        if (intPtr >= (uint32_t)ROM_SIZE)
         {
-            uint16_t intPtr = byEncodedBlock_a[intI * 2] | (byEncodedBlock_a[intI * 2 + 1] << 8);
-            if (intPtr >= ROM_SIZE)
-            {
-                fprintf(stderr, "Error: Pointer %u out of bounds\n", intPtr);
-                intDecodeFailed = 1;
-            }
-            else
-            {
-                byDecoded[intI] = byRomData_a[intPtr];
-            }
+            fprintf(stderr, "Error: ROM pointer %u out of range\n", (unsigned)intPtr);
+            intFailed = 1;
         }
-        if (intDecodeFailed) { free(byDecoded); byDecoded = NULL; }
+        else
+        {
+            byOut[intI] = byRom_a[intPtr];
+        }
     }
-    return byDecoded;
+
+    if (intFailed) { free(byOut); return NULL; }
+    return byOut;
 }
 
-// --- Build Rolling ROM ---
-int build_rolling_rom(const char *strGenesisRomFile_a,
-                      const BlockInfo *arrChainHistory_a, int intChainCount_a,
-                      const BlockInfo *arrTrunkHistory_a, int intTrunkCount_a,
-                      int intTargetIndex_a, uint8_t *byRollingRom_a)
+// --- Load block file: <workdir>/<blockID>.ztb ---
+uint8_t* load_block(const char *strWorkDir_a, const char *strBlockID_a, int *intLen_a)
 {
-    uint8_t *byGenesisRom = load_rom(strGenesisRomFile_a);
-    if (!byGenesisRom) { fprintf(stderr, "Error: Cannot load genesis ROM\n"); return 0; }
+    char strPath[FILENAME_MAX];
+    snprintf(strPath, FILENAME_MAX, "%s/%s.ztb", strWorkDir_a, strBlockID_a);
 
-    size_t intBytesCopied = 0;
-    int intSamplesTaken = 0;
-
-    if (intChainCount_a > 0)
-    {
-        int intAvailable = 0;
-        int intI;
-        for (intI = 0; intI < intChainCount_a; intI++)
-        {
-            if (arrChainHistory_a[intI].index < intTargetIndex_a) { intAvailable++; }
-        }
-        int intToSample = (intAvailable < MAX_HISTORY_BLOCKS) ? intAvailable : MAX_HISTORY_BLOCKS;
-        int intStartIdx = intAvailable - intToSample;
-        int intCurrent = 0;
-
-        for (intI = 0; intI < intChainCount_a; intI++)
-        {
-            if (arrChainHistory_a[intI].index >= intTargetIndex_a) { intCurrent++; }
-            else if (intCurrent < intStartIdx) { intCurrent++; }
-            else if (intBytesCopied + ROM_ENTRY_SIZE > ROM_SIZE) { break; }
-            else if (intSamplesTaken >= MAX_HISTORY_BLOCKS) { break; }
-            else
-            {
-                FILE *f = fopen(arrChainHistory_a[intI].filename, "rb");
-                if (f)
-                {
-                    uint8_t byEncodedSample[ROM_ENTRY_SIZE];
-                    size_t intReadBytes = fread(byEncodedSample, 1, ROM_ENTRY_SIZE, f);
-                    if (intReadBytes >= ROM_ENTRY_SIZE)
-                    {
-                        memcpy(byRollingRom_a + intBytesCopied, byEncodedSample, ROM_ENTRY_SIZE);
-                        intBytesCopied += ROM_ENTRY_SIZE;
-                        intSamplesTaken++;
-                    }
-                    fclose(f);
-                }
-                intCurrent++;
-            }
-        }
-    }
-
-    if (intSamplesTaken < MAX_HISTORY_BLOCKS && intTrunkCount_a > 0)
-    {
-        int intRemaining = MAX_HISTORY_BLOCKS - intSamplesTaken;
-        int intTrunkSamples = (intTrunkCount_a < intRemaining) ? intTrunkCount_a : intRemaining;
-        int intStartIdx = intTrunkCount_a - intTrunkSamples;
-        int intI;
-        for (intI = intStartIdx; intI < intTrunkCount_a; intI++)
-        {
-            if (intBytesCopied + ROM_ENTRY_SIZE > ROM_SIZE) { break; }
-            else if (intSamplesTaken >= MAX_HISTORY_BLOCKS) { break; }
-            else
-            {
-                FILE *f = fopen(arrTrunkHistory_a[intI].filename, "rb");
-                if (f)
-                {
-                    uint8_t byEncodedSample[ROM_ENTRY_SIZE];
-                    size_t intReadBytes = fread(byEncodedSample, 1, ROM_ENTRY_SIZE, f);
-                    if (intReadBytes >= ROM_ENTRY_SIZE)
-                    {
-                        memcpy(byRollingRom_a + intBytesCopied, byEncodedSample, ROM_ENTRY_SIZE);
-                        intBytesCopied += ROM_ENTRY_SIZE;
-                        intSamplesTaken++;
-                    }
-                    fclose(f);
-                }
-            }
-        }
-    }
-
-    if (intBytesCopied < ROM_SIZE)
-    {
-        memcpy(byRollingRom_a + intBytesCopied, byGenesisRom, ROM_SIZE - intBytesCopied);
-    }
-
-    free(byGenesisRom);
-    return 1;
-}
-
-// --- X2 Mode: XOR a buffer with a file's content, always wrapping if file is shorter ---
-// The previous block file XORs the current output buffer byte-for-byte.
-// If the file is shorter than the buffer, wrap back to start and continue.
-// This ensures every byte of the previous block contributes to the XOR regardless
-// of the size relationship between the two blocks.
-int xor_buffer_with_file(uint8_t *byBuffer_a, size_t intBufferLen_a,
-                         const char *strFilename_a)
-{
-    FILE *f = fopen(strFilename_a, "rb");
-    if (!f)
-    {
-        fprintf(stderr, "Error: Cannot open previous block '%s' for X2 mode\n", strFilename_a);
-        return 0;
-    }
-
-    fseek(f, 0, SEEK_END);
-    long lngFileLen = ftell(f);
-    fseek(f, 0, SEEK_SET);
-
-    if (lngFileLen == 0)
-    {
-        fclose(f);
-        return 0;
-    }
-
-    size_t intBufPos = 0;
-    uint8_t byBuf[4096];
-
-    while (intBufPos < intBufferLen_a)
-    {
-        size_t intToRead = intBufferLen_a - intBufPos;
-        if (intToRead > sizeof(byBuf))
-        {
-            intToRead = sizeof(byBuf);
-        }
-
-        size_t intRead = fread(byBuf, 1, intToRead, f);
-        if (intRead == 0)
-        {
-            // EOF — wrap back to start of file
-            fseek(f, 0, SEEK_SET);
-            intRead = fread(byBuf, 1, intToRead, f);
-            if (intRead == 0)
-            {
-                break;
-            }
-        }
-
-        size_t intI;
-        for (intI = 0; intI < intRead && intBufPos < intBufferLen_a; intI++)
-        {
-            byBuffer_a[intBufPos] ^= byBuf[intI];
-            intBufPos++;
-        }
-    }
-
-    fclose(f);
-    return 1;
-}
-
-// --- Try to decode block 1 of a chain with a given ROM ---
-// Used by detect_branch_status and discover_branches_from_trunk.
-// strPrevBlockFilename_a: filename of the previous block for X1 un-XOR (trunk's last block
-// for a branch block 1, NULL for a trunk block 1 which is always stored plain even in X1).
-// Returns 1 and fills objHeaderOut_a if the CRC and decode succeed; 0 otherwise.
-static int try_decode_block1(const uint8_t *byRom_a, const char *strFilename_a,
-                              const char *strPrevBlockFilename_a,
-                              ZTB_BlockHeader *objHeaderOut_a)
-{
-    int intValid = 0;
-    FILE *f = fopen(strFilename_a, "rb");
+    uint8_t *byResult = NULL;
+    FILE *f = fopen(strPath, "rb");
     if (f)
     {
         fseek(f, 0, SEEK_END);
-        size_t intFileLen = ftell(f);
+        long lngSize = ftell(f);
         fseek(f, 0, SEEK_SET);
 
-        if (intFileLen > BLOCK_PREFIX_ENCODED_SIZE)
+        if (lngSize > 0)
         {
-            uint8_t *byFileData = malloc(intFileLen);
-            if (byFileData)
+            byResult = (uint8_t*)malloc(lngSize);
+            if (byResult)
             {
-                if (fread(byFileData, 1, intFileLen, f) == intFileLen)
+                if (fread(byResult, 1, lngSize, f) == (size_t)lngSize)
                 {
-                    // Read mode from encoded bytes 0-1 (never XOR'd on disk).
-                    size_t intModeDecodedLen;
-                    uint8_t *byModeDecoded = zoscii_decode_block(byRom_a, byFileData, 2,
-                                                                  &intModeDecodedLen);
-                    uint8_t byMode = MODE_NORMAL;
-                    if (byModeDecoded && intModeDecodedLen >= 1)
-                    {
-                        byMode = byModeDecoded[0];
-                        free(byModeDecoded);
-                    }
-                    else
-                    {
-                        if (byModeDecoded) { free(byModeDecoded); }
-                        free(byFileData);
-                        fclose(f);
-                        return 0;
-                    }
-
-                    // If X2 and a previous block is available, un-XOR the file data.
-                    // Trunk block 1 has no previous block and was written plain — skip XOR.
-                    if (byMode == MODE_X2 && strPrevBlockFilename_a != NULL)
-                    {
-                        if (!xor_buffer_with_file(byFileData, intFileLen, strPrevBlockFilename_a))
-                        {
-                            free(byFileData);
-                            fclose(f);
-                            return 0;
-                        }
-                        // Bytes 0-1 (mode) were never XOR'd by the writer; restore them
-                        // so the CRC decode at bytes 2-17 uses the correct data.
-                        // We already have byMode, so just leave bytes 0-1 as-is (they are
-                        // doubly-XOR'd but we won't use them again).
-                    }
-
-                    // Decode the CRC fields from encoded bytes 2-17.
-                    size_t intPrefixDecodedLen;
-                    uint8_t *byPrefixDecoded = zoscii_decode_block(byRom_a, byFileData + 2,
-                                                                    CRC_PREFIX_ENCODED_SIZE,
-                                                                    &intPrefixDecodedLen);
-                    if (byPrefixDecoded && intPrefixDecodedLen >= BLOCK_TYPE_SIZE + BLOCK_VERSION_SIZE + HASH_TYPE_SIZE + HASH_SIZE * 2)
-                    {
-                        // [0]=block_type [1]=block_version [2]=hash_type [3-6]=hash [7-10]=prevHash
-                        uint32_t intStoredCrc = byPrefixDecoded[3] | (byPrefixDecoded[4] << 8) |
-                                                (byPrefixDecoded[5] << 16) | (byPrefixDecoded[6] << 24);
-                        free(byPrefixDecoded);
-
-                        // Verify CRC32 over the encoded block data (after prefix)
-                        size_t intEncodedLen = intFileLen - BLOCK_PREFIX_ENCODED_SIZE;
-                        uint32_t intCalcCrc = calculate_checksum(byFileData + BLOCK_PREFIX_ENCODED_SIZE,
-                                                                 intEncodedLen);
-
-                        if (intCalcCrc == intStoredCrc)
-                        {
-                            // Decode block body to read the header
-                            size_t intDecodedLen;
-                            uint8_t *byDecoded = zoscii_decode_block(byRom_a,
-                                                                      byFileData + BLOCK_PREFIX_ENCODED_SIZE,
-                                                                      intEncodedLen, &intDecodedLen);
-                            if (byDecoded && intDecodedLen >= sizeof(ZTB_BlockHeader))
-                            {
-                                memcpy(objHeaderOut_a, byDecoded, sizeof(ZTB_BlockHeader));
-                                intValid = 1;
-                                free(byDecoded);
-                            }
-                            else
-                            {
-                                if (byDecoded) { free(byDecoded); }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if (byPrefixDecoded) { free(byPrefixDecoded); }
-                    }
+                    *intLen_a = (int)lngSize;
                 }
-                free(byFileData);
+                else
+                {
+                    free(byResult);
+                    byResult  = NULL;
+                    *intLen_a = 0;
+                }
             }
         }
         fclose(f);
     }
-    return intValid;
+
+    return byResult;
 }
 
-// --- Detect Branch Status ---
-int detect_branch_status(const char *strGenesisRomFile_a,
-                        const BlockInfo *arrChainHistory_a, int intChainCount_a,
-                        const char *strChainId_a, char *strTrunkIdOut_a)
+// --- Find genesis: scan workdir for a .ztb file of exactly ROM_SIZE bytes ---
+uint8_t* find_genesis(const char *strWorkDir_a)
 {
-    int intIsBranch = 0;
-    strcpy(strTrunkIdOut_a, NULL_GUID);
-    if (intChainCount_a == 0) { return 0; }
+    uint8_t *byResult = NULL;
 
-    // Try decoding block 1 with pure genesis ROM (works if this is a trunk)
+#ifdef _WIN32
+    char strPattern[FILENAME_MAX];
+    snprintf(strPattern, FILENAME_MAX, "%s/*.ztb", strWorkDir_a);
+    WIN32_FIND_DATAA objFind;
+    HANDLE hFind = FindFirstFileA(strPattern, &objFind);
+    if (hFind != INVALID_HANDLE_VALUE)
     {
-        uint8_t *byGenesisRom = load_rom(strGenesisRomFile_a);
-        if (byGenesisRom)
+        do
         {
-            ZTB_BlockHeader objHeader;
-            // Trunk block 1 has no previous block (written plain even in X1) — pass NULL.
-            if (try_decode_block1(byGenesisRom, arrChainHistory_a[0].filename, NULL, &objHeader))
+            if (objFind.nFileSizeHigh == 0 && objFind.nFileSizeLow == ROM_SIZE)
             {
-                if (objHeader.is_branch == 1)
+                char strPath[FILENAME_MAX];
+                snprintf(strPath, FILENAME_MAX, "%s/%s", strWorkDir_a, objFind.cFileName);
+                FILE *f = fopen(strPath, "rb");
+                if (f)
                 {
-                    intIsBranch = 1;
-                    strncpy(strTrunkIdOut_a, objHeader.trunk_id, GUID_LEN - 1);
-                    strTrunkIdOut_a[GUID_LEN - 1] = '\0';
+                    byResult = (uint8_t*)malloc(ROM_SIZE);
+                    if (byResult)
+                    {
+                        if (fread(byResult, 1, ROM_SIZE, f) != ROM_SIZE)
+                        {
+                            free(byResult);
+                            byResult = NULL;
+                        }
+                    }
+                    fclose(f);
                 }
             }
-            free(byGenesisRom);
         }
+        while (byResult == NULL && FindNextFileA(hFind, &objFind) != 0);
+        FindClose(hFind);
     }
-
-    // If genesis decode didn't confirm branch, try candidate trunks
-    if (!intIsBranch)
+#else
+    DIR *d = opendir(strWorkDir_a);
+    if (d)
     {
-        char arrCandidates[100][GUID_LEN];
-        int intCandidateCount = collect_candidate_chain_ids(strChainId_a, arrCandidates, 100);
-        int intC;
-        for (intC = 0; intC < intCandidateCount && !intIsBranch; intC++)
+        struct dirent *dir;
+        while (byResult == NULL && (dir = readdir(d)) != NULL)
         {
-            BlockInfo *arrCandTrunkHistory = malloc(MAX_BLOCKS_TO_SCAN * sizeof(BlockInfo));
-            if (arrCandTrunkHistory)
+            int intNameLen = (int)strlen(dir->d_name);
+            if (intNameLen > 4 && strcmp(dir->d_name + intNameLen - 4, ".ztb") == 0)
             {
-                int intCandTrunkCount = scan_chain_blocks(arrCandidates[intC],
-                                                          arrCandTrunkHistory, MAX_BLOCKS_TO_SCAN);
-                if (intCandTrunkCount > 0)
+                char strPath[FILENAME_MAX];
+                snprintf(strPath, FILENAME_MAX, "%s/%s", strWorkDir_a, dir->d_name);
+                struct stat objStat;
+                if (stat(strPath, &objStat) == 0 && objStat.st_size == ROM_SIZE)
                 {
-                    uint8_t *byRollingRom = malloc(ROM_SIZE);
-                    if (byRollingRom)
+                    FILE *f = fopen(strPath, "rb");
+                    if (f)
                     {
-                        if (build_rolling_rom(strGenesisRomFile_a, NULL, 0,
-                                              arrCandTrunkHistory, intCandTrunkCount, 1, byRollingRom))
+                        byResult = (uint8_t*)malloc(ROM_SIZE);
+                        if (byResult)
                         {
-                            ZTB_BlockHeader objHeader;
-                            // Branch block 1 in X2 mode is XOR'd with the trunk's last block.
-                            const char *strPrevFile = arrCandTrunkHistory[intCandTrunkCount - 1].filename;
-                            if (try_decode_block1(byRollingRom, arrChainHistory_a[0].filename,
-                                                  strPrevFile, &objHeader))
+                            if (fread(byResult, 1, ROM_SIZE, f) != ROM_SIZE)
                             {
-                                if (objHeader.is_branch == 1 &&
-                                    strcmp(objHeader.trunk_id, arrCandidates[intC]) == 0)
-                                {
-                                    intIsBranch = 1;
-                                    strncpy(strTrunkIdOut_a, objHeader.trunk_id, GUID_LEN - 1);
-                                    strTrunkIdOut_a[GUID_LEN - 1] = '\0';
-                                }
+                                free(byResult);
+                                byResult = NULL;
                             }
                         }
-                        free(byRollingRom);
+                        fclose(f);
                     }
                 }
-                free(arrCandTrunkHistory);
             }
         }
+        closedir(d);
     }
+#endif
 
-    return intIsBranch;
+    return byResult;
 }
 
-// --- Discover Branches from Trunk ---
-int discover_branches_from_trunk(const char *strGenesisRomFile_a, const char *strTrunkId_a,
-                                 BranchInfo *arrBranches_a, int intMaxBranches_a)
+// --- Build rolling ROM (matches clsZTB.BuildRollingROM exactly) ---
+// Walks back from strPrevBlockID_a via prev_block_id in the raw header,
+// collecting up to MAX_HISTORY_BLOCKS blocks.
+// Copies first ROM_ENTRY_SIZE bytes of each block into the ROM buffer.
+// If a truncation block is found at the bottom, its payload (bytes 111..111+65535) is used
+// as the fill source instead of the genesis.
+// Remainder is filled from the fill source (truncation payload or genesis).
+uint8_t* build_rolling_rom(const char *strWorkDir_a, const char *strPrevBlockID_a)
 {
-    int intBranchCount = 0;
+    uint8_t *arrROM        = (uint8_t*)malloc(ROM_SIZE);
+    if (!arrROM) { return NULL; }
+    memset(arrROM, 0, ROM_SIZE);
 
-    char arrCandidates[100][GUID_LEN];
-    int intCandidateCount = collect_candidate_chain_ids(strTrunkId_a, arrCandidates, 100);
+    int intBytesCopied   = 0;
+    int intSamples       = 0;
+    uint8_t *byTruncPayload = NULL;
 
-    if (intCandidateCount > 0)
+    if (strPrevBlockID_a != NULL && strcmp(strPrevBlockID_a, NULL_GUID) != 0)
     {
-        BlockInfo *arrTrunkHistory = malloc(MAX_BLOCKS_TO_SCAN * sizeof(BlockInfo));
-        int intTrunkCount = 0;
-        if (arrTrunkHistory)
-        {
-            intTrunkCount = scan_chain_blocks(strTrunkId_a, arrTrunkHistory, MAX_BLOCKS_TO_SCAN);
-        }
+        // Walk back up to MAX_HISTORY_BLOCKS, collecting block bytes oldest-first
+        // We walk forward first to collect, then copy oldest first — match C# WalkBack
+        // which does Insert(0, ...) so result is oldest-first.
+        uint8_t *arrHistory[MAX_HISTORY_BLOCKS];
+        int      arrHistoryLen[MAX_HISTORY_BLOCKS];
+        int      intHistCount = 0;
 
-        int intC;
-        for (intC = 0; intC < intCandidateCount && intBranchCount < intMaxBranches_a; intC++)
+        char strCurrentID[GUID_LEN];
+        strncpy(strCurrentID, strPrevBlockID_a, GUID_LEN - 1);
+        strCurrentID[GUID_LEN - 1] = '\0';
+
+        while (strcmp(strCurrentID, NULL_GUID) != 0 &&
+               strlen(strCurrentID) > 0 &&
+               intHistCount < MAX_HISTORY_BLOCKS)
         {
-            BlockInfo *arrCandHistory = malloc(MAX_BLOCKS_TO_SCAN * sizeof(BlockInfo));
-            if (arrCandHistory)
-            {
-                int intCandCount = scan_chain_blocks(arrCandidates[intC],
-                                                     arrCandHistory, MAX_BLOCKS_TO_SCAN);
-                if (intCandCount > 0)
-                {
-                    uint8_t *byRollingRom = malloc(ROM_SIZE);
-                    if (byRollingRom)
-                    {
-                        if (build_rolling_rom(strGenesisRomFile_a, NULL, 0,
-                                              arrTrunkHistory, intTrunkCount, 1, byRollingRom))
-                        {
-                            ZTB_BlockHeader objHeader;
-                            // Branch block 1 in X2 mode is XOR'd with the trunk's last block.
-                            const char *strPrevFile = (intTrunkCount > 0)
-                                                      ? arrTrunkHistory[intTrunkCount - 1].filename
-                                                      : NULL;
-                            if (try_decode_block1(byRollingRom, arrCandHistory[0].filename,
-                                                  strPrevFile, &objHeader))
-                            {
-                                if (objHeader.is_branch == 1 &&
-                                    strcmp(objHeader.trunk_id, strTrunkId_a) == 0)
-                                {
-                                    strncpy(arrBranches_a[intBranchCount].branch_id,
-                                            arrCandidates[intC], GUID_LEN - 1);
-                                    arrBranches_a[intBranchCount].branch_id[GUID_LEN - 1] = '\0';
-                                    intBranchCount++;
-                                }
-                            }
-                        }
-                        free(byRollingRom);
-                    }
-                }
-                free(arrCandHistory);
+            int intBlockLen = 0;
+            uint8_t *byBlock = load_block(strWorkDir_a, strCurrentID, &intBlockLen);
+            if (!byBlock || intBlockLen < HEADER_RAW_SIZE) 
+            { 
+                if (byBlock) { free(byBlock); }
+                break; 
             }
+
+            // Insert at front (shift existing entries right) to match C# Insert(0, ...)
+            int intShift;
+            for (intShift = intHistCount; intShift > 0; intShift--)
+            {
+                arrHistory[intShift]    = arrHistory[intShift - 1];
+                arrHistoryLen[intShift] = arrHistoryLen[intShift - 1];
+            }
+            arrHistory[0]    = byBlock;
+            arrHistoryLen[0] = intBlockLen;
+            intHistCount++;
+
+            // Stop walking at truncation block
+            if (byBlock[RAW_OFF_BLOCK_TYPE] == BLOCK_TYPE_TRUNCATION) { break; }
+
+            read_fixed_string(byBlock, RAW_OFF_PREV_ID, 36, strCurrentID);
         }
 
-        if (arrTrunkHistory) { free(arrTrunkHistory); }
+        // Check if oldest block is truncation — extract its ROM payload
+        if (intHistCount > 0 &&
+            arrHistory[0][RAW_OFF_BLOCK_TYPE] == BLOCK_TYPE_TRUNCATION)
+        {
+            if (arrHistoryLen[0] >= HEADER_RAW_SIZE + ROM_SIZE)
+            {
+                byTruncPayload = (uint8_t*)malloc(ROM_SIZE);
+                if (byTruncPayload)
+                {
+                    memcpy(byTruncPayload, arrHistory[0] + HEADER_RAW_SIZE, ROM_SIZE);
+                }
+            }
+            free(arrHistory[0]);
+            // Shift remaining entries down
+            int intShift;
+            for (intShift = 0; intShift < intHistCount - 1; intShift++)
+            {
+                arrHistory[intShift]    = arrHistory[intShift + 1];
+                arrHistoryLen[intShift] = arrHistoryLen[intShift + 1];
+            }
+            intHistCount--;
+        }
+
+        // Copy first ROM_ENTRY_SIZE bytes of each block into ROM
+        int intI;
+        for (intI = 0; intI < intHistCount; intI++)
+        {
+            if (intBytesCopied + ROM_ENTRY_SIZE > ROM_SIZE) { break; }
+            if (intSamples >= MAX_HISTORY_BLOCKS)           { break; }
+            int intCopy = arrHistoryLen[intI] < ROM_ENTRY_SIZE
+                          ? arrHistoryLen[intI] : ROM_ENTRY_SIZE;
+            memcpy(arrROM + intBytesCopied, arrHistory[intI], intCopy);
+            intBytesCopied += ROM_ENTRY_SIZE;
+            intSamples++;
+        }
+
+        for (intI = 0; intI < intHistCount; intI++) { free(arrHistory[intI]); }
     }
 
-    return intBranchCount;
+    // Fill remainder from truncation payload or genesis
+    if (intBytesCopied < ROM_SIZE)
+    {
+        uint8_t *byFill = byTruncPayload;
+        if (byFill == NULL)
+        {
+            byFill = find_genesis(strWorkDir_a);
+        }
+
+        if (byFill != NULL && byFill != byTruncPayload)
+        {
+            // byFill is genesis — check length
+            memcpy(arrROM + intBytesCopied, byFill, ROM_SIZE - intBytesCopied);
+            free(byFill);
+        }
+        else if (byFill != NULL)
+        {
+            memcpy(arrROM + intBytesCopied, byFill, ROM_SIZE - intBytesCopied);
+        }
+        else
+        {
+            free(arrROM);
+            if (byTruncPayload) { free(byTruncPayload); }
+            return NULL;
+        }
+    }
+
+    if (byTruncPayload) { free(byTruncPayload); }
+    return arrROM;
 }

@@ -15,6 +15,10 @@ An innovative character encoding system that eliminates lookup table overhead wh
 
 CyborgZOSCII is an alternative to ASCII/PETSCII that uses direct ROM addressing instead of traditional character-to-value mapping. This approach provides significant advantages for resource-constrained systems while offering unique security properties.
 
+Encryption providers are supplied as standalone DLLs. The C# NuGet can use them to provide a seamless, extensible way to convert encrypted data to ZOSCII or UNSIGNAL Protocol. You can add new DLLs at any future date without ever changing your application - as long as they follow the interface contract. Drop a new encryption DLL into the plugins folder, add its filename to the probe list, and it appears in the dropdown immediately. No code changes. No recompilation. No configuration files. Amiga-style discovery.  
+
+They are also separate from the NuGet to avoid any encryption export laws, as the NuGet doesn't have any internal encryption.
+
 ## Developer Resources
 
 - CyborgUnicorn.ZOSCII nuget source

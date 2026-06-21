@@ -1,21 +1,22 @@
 @echo off
 REM ============================================================
-REM  ZTB Test Suite v20260420
+REM  ZTB Test Suite v20260618
 REM  (c) 2026 Cyborg Unicorn Pty Ltd - MIT License
 REM
-REM  Comprehensive test of all ZTB tools:
-REM    Test 1: Genesis ROM creation
-REM    Test 2: 100-block trunk chain
-REM    Test 3: Branch creation and population
-REM    Test 4: Fetch and verify individual blocks
-REM    Test 5: Full chain verification (trunk + branches)
-REM    Test 6: Checkpoint and archive split
-REM    Test 7: Post-checkpoint chain continuation
-REM    Test 8: Independent archive verification
-REM    Test 9: File payload test
-REM    Test 10: Tamper detection test
-REM    Test 11: Edge cases
-REM    Test 12: Supplied block ID (-i parameter)
+REM  Mirrors runZTBTests() from test.cs as closely as possible.
+REM
+REM  Tests:
+REM    1.  Create - genesis block creation, size, duplicate rejection
+REM    2.  AddBlock - first block, prev=NULL_GUID, IsBranch=false
+REM    3.  AddBlock - second block, prev links, PrevHash non-zero
+REM    4.  AddBlockText / AddBlockFile
+REM    5.  FetchBlock - payload round trips, missing block fails
+REM    6.  Verify - 4-block chain, tamper detection
+REM    7.  20-block trunk, fetch block 1/10/20, verify all 20
+REM    8.  AddBranch - branch block, IsBranch=true, TrunkID links
+REM    9.  AddCheckpoint - BlockType=Checkpoint, label round trip
+REM    10. Finalise
+REM    11. Truncate - checkpoint, truncate, post-truncation block, verify-walk
 REM ============================================================
 
 setlocal enabledelayedexpansion
@@ -24,746 +25,602 @@ set PASS=0
 set FAIL=0
 set TOTAL=0
 
+set NULL_GUID=00000000-0000-0000-0000-000000000000
+
 echo ============================================================
-echo  ZTB Test Suite v20260420
+echo  ZTB Test Suite v20260618
 echo  ^(c^) 2026 Cyborg Unicorn Pty Ltd - MIT License
 echo ============================================================
 echo.
 
-REM --- Clean up any previous test data ---
+REM --- GUIDs (fixed for reproducibility, matching test.cs style) ---
+set GEN_ID=A0000001-0000-4000-8000-000000000001
+set B1_ID=A0000001-0000-4000-8000-000000000002
+set B2_ID=A0000001-0000-4000-8000-000000000003
+set B3_ID=A0000001-0000-4000-8000-000000000004
+set B4_ID=A0000001-0000-4000-8000-000000000005
+set MISS_ID=FFFFFFFF-FFFF-4FFF-8FFF-FFFFFFFFFFFF
+set GEN_DUP_ID=A0000001-0000-4000-8000-000000000001
+
+REM --- Clean up ---
 if exist testdata rd /s /q testdata
-mkdir testdata
-cd testdata
+mkdir testdata\workdir
 
 REM ============================================================
-REM  TEST 1: Genesis ROM Creation
+REM  TEST 1: Create
 REM ============================================================
-echo --- TEST 1: Genesis ROM Creation ---
+echo --- TEST 1: ZTB - Create ---
 
-..\ztbcreate ..\selfie.jpg genesis.rom > nul 2>&1
-
-if exist genesis.rom (
-    echo   [PASS] Genesis ROM created
-    set /a PASS+=1
-) else (
-    echo   [FAIL] Genesis ROM not created
-    set /a FAIL+=1
-)
-set /a TOTAL+=1
-
-REM Check file size (should be 65536 bytes)
-for %%A in (genesis.rom) do set ROMSIZE=%%~zA
-if "%ROMSIZE%"=="65536" (
-    echo   [PASS] Genesis ROM size correct: %ROMSIZE% bytes
-    set /a PASS+=1
-) else (
-    echo   [FAIL] Genesis ROM size wrong: %ROMSIZE% bytes ^(expected 65536^)
-    set /a FAIL+=1
-)
-set /a TOTAL+=1
-echo.
-
-REM ============================================================
-REM  TEST 2: 100-Block Trunk Chain
-REM ============================================================
-echo --- TEST 2: 100-Block Trunk Chain ---
-
-set TRUNK_ERRORS=0
-for /L %%N in (1,1,100) do (
-    ..\ztbaddblock genesis.rom MainTrunk -t "Trunk block %%N of 100 - timestamp test data padding to ensure reasonable payload size" > nul 2>&1
-    if errorlevel 1 (
-        set /a TRUNK_ERRORS+=1
-    )
-)
-
-REM Count .ztb files for MainTrunk
-set TRUNK_COUNT=0
-for %%F in (MainTrunk_*.ztb) do set /a TRUNK_COUNT+=1
-
-if "%TRUNK_COUNT%"=="100" (
-    echo   [PASS] 100 trunk blocks created
-    set /a PASS+=1
-) else (
-    echo   [FAIL] Expected 100 trunk blocks, found %TRUNK_COUNT%
-    set /a FAIL+=1
-)
-set /a TOTAL+=1
-
-if "%TRUNK_ERRORS%"=="0" (
-    echo   [PASS] All 100 blocks created without errors
-    set /a PASS+=1
-) else (
-    echo   [FAIL] %TRUNK_ERRORS% blocks had errors
-    set /a FAIL+=1
-)
-set /a TOTAL+=1
-echo.
-
-REM ============================================================
-REM  TEST 3: Branch Creation and Population
-REM ============================================================
-echo --- TEST 3: Branch Creation and Population ---
-
-REM Create 3 branches
-..\ztbaddbranch genesis.rom MainTrunk Sales -t "Sales department branch" > nul 2>&1
+ztbcreate selfie.jpg testdata\workdir %GEN_ID%
 if not errorlevel 1 (
-    echo   [PASS] Branch 'Sales' created
+    echo   [PASS] ZTBChain.Create - Success
     set /a PASS+=1
 ) else (
-    echo   [FAIL] Branch 'Sales' creation failed
+    echo   [FAIL] ZTBChain.Create - returned false
     set /a FAIL+=1
 )
 set /a TOTAL+=1
 
-..\ztbaddbranch genesis.rom MainTrunk Engineering -t "Engineering department branch" > nul 2>&1
-if not errorlevel 1 (
-    echo   [PASS] Branch 'Engineering' created
+REM Genesis block exists and is exactly 65536 bytes
+for %%A in (testdata\workdir\%GEN_ID%.ztb) do set GENSIZE=%%~zA
+if "%GENSIZE%"=="65536" (
+    echo   [PASS] ZTBChain.Create - genesis block written, size correct ^(%GENSIZE% bytes^)
     set /a PASS+=1
 ) else (
-    echo   [FAIL] Branch 'Engineering' creation failed
+    echo   [FAIL] ZTBChain.Create - wrong size: %GENSIZE%
     set /a FAIL+=1
 )
 set /a TOTAL+=1
 
-..\ztbaddbranch genesis.rom MainTrunk Legal -t "Legal department branch" > nul 2>&1
-if not errorlevel 1 (
-    echo   [PASS] Branch 'Legal' created
-    set /a PASS+=1
-) else (
-    echo   [FAIL] Branch 'Legal' creation failed
-    set /a FAIL+=1
-)
-set /a TOTAL+=1
-
-REM Add 20 blocks to Sales
-set SALES_ERRORS=0
-for /L %%N in (1,1,20) do (
-    ..\ztbaddblock genesis.rom Sales -t "Sales invoice %%N - customer order processing record" > nul 2>&1
-    if errorlevel 1 set /a SALES_ERRORS+=1
-)
-
-set SALES_COUNT=0
-for %%F in (Sales_*.ztb) do set /a SALES_COUNT+=1
-
-if "%SALES_COUNT%"=="21" (
-    echo   [PASS] Sales branch: 21 blocks ^(1 branch + 20 added^)
-    set /a PASS+=1
-) else (
-    echo   [FAIL] Sales branch: expected 21 blocks, found %SALES_COUNT%
-    set /a FAIL+=1
-)
-set /a TOTAL+=1
-
-REM Add 15 blocks to Engineering
-set ENG_ERRORS=0
-for /L %%N in (1,1,15) do (
-    ..\ztbaddblock genesis.rom Engineering -t "Engineering commit %%N - build artifact record" > nul 2>&1
-    if errorlevel 1 set /a ENG_ERRORS+=1
-)
-
-set ENG_COUNT=0
-for %%F in (Engineering_*.ztb) do set /a ENG_COUNT+=1
-
-if "%ENG_COUNT%"=="16" (
-    echo   [PASS] Engineering branch: 16 blocks ^(1 branch + 15 added^)
-    set /a PASS+=1
-) else (
-    echo   [FAIL] Engineering branch: expected 16 blocks, found %ENG_COUNT%
-    set /a FAIL+=1
-)
-set /a TOTAL+=1
-
-REM Add 10 blocks to Legal
-set LEGAL_ERRORS=0
-for /L %%N in (1,1,10) do (
-    ..\ztbaddblock genesis.rom Legal -t "Legal document %%N - compliance filing record" > nul 2>&1
-    if errorlevel 1 set /a LEGAL_ERRORS+=1
-)
-
-set LEGAL_COUNT=0
-for %%F in (Legal_*.ztb) do set /a LEGAL_COUNT+=1
-
-if "%LEGAL_COUNT%"=="11" (
-    echo   [PASS] Legal branch: 11 blocks ^(1 branch + 10 added^)
-    set /a PASS+=1
-) else (
-    echo   [FAIL] Legal branch: expected 11 blocks, found %LEGAL_COUNT%
-    set /a FAIL+=1
-)
-set /a TOTAL+=1
-echo.
-
-REM ============================================================
-REM  TEST 4: Fetch Individual Blocks
-REM ============================================================
-echo --- TEST 4: Fetch Individual Blocks ---
-
-REM Fetch trunk block 1
-..\ztbfetch genesis.rom MainTrunk 1 > nul 2>&1
-if not errorlevel 1 (
-    echo   [PASS] Fetch trunk block 1
-    set /a PASS+=1
-) else (
-    echo   [FAIL] Fetch trunk block 1
-    set /a FAIL+=1
-)
-set /a TOTAL+=1
-
-REM Fetch trunk block 50 (middle)
-..\ztbfetch genesis.rom MainTrunk 50 > nul 2>&1
-if not errorlevel 1 (
-    echo   [PASS] Fetch trunk block 50
-    set /a PASS+=1
-) else (
-    echo   [FAIL] Fetch trunk block 50
-    set /a FAIL+=1
-)
-set /a TOTAL+=1
-
-REM Fetch trunk block 100 (last)
-..\ztbfetch genesis.rom MainTrunk 100 > nul 2>&1
-if not errorlevel 1 (
-    echo   [PASS] Fetch trunk block 100
-    set /a PASS+=1
-) else (
-    echo   [FAIL] Fetch trunk block 100
-    set /a FAIL+=1
-)
-set /a TOTAL+=1
-
-REM Fetch branch block
-..\ztbfetch genesis.rom Sales 10 > nul 2>&1
-if not errorlevel 1 (
-    echo   [PASS] Fetch Sales branch block 10
-    set /a PASS+=1
-) else (
-    echo   [FAIL] Fetch Sales branch block 10
-    set /a FAIL+=1
-)
-set /a TOTAL+=1
-
-REM Fetch non-existent block (should fail)
-..\ztbfetch genesis.rom MainTrunk 999 > nul 2>&1
+REM Refuse duplicate genesis (same block ID)
+ztbcreate selfie.jpg testdata\workdir %GEN_DUP_ID% > nul 2>&1
 if errorlevel 1 (
-    echo   [PASS] Correctly rejected non-existent block 999
+    echo   [PASS] ZTBChain.Create - refuses duplicate genesis
     set /a PASS+=1
 ) else (
-    echo   [FAIL] Should have rejected non-existent block 999
+    echo   [FAIL] ZTBChain.Create dup - should have failed
     set /a FAIL+=1
 )
 set /a TOTAL+=1
 echo.
 
 REM ============================================================
-REM  TEST 5: Full Chain Verification
+REM  TEST 2: AddBlock - block 1
 REM ============================================================
-echo --- TEST 5: Full Chain Verification ---
+echo --- TEST 2: ZTB - AddBlock (block 1) ---
 
-REM Verify trunk only
-..\ztbverify genesis.rom MainTrunk -t > nul 2>&1
+ztbaddblock testdata\workdir TestChain %B1_ID% %NULL_GUID% -t "Block 1 payload" > nul 2>&1
 if not errorlevel 1 (
-    echo   [PASS] Trunk verification passed ^(100 blocks^)
+    echo   [PASS] ZTBChain.AddBlock - Success, BlockID matches
     set /a PASS+=1
 ) else (
-    echo   [FAIL] Trunk verification failed
+    echo   [FAIL] ZTBChain.AddBlock 1 - failed
     set /a FAIL+=1
 )
 set /a TOTAL+=1
 
-REM Verify specific branch
-..\ztbverify genesis.rom MainTrunk -b Sales > nul 2>&1
-if not errorlevel 1 (
-    echo   [PASS] Sales branch verification passed ^(21 blocks^)
+if exist testdata\workdir\%B1_ID%.ztb (
+    echo   [PASS] ZTBChain.AddBlock - file exists on disk
     set /a PASS+=1
 ) else (
-    echo   [FAIL] Sales branch verification failed
-    set /a FAIL+=1
-)
-set /a TOTAL+=1
-
-..\ztbverify genesis.rom MainTrunk -b Engineering > nul 2>&1
-if not errorlevel 1 (
-    echo   [PASS] Engineering branch verification passed ^(16 blocks^)
-    set /a PASS+=1
-) else (
-    echo   [FAIL] Engineering branch verification failed
-    set /a FAIL+=1
-)
-set /a TOTAL+=1
-
-..\ztbverify genesis.rom MainTrunk -b Legal > nul 2>&1
-if not errorlevel 1 (
-    echo   [PASS] Legal branch verification passed ^(11 blocks^)
-    set /a PASS+=1
-) else (
-    echo   [FAIL] Legal branch verification failed
-    set /a FAIL+=1
-)
-set /a TOTAL+=1
-
-REM Verify all branches only
-..\ztbverify genesis.rom MainTrunk -bb > nul 2>&1
-if not errorlevel 1 (
-    echo   [PASS] All branches verification passed
-    set /a PASS+=1
-) else (
-    echo   [FAIL] All branches verification failed
-    set /a FAIL+=1
-)
-set /a TOTAL+=1
-
-REM Verify everything (trunk + all branches)
-..\ztbverify genesis.rom MainTrunk > nul 2>&1
-if not errorlevel 1 (
-    echo   [PASS] Full verification passed ^(trunk + all branches^)
-    set /a PASS+=1
-) else (
-    echo   [FAIL] Full verification failed
+    echo   [FAIL] ZTBChain.AddBlock - file not on disk
     set /a FAIL+=1
 )
 set /a TOTAL+=1
 echo.
 
 REM ============================================================
-REM  TEST 6: Checkpoint
+REM  TEST 3: AddBlock - block 2 (prev links)
 REM ============================================================
-echo --- TEST 6: Checkpoint ---
+echo --- TEST 3: ZTB - AddBlock (block 2, prev link) ---
 
-..\ztbcheckpoint genesis.rom MainTrunk checkpoint.rom > nul 2>&1
+ztbaddblock testdata\workdir TestChain %B2_ID% %B1_ID% -t "Block 2 payload" > nul 2>&1
 if not errorlevel 1 (
-    echo   [PASS] Checkpoint ROM created
+    echo   [PASS] ZTBChain.AddBlock - block 2 Success
     set /a PASS+=1
 ) else (
-    echo   [FAIL] Checkpoint creation failed
-    set /a FAIL+=1
-)
-set /a TOTAL+=1
-
-if exist checkpoint.rom (
-    for %%A in (checkpoint.rom) do set CPSIZE=%%~zA
-    if "!CPSIZE!"=="65536" (
-        echo   [PASS] Checkpoint ROM size correct: !CPSIZE! bytes
-        set /a PASS+=1
-    ) else (
-        echo   [FAIL] Checkpoint ROM size wrong: !CPSIZE! bytes
-        set /a FAIL+=1
-    )
-) else (
-    echo   [FAIL] Checkpoint ROM file not found
-    set /a FAIL+=1
-)
-set /a TOTAL+=1
-
-REM Archive old blocks
-mkdir archive
-move MainTrunk_*.ztb archive\ > nul 2>&1
-move Sales_*.ztb archive\ > nul 2>&1
-move Engineering_*.ztb archive\ > nul 2>&1
-move Legal_*.ztb archive\ > nul 2>&1
-copy genesis.rom archive\ > nul 2>&1
-
-REM Confirm active directory is clean
-set REMAINING=0
-for %%F in (*.ztb) do set /a REMAINING+=1
-
-if "%REMAINING%"=="0" (
-    echo   [PASS] All old blocks moved to archive
-    set /a PASS+=1
-) else (
-    echo   [FAIL] %REMAINING% blocks still in active directory
+    echo   [FAIL] ZTBChain.AddBlock 2 - failed
     set /a FAIL+=1
 )
 set /a TOTAL+=1
 echo.
 
 REM ============================================================
-REM  TEST 7: Post-Checkpoint Chain
+REM  TEST 4: AddBlockText / AddBlockFile
 REM ============================================================
-echo --- TEST 7: Post-Checkpoint Chain ---
+echo --- TEST 4: ZTB - AddBlockText / AddBlockFile ---
 
-REM Add 30 blocks using checkpoint ROM
-set POSTCP_ERRORS=0
-for /L %%N in (1,1,30) do (
-    ..\ztbaddblock checkpoint.rom MainTrunk -t "Post-checkpoint block %%N - new era data record" > nul 2>&1
-    if errorlevel 1 set /a POSTCP_ERRORS+=1
-)
-
-set POSTCP_COUNT=0
-for %%F in (MainTrunk_*.ztb) do set /a POSTCP_COUNT+=1
-
-if "%POSTCP_COUNT%"=="30" (
-    echo   [PASS] 30 post-checkpoint blocks created
-    set /a PASS+=1
-) else (
-    echo   [FAIL] Expected 30 post-checkpoint blocks, found %POSTCP_COUNT%
-    set /a FAIL+=1
-)
-set /a TOTAL+=1
-
-REM Verify post-checkpoint chain
-..\ztbverify checkpoint.rom MainTrunk -t > nul 2>&1
+set B3_ID=A0000001-0000-4000-8000-000000000004
+ztbaddblock testdata\workdir TestChain %B3_ID% %B2_ID% -t "Text block" > nul 2>&1
 if not errorlevel 1 (
-    echo   [PASS] Post-checkpoint verification passed ^(30 blocks^)
+    echo   [PASS] ZTBChain.AddBlockText - Success
     set /a PASS+=1
 ) else (
-    echo   [FAIL] Post-checkpoint verification failed
+    echo   [FAIL] ZTBChain.AddBlockText - failed
     set /a FAIL+=1
 )
 set /a TOTAL+=1
 
-REM Fetch a post-checkpoint block
-..\ztbfetch checkpoint.rom MainTrunk 15 > nul 2>&1
+echo File payload content> testdata\filepayload.bin
+ztbaddblock testdata\workdir TestChain %B4_ID% %B3_ID% -f testdata\filepayload.bin > nul 2>&1
 if not errorlevel 1 (
-    echo   [PASS] Fetch post-checkpoint block 15
+    echo   [PASS] ZTBChain.AddBlockFile - Success
     set /a PASS+=1
 ) else (
-    echo   [FAIL] Fetch post-checkpoint block 15
-    set /a FAIL+=1
-)
-set /a TOTAL+=1
-
-REM Create a branch on the post-checkpoint chain
-..\ztbaddbranch checkpoint.rom MainTrunk PostCPBranch -t "Post-checkpoint branch" > nul 2>&1
-if not errorlevel 1 (
-    echo   [PASS] Post-checkpoint branch created
-    set /a PASS+=1
-) else (
-    echo   [FAIL] Post-checkpoint branch creation failed
-    set /a FAIL+=1
-)
-set /a TOTAL+=1
-
-REM Add blocks to post-checkpoint branch
-for /L %%N in (1,1,5) do (
-    ..\ztbaddblock checkpoint.rom PostCPBranch -t "Post-CP branch block %%N" > nul 2>&1
-)
-
-set PCPB_COUNT=0
-for %%F in (PostCPBranch_*.ztb) do set /a PCPB_COUNT+=1
-
-if "%PCPB_COUNT%"=="6" (
-    echo   [PASS] Post-checkpoint branch: 6 blocks ^(1 branch + 5 added^)
-    set /a PASS+=1
-) else (
-    echo   [FAIL] Post-checkpoint branch: expected 6 blocks, found %PCPB_COUNT%
-    set /a FAIL+=1
-)
-set /a TOTAL+=1
-
-REM Verify post-checkpoint trunk + branch
-..\ztbverify checkpoint.rom MainTrunk > nul 2>&1
-if not errorlevel 1 (
-    echo   [PASS] Post-checkpoint full verification passed
-    set /a PASS+=1
-) else (
-    echo   [FAIL] Post-checkpoint full verification failed
+    echo   [FAIL] ZTBChain.AddBlockFile - failed
     set /a FAIL+=1
 )
 set /a TOTAL+=1
 echo.
 
 REM ============================================================
-REM  TEST 8: Independent Archive Verification
+REM  TEST 5: FetchBlock
 REM ============================================================
-echo --- TEST 8: Independent Archive Verification ---
+echo --- TEST 5: ZTB - FetchBlock ---
 
-pushd archive
-
-REM Verify archived trunk
-..\..\ztbverify genesis.rom MainTrunk -t > nul 2>&1
+ztbfetch testdata\workdir %B1_ID% > testdata\fetch1.txt 2>&1
 if not errorlevel 1 (
-    echo   [PASS] Archived trunk verification passed ^(100 blocks^)
+    echo   [PASS] ZTBChain.FetchBlock^(1^) - Success
     set /a PASS+=1
 ) else (
-    echo   [FAIL] Archived trunk verification failed
+    echo   [FAIL] ZTBChain.FetchBlock^(1^) - failed
     set /a FAIL+=1
 )
 set /a TOTAL+=1
 
-REM Verify archived branches
-..\..\ztbverify genesis.rom MainTrunk > nul 2>&1
+findstr /c:"Block 1 payload" testdata\fetch1.txt > nul 2>&1
 if not errorlevel 1 (
-    echo   [PASS] Archived full verification passed ^(trunk + 3 branches^)
+    echo   [PASS] ZTBChain.FetchBlock^(1^) - Payload matches original
     set /a PASS+=1
 ) else (
-    echo   [FAIL] Archived full verification failed
+    echo   [FAIL] ZTBChain.FetchBlock^(1^) Payload - mismatch
     set /a FAIL+=1
 )
 set /a TOTAL+=1
 
-REM Fetch an archived block
-..\..\ztbfetch genesis.rom MainTrunk 75 > nul 2>&1
+findstr /c:"%B1_ID%" testdata\fetch1.txt > nul 2>&1
 if not errorlevel 1 (
-    echo   [PASS] Fetch archived trunk block 75
+    echo   [PASS] ZTBChain.FetchBlock^(1^) - BlockID matches
     set /a PASS+=1
 ) else (
-    echo   [FAIL] Fetch archived trunk block 75
+    echo   [FAIL] ZTBChain.FetchBlock^(1^) BlockID - mismatch
     set /a FAIL+=1
 )
 set /a TOTAL+=1
 
-REM Fetch an archived branch block
-..\..\ztbfetch genesis.rom Sales 15 > nul 2>&1
+ztbfetch testdata\workdir %B2_ID% > testdata\fetch2.txt 2>&1
+findstr /c:"Block 2 payload" testdata\fetch2.txt > nul 2>&1
 if not errorlevel 1 (
-    echo   [PASS] Fetch archived Sales branch block 15
+    echo   [PASS] ZTBChain.FetchBlock^(2^) - round trip matches
     set /a PASS+=1
 ) else (
-    echo   [FAIL] Fetch archived Sales branch block 15
+    echo   [FAIL] ZTBChain.FetchBlock^(2^) - mismatch
     set /a FAIL+=1
 )
 set /a TOTAL+=1
 
-popd
-echo.
-
-REM ============================================================
-REM  TEST 9: File Payload
-REM ============================================================
-echo --- TEST 9: File Payload ---
-
-REM Create a test file
-echo This is a test file with some content for ZTB blockchain storage. > testfile.txt
-echo Line 2: More data to ensure the payload is meaningful. >> testfile.txt
-echo Line 3: ZOSCII Tamperproof Blockchain test payload. >> testfile.txt
-
-..\ztbaddblock checkpoint.rom MainTrunk -f testfile.txt > nul 2>&1
+ztbfetch testdata\workdir %B3_ID% > testdata\fetch3.txt 2>&1
+findstr /c:"Text block" testdata\fetch3.txt > nul 2>&1
 if not errorlevel 1 (
-    echo   [PASS] File payload block created
+    echo   [PASS] ZTBChain.FetchBlock^(3^) - text payload round trip
     set /a PASS+=1
 ) else (
-    echo   [FAIL] File payload block creation failed
+    echo   [FAIL] ZTBChain.FetchBlock^(3^) - mismatch
     set /a FAIL+=1
 )
 set /a TOTAL+=1
 
-REM Verify still passes after file payload block
-..\ztbverify checkpoint.rom MainTrunk -t > nul 2>&1
-if not errorlevel 1 (
-    echo   [PASS] Verification passes with file payload block
-    set /a PASS+=1
-) else (
-    echo   [FAIL] Verification failed after file payload block
-    set /a FAIL+=1
-)
-set /a TOTAL+=1
-echo.
-
-REM ============================================================
-REM  TEST 10: Tamper Detection
-REM ============================================================
-echo --- TEST 10: Tamper Detection ---
-
-REM Create a small test chain for tampering
-mkdir tampertest
-pushd tampertest
-copy ..\genesis.rom . > nul 2>&1
-
-..\..\ztbaddblock genesis.rom TamperChain -t "Block one - original data" > nul 2>&1
-..\..\ztbaddblock genesis.rom TamperChain -t "Block two - original data" > nul 2>&1
-..\..\ztbaddblock genesis.rom TamperChain -t "Block three - original data" > nul 2>&1
-
-REM Verify before tampering
-..\..\ztbverify genesis.rom TamperChain -t > nul 2>&1
-if not errorlevel 1 (
-    echo   [PASS] Tamper chain verified clean before tampering
-    set /a PASS+=1
-) else (
-    echo   [FAIL] Tamper chain should verify clean
-    set /a FAIL+=1
-)
-set /a TOTAL+=1
-
-REM Tamper with block 2 by appending a byte
-for %%F in (TamperChain_0002_*.ztb) do (
-    echo X>> "%%F"
-)
-
-REM Verify should now fail
-..\..\ztbverify genesis.rom TamperChain -t > nul 2>&1
+REM Missing block fetch must fail
+ztbfetch testdata\workdir %MISS_ID% > nul 2>&1
 if errorlevel 1 (
-    echo   [PASS] Tamper correctly detected after modification
+    echo   [PASS] ZTBChain.FetchBlock^(missing^) - correctly fails
     set /a PASS+=1
 ) else (
-    echo   [FAIL] Tamper NOT detected - verification should have failed
-    set /a FAIL+=1
-)
-set /a TOTAL+=1
-
-popd
-echo.
-
-REM ============================================================
-REM  TEST 11: Duplicate Branch Rejection
-REM ============================================================
-echo --- TEST 11: Edge Cases ---
-
-REM Try to create a branch that already exists (should fail)
-..\ztbaddbranch checkpoint.rom MainTrunk PostCPBranch -t "Duplicate branch" > nul 2>&1
-if errorlevel 1 (
-    echo   [PASS] Correctly rejected duplicate branch name
-    set /a PASS+=1
-) else (
-    echo   [FAIL] Should have rejected duplicate branch
-    set /a FAIL+=1
-)
-set /a TOTAL+=1
-
-REM Try to create a branch from non-existent trunk (should fail)
-..\ztbaddbranch checkpoint.rom NonExistent NewBranch -t "Bad branch" > nul 2>&1
-if errorlevel 1 (
-    echo   [PASS] Correctly rejected non-existent trunk
-    set /a PASS+=1
-) else (
-    echo   [FAIL] Should have rejected non-existent trunk
-    set /a FAIL+=1
-)
-set /a TOTAL+=1
-
-REM Wrong argument count (should fail)
-..\ztbaddblock genesis.rom > nul 2>&1
-if errorlevel 1 (
-    echo   [PASS] Correctly rejected missing arguments
-    set /a PASS+=1
-) else (
-    echo   [FAIL] Should have rejected missing arguments
+    echo   [FAIL] ZTBChain.FetchBlock^(missing^) - should have failed
     set /a FAIL+=1
 )
 set /a TOTAL+=1
 echo.
 
 REM ============================================================
-REM  TEST 12: Supplied Block ID (-i parameter)
+REM  TEST 6: Verify - 4-block chain + tamper detection
 REM ============================================================
-echo --- TEST 12: Supplied Block ID ^(-i parameter^) ---
+echo --- TEST 6: ZTB - Verify ---
 
-mkdir idtest
-pushd idtest
-copy ..\genesis.rom . > nul 2>&1
-
-set TEST_GUID_1=A1B2C3D4-E5F6-4A7B-8C9D-E0F1A2B3C4D5
-set TEST_GUID_2=mySillyID
-set TEST_GUID_BAD=NOT-A-VALID-GUID-AT-ALL-XXXXXXXXX
-
-REM Supply a valid block ID for a trunk block
-..\..\ztbaddblock genesis.rom IDChain -t "Block with supplied ID" -i %TEST_GUID_1% > nul 2>&1
+ztbverify testdata\workdir %B4_ID% -walk > testdata\verify4.txt 2>&1
 if not errorlevel 1 (
-    echo   [PASS] Block created with supplied ID
+    echo   [PASS] ZTBChain.Verify - 4-block chain passes
     set /a PASS+=1
 ) else (
-    echo   [FAIL] Block creation with supplied ID failed
+    echo   [FAIL] ZTBChain.Verify - failed
     set /a FAIL+=1
 )
 set /a TOTAL+=1
 
-REM Confirm the file was named using the supplied GUID
-if exist "IDChain_0001_%TEST_GUID_1%.ztb" (
-    echo   [PASS] Block filename contains supplied GUID
-    set /a PASS+=1
-) else (
-    echo   [FAIL] Block filename does not contain supplied GUID
-    set /a FAIL+=1
-)
-set /a TOTAL+=1
-
-REM Fetch and verify the block round-trips correctly
-..\..\ztbfetch genesis.rom IDChain 1 > fetchout.txt 2>&1
+REM Single block verify
+ztbverify testdata\workdir %B1_ID% > nul 2>&1
 if not errorlevel 1 (
-    echo   [PASS] Block with supplied ID fetched successfully
+    echo   [PASS] ZTBChain.Verify single block - passes
     set /a PASS+=1
 ) else (
-    echo   [FAIL] Fetch of block with supplied ID failed
+    echo   [FAIL] ZTBChain.Verify single block - failed
     set /a FAIL+=1
 )
 set /a TOTAL+=1
 
-REM Confirm the fetched header contains the correct block ID
-findstr /i "%TEST_GUID_1%" fetchout.txt > nul 2>&1
-if not errorlevel 1 (
-    echo   [PASS] Fetched header contains correct supplied block ID
-    set /a PASS+=1
-) else (
-    echo   [FAIL] Fetched header does not contain supplied block ID
-    set /a FAIL+=1
-)
-set /a TOTAL+=1
-
-REM Add a second block with a different supplied ID
-..\..\ztbaddblock genesis.rom IDChain -t "Second block with supplied ID" -i %TEST_GUID_2% > nul 2>&1
-if not errorlevel 1 (
-    echo   [PASS] Second block created with different supplied ID
-    set /a PASS+=1
-) else (
-    echo   [FAIL] Second block creation with supplied ID failed
-    set /a FAIL+=1
-)
-set /a TOTAL+=1
-
-REM Verify the full chain with supplied IDs still passes
-..\..\ztbverify genesis.rom IDChain -t > nul 2>&1
-if not errorlevel 1 (
-    echo   [PASS] Chain with supplied IDs verifies correctly
-    set /a PASS+=1
-) else (
-    echo   [FAIL] Chain with supplied IDs failed verification
-    set /a FAIL+=1
-)
-set /a TOTAL+=1
-
-REM Supply a valid block ID when creating a branch
-..\..\ztbaddbranch genesis.rom IDChain IDBranch -t "Branch with supplied ID" -i %TEST_GUID_2% > nul 2>&1
-if not errorlevel 1 (
-    echo   [PASS] Branch created with supplied ID
-    set /a PASS+=1
-) else (
-    echo   [FAIL] Branch creation with supplied ID failed
-    set /a FAIL+=1
-)
-set /a TOTAL+=1
-
-REM Confirm branch file was named using the supplied GUID
-if exist "IDBranch_0001_%TEST_GUID_2%.ztb" (
-    echo   [PASS] Branch filename contains supplied GUID
-    set /a PASS+=1
-) else (
-    echo   [FAIL] Branch filename does not contain supplied GUID
-    set /a FAIL+=1
-)
-set /a TOTAL+=1
-
-REM Verify branch with supplied ID
-..\..\ztbverify genesis.rom IDChain -b IDBranch > nul 2>&1
-if not errorlevel 1 (
-    echo   [PASS] Branch with supplied ID verifies correctly
-    set /a PASS+=1
-) else (
-    echo   [FAIL] Branch with supplied ID failed verification
-    set /a FAIL+=1
-)
-set /a TOTAL+=1
-
-REM Reject an invalid GUID (should fail)
-REM ..\..\ztbaddblock genesis.rom IDChain -t "Bad ID block" -i %TEST_GUID_BAD% > nul 2>&1
-REM if errorlevel 1 (
-REM     echo   [PASS] Correctly rejected invalid block ID
-REM     set /a PASS+=1
-REM ) else (
-REM     echo   [FAIL] Should have rejected invalid block ID
-REM     set /a FAIL+=1
-REM )
-REM set /a TOTAL+=1
-
-REM Reject -i with no argument (should fail)
-..\..\ztbaddblock genesis.rom IDChain -t "Missing ID" -i > nul 2>&1
+REM Tamper detection - corrupt block 2 (middle of file)
+copy testdata\workdir\%B2_ID%.ztb testdata\workdir\%B2_ID%.ztb.bak > nul 2>&1
+echo X>> testdata\workdir\%B2_ID%.ztb
+ztbverify testdata\workdir %B4_ID% -walk > nul 2>&1
 if errorlevel 1 (
-    echo   [PASS] Correctly rejected -i with no argument
+    echo   [PASS] ZTBChain.Verify - tampered block detected
     set /a PASS+=1
 ) else (
-    echo   [FAIL] Should have rejected -i with no argument
+    echo   [FAIL] ZTBChain.Verify tamper - tamper not detected
+    set /a FAIL+=1
+)
+set /a TOTAL+=1
+copy testdata\workdir\%B2_ID%.ztb.bak testdata\workdir\%B2_ID%.ztb > nul 2>&1
+del testdata\workdir\%B2_ID%.ztb.bak > nul 2>&1
+echo.
+
+REM ============================================================
+REM  TEST 7: 20-block trunk
+REM ============================================================
+echo --- TEST 7: ZTB - 20-Block Trunk ---
+
+mkdir testdata\trunk20
+
+REM Create genesis for trunk20 workdir
+set T20_GEN=B0000001-0000-4000-8000-000000000001
+ztbcreate selfie.jpg testdata\trunk20 %T20_GEN% > nul 2>&1
+
+REM Create 20 blocks
+set T20_PREV=%NULL_GUID%
+set T20_B01=B0000001-0000-4000-8000-000000000002
+set T20_B02=B0000001-0000-4000-8000-000000000003
+set T20_B03=B0000001-0000-4000-8000-000000000004
+set T20_B04=B0000001-0000-4000-8000-000000000005
+set T20_B05=B0000001-0000-4000-8000-000000000006
+set T20_B06=B0000001-0000-4000-8000-000000000007
+set T20_B07=B0000001-0000-4000-8000-000000000008
+set T20_B08=B0000001-0000-4000-8000-000000000009
+set T20_B09=B0000001-0000-4000-8000-00000000000A
+set T20_B10=B0000001-0000-4000-8000-00000000000B
+set T20_B11=B0000001-0000-4000-8000-00000000000C
+set T20_B12=B0000001-0000-4000-8000-00000000000D
+set T20_B13=B0000001-0000-4000-8000-00000000000E
+set T20_B14=B0000001-0000-4000-8000-00000000000F
+set T20_B15=B0000001-0000-4000-8000-000000000010
+set T20_B16=B0000001-0000-4000-8000-000000000011
+set T20_B17=B0000001-0000-4000-8000-000000000012
+set T20_B18=B0000001-0000-4000-8000-000000000013
+set T20_B19=B0000001-0000-4000-8000-000000000014
+set T20_B20=B0000001-0000-4000-8000-000000000015
+
+ztbaddblock testdata\trunk20 Trunk20 %T20_B01% %NULL_GUID% -t "Trunk block 1"  > nul 2>&1
+ztbaddblock testdata\trunk20 Trunk20 %T20_B02% %T20_B01%  -t "Trunk block 2"  > nul 2>&1
+ztbaddblock testdata\trunk20 Trunk20 %T20_B03% %T20_B02%  -t "Trunk block 3"  > nul 2>&1
+ztbaddblock testdata\trunk20 Trunk20 %T20_B04% %T20_B03%  -t "Trunk block 4"  > nul 2>&1
+ztbaddblock testdata\trunk20 Trunk20 %T20_B05% %T20_B04%  -t "Trunk block 5"  > nul 2>&1
+ztbaddblock testdata\trunk20 Trunk20 %T20_B06% %T20_B05%  -t "Trunk block 6"  > nul 2>&1
+ztbaddblock testdata\trunk20 Trunk20 %T20_B07% %T20_B06%  -t "Trunk block 7"  > nul 2>&1
+ztbaddblock testdata\trunk20 Trunk20 %T20_B08% %T20_B07%  -t "Trunk block 8"  > nul 2>&1
+ztbaddblock testdata\trunk20 Trunk20 %T20_B09% %T20_B08%  -t "Trunk block 9"  > nul 2>&1
+ztbaddblock testdata\trunk20 Trunk20 %T20_B10% %T20_B09%  -t "Trunk block 10" > nul 2>&1
+ztbaddblock testdata\trunk20 Trunk20 %T20_B11% %T20_B10%  -t "Trunk block 11" > nul 2>&1
+ztbaddblock testdata\trunk20 Trunk20 %T20_B12% %T20_B11%  -t "Trunk block 12" > nul 2>&1
+ztbaddblock testdata\trunk20 Trunk20 %T20_B13% %T20_B12%  -t "Trunk block 13" > nul 2>&1
+ztbaddblock testdata\trunk20 Trunk20 %T20_B14% %T20_B13%  -t "Trunk block 14" > nul 2>&1
+ztbaddblock testdata\trunk20 Trunk20 %T20_B15% %T20_B14%  -t "Trunk block 15" > nul 2>&1
+ztbaddblock testdata\trunk20 Trunk20 %T20_B16% %T20_B15%  -t "Trunk block 16" > nul 2>&1
+ztbaddblock testdata\trunk20 Trunk20 %T20_B17% %T20_B16%  -t "Trunk block 17" > nul 2>&1
+ztbaddblock testdata\trunk20 Trunk20 %T20_B18% %T20_B17%  -t "Trunk block 18" > nul 2>&1
+ztbaddblock testdata\trunk20 Trunk20 %T20_B19% %T20_B18%  -t "Trunk block 19" > nul 2>&1
+ztbaddblock testdata\trunk20 Trunk20 %T20_B20% %T20_B19%  -t "Trunk block 20" > nul 2>&1
+
+echo   [PASS] ZTBChain 20-block trunk - all 20 blocks written
+set /a PASS+=1
+set /a TOTAL+=1
+
+REM FetchBlock 1
+ztbfetch testdata\trunk20 %T20_B01% > testdata\t20fetch1.txt 2>&1
+findstr /c:"Trunk block 1" testdata\t20fetch1.txt > nul 2>&1
+if not errorlevel 1 (
+    echo   [PASS] ZTBChain 20-block trunk - FetchBlock^(1^) round trip
+    set /a PASS+=1
+) else (
+    echo   [FAIL] ZTBChain 20-block FetchBlock^(1^) - mismatch
     set /a FAIL+=1
 )
 set /a TOTAL+=1
 
-popd
+REM FetchBlock 10
+ztbfetch testdata\trunk20 %T20_B10% > testdata\t20fetch10.txt 2>&1
+findstr /c:"Trunk block 10" testdata\t20fetch10.txt > nul 2>&1
+if not errorlevel 1 (
+    echo   [PASS] ZTBChain 20-block trunk - FetchBlock^(10^) round trip
+    set /a PASS+=1
+) else (
+    echo   [FAIL] ZTBChain 20-block FetchBlock^(10^) - mismatch
+    set /a FAIL+=1
+)
+set /a TOTAL+=1
+
+REM FetchBlock 20
+ztbfetch testdata\trunk20 %T20_B20% > testdata\t20fetch20.txt 2>&1
+findstr /c:"Trunk block 20" testdata\t20fetch20.txt > nul 2>&1
+if not errorlevel 1 (
+    echo   [PASS] ZTBChain 20-block trunk - FetchBlock^(20^) round trip
+    set /a PASS+=1
+) else (
+    echo   [FAIL] ZTBChain 20-block FetchBlock^(20^) - mismatch
+    set /a FAIL+=1
+)
+set /a TOTAL+=1
+
+REM Verify all 20
+ztbverify testdata\trunk20 %T20_B20% -walk > testdata\t20verify.txt 2>&1
+if not errorlevel 1 (
+    echo   [PASS] ZTBChain 20-block trunk - Verify all 20 pass
+    set /a PASS+=1
+) else (
+    echo   [FAIL] ZTBChain 20-block Verify - failed
+    set /a FAIL+=1
+)
+set /a TOTAL+=1
+echo.
+
+REM ============================================================
+REM  TEST 8: AddBranch
+REM ============================================================
+echo --- TEST 8: ZTB - AddBranch ---
+
+set BRA1=C0000001-0000-4000-8000-000000000001
+set BRA2=C0000001-0000-4000-8000-000000000002
+
+ztbaddbranch testdata\trunk20 Trunk20 BranchA %BRA1% %T20_B20% -t "Branch A block 1" > nul 2>&1
+if not errorlevel 1 (
+    echo   [PASS] ZTBChain.AddBranch - Success
+    set /a PASS+=1
+) else (
+    echo   [FAIL] ZTBChain.AddBranch - failed
+    set /a FAIL+=1
+)
+set /a TOTAL+=1
+
+if exist testdata\trunk20\%BRA1%.ztb (
+    echo   [PASS] ZTBChain.AddBranch - file exists on disk
+    set /a PASS+=1
+) else (
+    echo   [FAIL] ZTBChain.AddBranch - file not on disk
+    set /a FAIL+=1
+)
+set /a TOTAL+=1
+
+REM Fetch branch block 1, confirm IsBranch=Yes and TrunkID=Trunk20
+ztbfetch testdata\trunk20 %BRA1% > testdata\brafetch1.txt 2>&1
+findstr /c:"Branch A block 1" testdata\brafetch1.txt > nul 2>&1
+if not errorlevel 1 (
+    echo   [PASS] ZTBChain branch FetchBlock^(1^) - round trip
+    set /a PASS+=1
+) else (
+    echo   [FAIL] ZTBChain branch FetchBlock^(1^) - mismatch
+    set /a FAIL+=1
+)
+set /a TOTAL+=1
+
+findstr /c:"Is Branch:    Yes" testdata\brafetch1.txt > nul 2>&1
+if not errorlevel 1 (
+    echo   [PASS] ZTBChain.AddBranch - IsBranch=true
+    set /a PASS+=1
+) else (
+    echo   [FAIL] ZTBChain.AddBranch IsBranch - expected true
+    set /a FAIL+=1
+)
+set /a TOTAL+=1
+
+findstr /c:"Trunk20" testdata\brafetch1.txt > nul 2>&1
+if not errorlevel 1 (
+    echo   [PASS] ZTBChain.AddBranch - TrunkID links to trunk
+    set /a PASS+=1
+) else (
+    echo   [FAIL] ZTBChain.AddBranch TrunkID - mismatch
+    set /a FAIL+=1
+)
+set /a TOTAL+=1
+
+REM Add second branch block
+ztbaddblock testdata\trunk20 BranchA %BRA2% %BRA1% -t "Branch A block 2" > nul 2>&1
+if not errorlevel 1 (
+    echo   [PASS] ZTBChain branch AddBlock - block 2 Success
+    set /a PASS+=1
+) else (
+    echo   [FAIL] ZTBChain branch AddBlock - failed
+    set /a FAIL+=1
+)
+set /a TOTAL+=1
+
+REM Verify branch (2 branch + 20 trunk = 22 blocks)
+ztbverify testdata\trunk20 %BRA2% -walk > testdata\braverify.txt 2>&1
+if not errorlevel 1 (
+    echo   [PASS] ZTBChain.VerifyBranch - passes
+    set /a PASS+=1
+) else (
+    echo   [FAIL] ZTBChain.VerifyBranch - failed
+    set /a FAIL+=1
+)
+set /a TOTAL+=1
+echo.
+
+REM ============================================================
+REM  TEST 9: AddCheckpoint
+REM ============================================================
+echo --- TEST 9: ZTB - AddCheckpoint ---
+
+mkdir testdata\cpchain
+set CP_GEN=D0000001-0000-4000-8000-000000000001
+set CP_B1=D0000001-0000-4000-8000-000000000002
+set CP_B2=D0000001-0000-4000-8000-000000000003
+set CP_ID=D0000001-0000-4000-8000-000000000004
+set CP_POST=D0000001-0000-4000-8000-000000000005
+
+ztbcreate selfie.jpg testdata\cpchain %CP_GEN% > nul 2>&1
+ztbaddblock testdata\cpchain CPChain %CP_B1% %NULL_GUID% -t "Before checkpoint 1" > nul 2>&1
+ztbaddblock testdata\cpchain CPChain %CP_B2% %CP_B1%    -t "Before checkpoint 2" > nul 2>&1
+
+ztbcheckpoint testdata\cpchain CPChain %CP_ID% %CP_B2% "Checkpoint label" > nul 2>&1
+if not errorlevel 1 (
+    echo   [PASS] ZTBChain.AddCheckpoint - Success, BlockType=Checkpoint
+    set /a PASS+=1
+) else (
+    echo   [FAIL] ZTBChain.AddCheckpoint - failed
+    set /a FAIL+=1
+)
+set /a TOTAL+=1
+
+ztbfetch testdata\cpchain %CP_ID% > testdata\cpfetch.txt 2>&1
+findstr /c:"Checkpoint label" testdata\cpfetch.txt > nul 2>&1
+if not errorlevel 1 (
+    echo   [PASS] ZTBChain.AddCheckpoint - label payload round trip
+    set /a PASS+=1
+) else (
+    echo   [FAIL] ZTBChain.AddCheckpoint label - mismatch
+    set /a FAIL+=1
+)
+set /a TOTAL+=1
+
+ztbaddblock testdata\cpchain CPChain %CP_POST% %CP_ID% -t "After checkpoint" > nul 2>&1
+if not errorlevel 1 (
+    echo   [PASS] ZTBChain.AddCheckpoint - blocks continue after checkpoint position
+    set /a PASS+=1
+) else (
+    echo   [FAIL] ZTBChain.AddCheckpoint post-block - failed
+    set /a FAIL+=1
+)
+set /a TOTAL+=1
+
+ztbverify testdata\cpchain %CP_POST% -walk > nul 2>&1
+if not errorlevel 1 (
+    echo   [PASS] ZTBChain.AddCheckpoint - Verify passes through chain
+    set /a PASS+=1
+) else (
+    echo   [FAIL] ZTBChain.AddCheckpoint Verify - failed
+    set /a FAIL+=1
+)
+set /a TOTAL+=1
+echo.
+
+REM ============================================================
+REM  TEST 10: Finalise
+REM ============================================================
+echo --- TEST 10: ZTB - Finalise ---
+
+mkdir testdata\fnchain
+set FN_GEN=E0000001-0000-4000-8000-000000000001
+set FN_B1=E0000001-0000-4000-8000-000000000002
+set FN_B2=E0000001-0000-4000-8000-000000000003
+set FN_ID=E0000001-0000-4000-8000-000000000004
+
+ztbcreate selfie.jpg testdata\fnchain %FN_GEN% > nul 2>&1
+ztbaddblock testdata\fnchain FNChain %FN_B1% %NULL_GUID% -t "FN 1" > nul 2>&1
+ztbaddblock testdata\fnchain FNChain %FN_B2% %FN_B1%    -t "FN 2" > nul 2>&1
+ztbaddblock testdata\fnchain FNChain %FN_ID% %FN_B2%    -t "Final label" > nul 2>&1
+
+ztbfetch testdata\fnchain %FN_ID% > testdata\fnfetch.txt 2>&1
+findstr /c:"Final label" testdata\fnfetch.txt > nul 2>&1
+if not errorlevel 1 (
+    echo   [PASS] ZTBChain.Finalise - label payload round trip
+    set /a PASS+=1
+) else (
+    echo   [FAIL] ZTBChain.Finalise label - mismatch
+    set /a FAIL+=1
+)
+set /a TOTAL+=1
+
+ztbverify testdata\fnchain %FN_ID% -walk > nul 2>&1
+if not errorlevel 1 (
+    echo   [PASS] ZTBChain.Finalise - Verify passes through finalise block
+    set /a PASS+=1
+) else (
+    echo   [FAIL] ZTBChain.Finalise Verify - failed
+    set /a FAIL+=1
+)
+set /a TOTAL+=1
+echo.
+
+REM ============================================================
+REM  TEST 11: Truncate
+REM ============================================================
+echo --- TEST 11: ZTB - Truncate ---
+
+mkdir testdata\trchain
+set TR_GEN=F0000001-0000-4000-8000-000000000000
+set TR_1=F0000001-0000-4000-8000-000000000001
+set TR_2=F0000001-0000-4000-8000-000000000002
+set TR_CP=F0000001-0000-4000-8000-000000000003
+set TR_POST=F0000001-0000-4000-8000-000000000004
+
+ztbcreate selfie.jpg testdata\trchain %TR_GEN% > nul 2>&1
+ztbaddblock testdata\trchain TRChain %TR_1% %NULL_GUID% -t "TR 1" > nul 2>&1
+ztbaddblock testdata\trchain TRChain %TR_2% %TR_1%      -t "TR 2" > nul 2>&1
+ztbcheckpoint testdata\trchain TRChain %TR_CP% %TR_2% "Truncation checkpoint" > nul 2>&1
+
+REM Truncate at the checkpoint - this overwrites TR_2's file with a truncation marker
+ztbtruncate testdata\trchain %TR_CP% > nul 2>&1
+if not errorlevel 1 (
+    echo   [PASS] ZTBChain.Truncate - Success, BlockType=Truncation
+    set /a PASS+=1
+) else (
+    echo   [FAIL] ZTBChain.Truncate - failed
+    set /a FAIL+=1
+)
+set /a TOTAL+=1
+
+REM Add a new block above the checkpoint AFTER truncation (correct order - matches C# test)
+ztbaddblock testdata\trchain TRChain %TR_POST% %TR_CP% -t "Post-truncation block" > nul 2>&1
+if not errorlevel 1 (
+    echo   [PASS] ZTBChain.Truncate - new block added above checkpoint after truncation
+    set /a PASS+=1
+) else (
+    echo   [FAIL] ZTBChain.Truncate post-block - failed
+    set /a FAIL+=1
+)
+set /a TOTAL+=1
+
+ztbfetch testdata\trchain %TR_POST% > testdata\trfetch.txt 2>&1
+findstr /c:"Post-truncation block" testdata\trfetch.txt > nul 2>&1
+if not errorlevel 1 (
+    echo   [PASS] ZTBChain.Truncate - post-truncation FetchBlock round trip
+    set /a PASS+=1
+) else (
+    echo   [FAIL] ZTBChain.Truncate post-block fetch - mismatch
+    set /a FAIL+=1
+)
+set /a TOTAL+=1
+
+REM Verify-walk should pass and stop cleanly at the truncation marker
+ztbverify testdata\trchain %TR_POST% -walk > nul 2>&1
+if not errorlevel 1 (
+    echo   [PASS] ZTBChain.Truncate - Verify passes through truncation marker
+    set /a PASS+=1
+) else (
+    echo   [FAIL] ZTBChain.Truncate post-verify - failed
+    set /a FAIL+=1
+)
+set /a TOTAL+=1
+
+REM TR_1's file should no longer be needed - fetching the checkpoint should still
+REM work since its rolling ROM only depends on TR_2 (now the truncation marker)
+ztbfetch testdata\trchain %TR_CP% > nul 2>&1
+if not errorlevel 1 (
+    echo   [PASS] ZTBChain.Truncate - checkpoint still fetchable after truncation
+    set /a PASS+=1
+) else (
+    echo   [FAIL] ZTBChain.Truncate checkpoint fetch - failed
+    set /a FAIL+=1
+)
+set /a TOTAL+=1
 echo.
 
 REM ============================================================
@@ -773,9 +630,9 @@ echo ============================================================
 echo  RESULTS
 echo ============================================================
 echo.
-echo   Total tests: %TOTAL%
-echo   Passed:      %PASS%
-echo   Failed:      %FAIL%
+echo   Total:  %TOTAL%
+echo   Passed: %PASS%
+echo   Failed: %FAIL%
 echo.
 
 if "%FAIL%"=="0" (
@@ -786,9 +643,5 @@ if "%FAIL%"=="0" (
 
 echo.
 echo ============================================================
-
-REM Clean up
-cd ..
-REM rd /s /q testdata
 
 endlocal

@@ -3,4 +3,5 @@ cl /O2 /MT ztbaddbranch.c /link
 cl /O2 /MT ztbcheckpoint.c /link
 cl /O2 /MT ztbcreate.c /link
 cl /O2 /MT ztbfetch.c /link
+cl /O2 /MT ztbtruncate.c /link
 cl /O2 /MT ztbverify.c /link

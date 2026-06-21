@@ -1,378 +1,186 @@
-// Cyborg ZTB Chain Verifier v20260420
+// Cyborg ZTB Verify v20260618
 // (c) 2026 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
 //
-// Verifies the integrity of a ZTB chain (trunk or branch).
-// Usage: ztbverify <genesis_rom> <trunk_id>           - Verify trunk and all branches
-// Usage: ztbverify <genesis_rom> <trunk_id> -t        - Verify trunk only
-// Usage: ztbverify <genesis_rom> <trunk_id> -b <branch_id> - Verify specific branch only
-// Usage: ztbverify <genesis_rom> <trunk_id> -bb       - Verify all branches only (not trunk)
+// Verifies a block or walks back verifying the whole chain.
+// Matches ZTBChain.Verify exactly.
+//
+// Usage: ztbverify <workdir> <tip_block_id> [-walk]
 
 #include "ztbcommon.c"
 
-// --- Verification Statistics ---
-typedef struct {
-    int total_blocks;
-    int verified_blocks;
-    int failed_blocks;
-    int branches_found;
-} VerifyStats;
-
-
-// --- Verify Single Block ---
-int verify_single_block(const char *strGenesisRomFile_a,
-                        const BlockInfo *arrChainHistory_a, int intChainCount_a,
-                        const BlockInfo *arrTrunkHistory_a, int intTrunkCount_a,
-                        int intTargetIndex_a)
+// Verify a single block. Returns 1 if valid, 0 if not.
+static int verify_block(const char *strWorkDir_a, const char *strBlockID_a)
 {
-    int intValid = 0;
+    int intValid      = 0;
+    uint8_t *byBlock  = NULL;
     uint8_t *byRollingRom = NULL;
-    uint8_t *byFileData = NULL;
+    uint8_t *byDecoded    = NULL;
 
-    // Find target block
-    BlockInfo *objTarget = NULL;
-    int intI;
-    for (intI = 0; intI < intChainCount_a; intI++)
+    int intBlockLen = 0;
+    byBlock = load_block(strWorkDir_a, strBlockID_a, &intBlockLen);
+
+    if (byBlock && intBlockLen >= HEADER_RAW_SIZE)
     {
-        if (arrChainHistory_a[intI].index == intTargetIndex_a)
+        uint8_t byBlockType = byBlock[RAW_OFF_BLOCK_TYPE];
+        char strPrevID[GUID_LEN];
+        read_fixed_string(byBlock, RAW_OFF_PREV_ID, 36, strPrevID);
+
+        // Truncation block is not encoded — treat as valid (matches C# FetchBlock)
+        if (byBlockType == BLOCK_TYPE_TRUNCATION)
         {
-            objTarget = (BlockInfo *)&arrChainHistory_a[intI];
+            intValid = 1;
         }
-    }
-
-    if (!objTarget) { return 0; }
-
-    // Find previous block filename for X1 mode:
-    // For trunk block N>1: chain block N-1.
-    // For branch block 1: trunk's last block.
-    // For trunk block 1: no previous block.
-    const char *strPrevBlockFilename = NULL;
-    for (intI = 0; intI < intChainCount_a; intI++)
-    {
-        if (arrChainHistory_a[intI].index == intTargetIndex_a - 1)
+        else
         {
-            strPrevBlockFilename = arrChainHistory_a[intI].filename;
-        }
-    }
-    if (!strPrevBlockFilename && intTargetIndex_a == 1 && intTrunkCount_a > 0)
-    {
-        strPrevBlockFilename = arrTrunkHistory_a[intTrunkCount_a - 1].filename;
-    }
-
-    byRollingRom = malloc(ROM_SIZE);
-    if (!byRollingRom) { return 0; }
-
-    if (!build_rolling_rom(strGenesisRomFile_a,
-                           arrChainHistory_a, intChainCount_a,
-                           arrTrunkHistory_a, intTrunkCount_a,
-                           intTargetIndex_a, byRollingRom))
-    {
-        free(byRollingRom);
-        return 0;
-    }
-
-    FILE *f = fopen(objTarget->filename, "rb");
-    if (f)
-    {
-        fseek(f, 0, SEEK_END);
-        size_t intFileLen = ftell(f);
-        fseek(f, 0, SEEK_SET);
-
-        if (intFileLen > BLOCK_PREFIX_ENCODED_SIZE)
-        {
-            byFileData = malloc(intFileLen);
-            if (byFileData && fread(byFileData, 1, intFileLen, f) == intFileLen)
+            byRollingRom = build_rolling_rom(strWorkDir_a, strPrevID);
+            if (byRollingRom)
             {
-                // Encoded bytes 0-1 are the mode and are never XOR'd on disk —
-                // decode them directly to learn the mode before doing anything else.
-                size_t intModeDecodedLen;
-                uint8_t *byModeDecoded = zoscii_decode_block(byRollingRom, byFileData, 2,
-                                                              &intModeDecodedLen);
-                uint8_t byMode = MODE_NORMAL;
-                if (byModeDecoded && intModeDecodedLen >= 1)
+                int intEncLen = intBlockLen - HEADER_RAW_SIZE;
+                int intDecLen = 0;
+                byDecoded     = zoscii_decode(byRollingRom, byBlock,
+                                              HEADER_RAW_SIZE, intEncLen, &intDecLen);
+                if (byDecoded && intDecLen >= ENC_HEADER_SIZE)
                 {
-                    byMode = byModeDecoded[0];
-                    free(byModeDecoded);
-                }
+                    uint8_t byHashType     = byDecoded[ENC_OFF_HASH_TYPE];
+                    uint32_t intStoredHash = (uint32_t)(byDecoded[ENC_OFF_HASH] |
+                                            (byDecoded[ENC_OFF_HASH + 1] << 8)  |
+                                            (byDecoded[ENC_OFF_HASH + 2] << 16) |
+                                            (byDecoded[ENC_OFF_HASH + 3] << 24));
+                    uint32_t intStoredPrevHash = (uint32_t)(byDecoded[ENC_OFF_PREV_HASH] |
+                                                (byDecoded[ENC_OFF_PREV_HASH + 1] << 8)  |
+                                                (byDecoded[ENC_OFF_PREV_HASH + 2] << 16) |
+                                                (byDecoded[ENC_OFF_PREV_HASH + 3] << 24));
 
-                // Un-XOR the file buffer if X2 and a previous block exists.
-                // Trunk block 1 has no previous block and was written plain even in X2 — skip XOR.
-                int intDataReady = 1;
-                if (byMode == MODE_X2 && strPrevBlockFilename != NULL)
-                {
-                    if (!xor_buffer_with_file(byFileData, intFileLen, strPrevBlockFilename))
+                    // Current-block hash covers the payload ONLY (see ztbaddblock.c)
+                    int intPaddedPayloadLen = intDecLen - ENC_OFF_PAYLOAD;
+                    uint32_t intCalcHash = hash_bytes((int)byHashType,
+                                                      byDecoded + ENC_OFF_PAYLOAD,
+                                                      0, intPaddedPayloadLen);
+                    int blnHashOK = (intCalcHash == intStoredHash);
+
+                    int blnPrevHashOK = 1;
+                    if (intStoredPrevHash != 0 && strcmp(strPrevID, NULL_GUID) != 0)
                     {
-                        intDataReady = 0;
-                    }
-                }
-
-                if (intDataReady)
-                {
-                    // Decode CRC fields from encoded bytes 2-17 (raw bytes 1-8: current CRC + prev CRC)
-                    size_t intCrcDecodedLen;
-                    uint8_t *byCrcDecoded = zoscii_decode_block(byRollingRom, byFileData + 2,
-                                                                 CRC_PREFIX_ENCODED_SIZE,
-                                                                 &intCrcDecodedLen);
-                    if (byCrcDecoded && intCrcDecodedLen >= BLOCK_TYPE_SIZE + BLOCK_VERSION_SIZE + HASH_TYPE_SIZE + HASH_SIZE * 2)
-                    {
-                        /* [0]=block_type [1]=block_version [2]=hash_type [3-6]=hash [7-10]=prevHash */
-                        uint32_t intStoredCrc     = byCrcDecoded[3] | (byCrcDecoded[4] << 8) |
-                                                    (byCrcDecoded[5] << 16) | (byCrcDecoded[6] << 24);
-                        uint32_t intStoredPrevCrc = byCrcDecoded[7] | (byCrcDecoded[8] << 8) |
-                                                    (byCrcDecoded[9] << 16) | (byCrcDecoded[10] << 24);
-                        free(byCrcDecoded);
-
-                        int intPrevCrcOk = 1;
-                        if ((byMode == MODE_X1 || byMode == MODE_X2) && intStoredPrevCrc != 0 && strPrevBlockFilename)
+                        int intPrevLen  = 0;
+                        uint8_t *byPrev = load_block(strWorkDir_a, strPrevID, &intPrevLen);
+                        if (byPrev)
                         {
-                            uint32_t intCalcPrevCrc = calculate_file_checksum(strPrevBlockFilename);
-                            intPrevCrcOk = (intCalcPrevCrc == intStoredPrevCrc) ? 1 : 0;
-                        }
-
-                        if (intPrevCrcOk)
-                        {
-                            size_t intEncodedLen = intFileLen - BLOCK_PREFIX_ENCODED_SIZE;
-                            uint32_t intCalcCrc = calculate_checksum(byFileData + BLOCK_PREFIX_ENCODED_SIZE,
-                                                                     intEncodedLen);
-                            intValid = (intCalcCrc == intStoredCrc) ? 1 : 0;
+                            int blnPrevIsTrunc = (intPrevLen >= HEADER_RAW_SIZE &&
+                                                  byPrev[RAW_OFF_BLOCK_TYPE] == BLOCK_TYPE_TRUNCATION);
+                            if (!blnPrevIsTrunc)
+                            {
+                                uint32_t intCalcPrev = hash_bytes((int)byHashType,
+                                                                   byPrev, 0, intPrevLen);
+                                blnPrevHashOK = (intCalcPrev == intStoredPrevHash);
+                            }
+                            free(byPrev);
                         }
                     }
-                    else
-                    {
-                        if (byCrcDecoded) { free(byCrcDecoded); }
-                    }
+
+                    if (blnHashOK && blnPrevHashOK) { intValid = 1; }
                 }
             }
         }
-        fclose(f);
     }
 
-    if (byFileData)   { free(byFileData); }
+    if (byBlock)      { free(byBlock); }
     if (byRollingRom) { free(byRollingRom); }
+    if (byDecoded)    { free(byDecoded); }
 
     return intValid;
 }
 
-
-// --- Verify Chain BACKWARDS ---
-int verify_chain_backwards(const char *strGenesisRomFile_a, const char *strChainId_a,
-                           const char *strTrunkId_a, VerifyStats *objStats_a)
-{
-    int intSuccess = 0;
-    BlockInfo *arrHistory = NULL;
-    BlockInfo *arrTrunkHistory = NULL;
-
-    arrHistory = malloc(MAX_BLOCKS_TO_SCAN * sizeof(BlockInfo));
-    if (arrHistory)
-    {
-        int intBlockCount = scan_chain_blocks(strChainId_a, arrHistory, MAX_BLOCKS_TO_SCAN);
-
-        if (intBlockCount > 0)
-        {
-            int intTrunkCount = 0;
-
-            if (strTrunkId_a && strcmp(strTrunkId_a, NULL_GUID) != 0)
-            {
-                arrTrunkHistory = malloc(MAX_BLOCKS_TO_SCAN * sizeof(BlockInfo));
-                if (arrTrunkHistory)
-                {
-                    intTrunkCount = scan_chain_blocks(strTrunkId_a, arrTrunkHistory, MAX_BLOCKS_TO_SCAN);
-                }
-            }
-
-            intSuccess = 1;
-            int intI;
-
-            for (intI = intBlockCount - 1; intI >= 0; intI--)
-            {
-                printf("  Block %d (%s)... ", arrHistory[intI].index, arrHistory[intI].block_id);
-
-                if (verify_single_block(strGenesisRomFile_a, arrHistory, intBlockCount,
-                                        arrTrunkHistory, intTrunkCount, arrHistory[intI].index))
-                {
-                    printf("[PASS]\n");
-                    objStats_a->verified_blocks++;
-                }
-                else
-                {
-                    printf("[FAIL]\n");
-                    objStats_a->failed_blocks++;
-                    intSuccess = 0;
-                }
-
-                objStats_a->total_blocks++;
-            }
-        }
-    }
-
-    if (arrHistory)      { free(arrHistory); }
-    if (arrTrunkHistory) { free(arrTrunkHistory); }
-
-    return intSuccess;
-}
-
-// --- Main ---
 int main(int argc, char *argv[])
 {
     int intResult = 0;
 
-    printf("ZTB Chain Verifier v20260420\n");
+    printf("ZTB Verify v20260618\n");
     printf("(c) 2026 Cyborg Unicorn Pty Ltd - MIT License\n\n");
 
-    if (argc < 3 || argc > 5)
+    if (argc < 3 || argc > 4)
     {
-        fprintf(stderr, "Usage: %s <genesis_rom> <trunk_id>                - Verify trunk and all branches\n", argv[0]);
-        fprintf(stderr, "       %s <genesis_rom> <trunk_id> -t             - Verify trunk only\n", argv[0]);
-        fprintf(stderr, "       %s <genesis_rom> <trunk_id> -b <branch_id> - Verify specific branch only\n", argv[0]);
-        fprintf(stderr, "       %s <genesis_rom> <trunk_id> -bb            - Verify all branches only (not trunk)\n", argv[0]);
+        fprintf(stderr, "Usage: %s <workdir> <tip_block_id> [-walk]\n", argv[0]);
+        fprintf(stderr, "  -walk   Walk back through the chain verifying all blocks\n");
         intResult = 1;
     }
 
     if (intResult == 0)
     {
-        const char *strGenesisRomFile_a = argv[1];
-        const char *strTrunkId_a = argv[2];
+        const char *strWorkDir_a = argv[1];
+        const char *strTipID_a   = argv[2];
+        int blnWalk              = (argc == 4 && strcmp(argv[3], "-walk") == 0);
 
-        int intVerifyTrunk = 1;
-        int intVerifyBranches = 1;
-        char strSpecificBranch[GUID_LEN] = "";
+        int intVerified = 0;
+        int intFailed   = 0;
 
-        if (argc >= 4)
+        // Walk matches ZTBChain.Verify: start at tip, follow prev_block_id
+        char strCurrentID[GUID_LEN];
+        strncpy(strCurrentID, strTipID_a, GUID_LEN - 1);
+        strCurrentID[GUID_LEN - 1] = '\0';
+
+        while (strcmp(strCurrentID, NULL_GUID) != 0 && strlen(strCurrentID) > 0)
         {
-            if (strcmp(argv[3], "-t") == 0)
+            printf("  Verifying %s... ", strCurrentID);
+
+            int blnOK = verify_block(strWorkDir_a, strCurrentID);
+            if (blnOK)
             {
-                intVerifyTrunk = 1;
-                intVerifyBranches = 0;
-            }
-            else if (strcmp(argv[3], "-bb") == 0)
-            {
-                intVerifyTrunk = 0;
-                intVerifyBranches = 1;
-            }
-            else if (strcmp(argv[3], "-b") == 0)
-            {
-                if (argc != 5)
-                {
-                    fprintf(stderr, "Error: -b requires a branch_id argument\n");
-                    intResult = 1;
-                }
-                else
-                {
-                    intVerifyTrunk = 0;
-                    intVerifyBranches = 0;
-                    strncpy(strSpecificBranch, argv[4], GUID_LEN - 1);
-                    strSpecificBranch[GUID_LEN - 1] = '\0';
-                }
+                printf("[PASS]\n");
+                intVerified++;
             }
             else
             {
-                fprintf(stderr, "Error: Unknown option '%s'\n", argv[3]);
-                intResult = 1;
+                printf("[FAIL]\n");
+                intFailed++;
+                // Matches C#: stop on first failure
+                strcpy(strCurrentID, NULL_GUID);
+            }
+
+            if (blnOK)
+            {
+                if (!blnWalk)
+                {
+                    // Single block only
+                    strcpy(strCurrentID, NULL_GUID);
+                }
+                else
+                {
+                    // Load block to get prev_block_id for next iteration
+                    int intBlockLen = 0;
+                    uint8_t *byBlock = load_block(strWorkDir_a, strCurrentID, &intBlockLen);
+                    if (byBlock && intBlockLen >= HEADER_RAW_SIZE)
+                    {
+                        uint8_t byBlockType = byBlock[RAW_OFF_BLOCK_TYPE];
+                        read_fixed_string(byBlock, RAW_OFF_PREV_ID, 36, strCurrentID);
+                        free(byBlock);
+                        // Stop at truncation block (matches C# Verify)
+                        if (byBlockType == BLOCK_TYPE_TRUNCATION)
+                        {
+                            strcpy(strCurrentID, NULL_GUID);
+                        }
+                    }
+                    else
+                    {
+                        if (byBlock) { free(byBlock); }
+                        strcpy(strCurrentID, NULL_GUID);
+                    }
+                }
             }
         }
 
-        if (intResult == 0)
+        printf("\n=== Verify Summary ===\n");
+        printf("Verified: %d\n", intVerified);
+        printf("Failed:   %d\n", intFailed);
+
+        if (intFailed == 0 && intVerified > 0)
         {
-            VerifyStats objStats = {0, 0, 0, 0};
-
-            if (intVerifyTrunk)
-            {
-                printf("=== Verifying Trunk: %s ===\n", strTrunkId_a);
-                if (!verify_chain_backwards(strGenesisRomFile_a, strTrunkId_a, NULL, &objStats))
-                {
-                    printf("\n- TRUNK VERIFICATION FAILED\n");
-                    intResult = 1;
-                }
-                else
-                {
-                    printf("+ Trunk verified\n\n");
-                }
-            }
-
-            BranchInfo arrBranches[100];
-            int intBranchCount = 0;
-
-            if (intResult == 0 && (intVerifyBranches || strSpecificBranch[0] != '\0'))
-            {
-                intBranchCount = discover_branches_from_trunk(strGenesisRomFile_a, strTrunkId_a,
-                                                              arrBranches, 100);
-                objStats.branches_found = intBranchCount;
-            }
-
-            if (intResult == 0 && strSpecificBranch[0] != '\0')
-            {
-                int intFound = 0;
-                int intI;
-                for (intI = 0; intI < intBranchCount; intI++)
-                {
-                    if (strcmp(arrBranches[intI].branch_id, strSpecificBranch) == 0)
-                    {
-                        intFound = 1;
-                    }
-                }
-
-                if (!intFound)
-                {
-                    fprintf(stderr, "Error: Branch '%s' not found or not linked to trunk '%s'\n",
-                            strSpecificBranch, strTrunkId_a);
-                    intResult = 1;
-                }
-                else
-                {
-                    printf("=== Verifying Branch: %s ===\n", strSpecificBranch);
-                    if (!verify_chain_backwards(strGenesisRomFile_a, strSpecificBranch, strTrunkId_a, &objStats))
-                    {
-                        printf("\n- BRANCH VERIFICATION FAILED\n");
-                        intResult = 1;
-                    }
-                    else
-                    {
-                        printf("+ Branch verified\n\n");
-                    }
-                }
-            }
-            else if (intResult == 0 && intVerifyBranches && intBranchCount > 0)
-            {
-                printf("=== Found %d branch(es) ===\n\n", intBranchCount);
-
-                int intI;
-                for (intI = 0; intI < intBranchCount && intResult == 0; intI++)
-                {
-                    printf("--- Verifying Branch: %s ---\n", arrBranches[intI].branch_id);
-
-                    if (!verify_chain_backwards(strGenesisRomFile_a, arrBranches[intI].branch_id, strTrunkId_a, &objStats))
-                    {
-                        printf("\n- BRANCH VERIFICATION FAILED\n");
-                        intResult = 1;
-                    }
-                    else
-                    {
-                        printf("+ Branch verified\n\n");
-                    }
-                }
-            }
-            else if (intResult == 0 && intVerifyBranches && intBranchCount == 0)
-            {
-                printf("=== No branches found ===\n\n");
-            }
-
-            printf("=== Verification Summary ===\n");
-            printf("Total blocks verified: %d\n", objStats.verified_blocks);
-            printf("Failed verifications:  %d\n", objStats.failed_blocks);
-            if (intVerifyBranches || strSpecificBranch[0] != '\0')
-            {
-                printf("Branches found:        %d\n", objStats.branches_found);
-            }
-
-            if (objStats.failed_blocks == 0 && intResult == 0)
-            {
-                printf("\n+++ ALL VERIFICATIONS PASSED +++\n");
-            }
-            else
-            {
-                printf("\n- VERIFICATION FAILED\n");
-                intResult = 1;
-            }
+            printf("+++ ALL VERIFICATIONS PASSED +++\n");
+        }
+        else
+        {
+            printf("--- VERIFICATION FAILED ---\n");
+            intResult = 1;
         }
     }
 

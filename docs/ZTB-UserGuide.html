@@ -11,35 +11,38 @@
         <h1>ZOSCII Tamperproof Blockchain - User Guide</h1>
         <p><em>(c) 2026 Cyborg Unicorn Pty Ltd - MIT License</em></p>
 
+        <div class="important">
+            <strong>About block IDs:</strong> every tool below takes block IDs you supply yourself — there is no auto-generated numbering. Use GUIDs, or any string up to 36 characters. You are responsible for keeping track of which ID is the "tip" of each chain; the tools don't remember this for you between runs.
+        </div>
+
         <div class="command-section">
             <h2>ztbcreate - Create Your Blockchain Foundation</h2>
             
             <h3>What it does:</h3>
-            <p>Creates the Genesis ROM - the immutable "seed" that anchors your entire blockchain.</p>
+            <p>Creates the genesis block - the immutable "seed" that anchors your entire blockchain.</p>
             
             <h3>Why you need it:</h3>
-            <p>Every blockchain starts here. This 64KB file of high-entropy random data becomes the root of trust. Without it, nothing else works.</p>
+            <p>Every blockchain starts here. This 64KB file of high-entropy data becomes the root of trust. Without it, nothing else works.</p>
             
             <h3>When to use it:</h3>
             <p>Once, at the very beginning, before creating any blocks.</p>
             
             <h3>What happens:</h3>
             <ul>
-                <li>Generates 64KB of random data</li>
-                <li>Analyzes entropy to ensure all 256 byte values (0-255) are present</li>
-                <li>Warns if any values are missing (would break encoding later)</li>
-                <li>Saves the Genesis ROM file</li>
+                <li>Reads 1–3 source files and XOR-blends their bytes together</li>
+                <li>Writes a 65,536-byte file: byte 0 is the genesis marker, the rest is the blended entropy</li>
+                <li>Refuses to overwrite an existing block with the same ID</li>
             </ul>
             
             <div class="important">
-                <strong>Important:</strong> Keep this file safe and backed up! If you lose it, you can never decode your blocks again. All verification depends on this file.
+                <strong>Important:</strong> Keep this file safe and backed up! If you lose it, you can never decode your blocks again. All verification depends on this file (until a checkpoint + truncate establishes a new self-contained root).
             </div>
             
             <h3>Example:</h3>
-            <pre><code>ztbcreate selfie.jpg genesis.rom</code></pre>
+            <pre><code>ztbcreate selfie.jpg . A0000001-0000-4000-8000-000000000001</code></pre>
             
-            <p>ztbcreate &lt;entropyfile1&gt; [&lt;entropyfile2&gt;] [&lt;entropyfile3&gt;] &lt;output_genesis_rom&gt;<br><br>
-            Note: 1 to 3 entropy files are recommended to be JPEGs or MP3s or some other capture of real-world physics.</p>
+            <p><code>ztbcreate &lt;source1&gt; [source2] [source3] &lt;workdir&gt; &lt;new_block_id&gt;</code><br><br>
+            Note: 1 to 3 source files are recommended to be JPEGs, MP3s, or some other capture of real-world physics.</p>
         </div>
 
         <div class="command-section">
@@ -57,49 +60,38 @@
             <h3>What happens:</h3>
             <ul>
                 <li>Takes your data (text string or file)</li>
-                <li>Pads it to minimum size if needed</li>
-                <li>Builds a Rolling ROM from previous blocks + Genesis</li>
+                <li>Pads it to a minimum of 512 bytes if needed</li>
+                <li>Builds a Rolling ROM by walking backwards from <code>prev_block_id</code> through prior blocks</li>
                 <li>Encodes your data using ZOSCII (makes it tamperproof)</li>
-                <li>Creates a new block file: <code>chainid_index_blockid.ztb</code></li>
+                <li>Creates a new block file named <code>&lt;new_block_id&gt;.ztb</code></li>
             </ul>
             
-            <h3>Options:</h3>
+            <h3>Required arguments:</h3>
             <ul>
-                <li><code>-i "id"</code> - Supply a custom block ID (max 36 characters, truncated if longer)</li>
-                <li><code>-t "text"</code> - Add a text string</li>
-                <li><code>-f filename</code> - Add a file's contents</li>
-                <li><code>-x1</code> - X1 extended security: prev-block CRC binding, no on-disk XOR (see Key Concepts)</li>
-                <li><code>-x2</code> - X2 extended security: prev-block CRC binding + on-disk XOR (see Key Concepts)</li>
+                <li><code>workdir</code> - directory containing the genesis block and all chain blocks</li>
+                <li><code>chain_id</code> - a label of your own choosing, for your own bookkeeping only (not stored in the file)</li>
+                <li><code>new_block_id</code> - the ID this new block will be saved under</li>
+                <li><code>prev_block_id</code> - the ID of the block this one links to; use <code>00000000-0000-0000-0000-000000000000</code> for the first block of a chain</li>
+                <li><code>-t "text"</code> or <code>-f filename</code> - the payload, as a text string or a file's contents</li>
             </ul>
             
             <h3>Examples:</h3>
             <pre><code># First block on a new trunk
-ztbaddblock genesis.rom MyTrunk -t "Invoice #001" -i 1
+ztbaddblock . MyTrunk A0000001-0000-4000-8000-000000000002 00000000-0000-0000-0000-000000000000 -t "Invoice #001"
 
-# Or with quotes
-ztbaddblock genesis.rom MyTrunk -t "Invoice #001" -i "1"
+# Second block, linked to the first
+ztbaddblock . MyTrunk A0000001-0000-4000-8000-000000000003 A0000001-0000-4000-8000-000000000002 -t "Invoice #002"
 
-# Using a text label
-ztbaddblock genesis.rom MyTrunk -t "Welcome message" -i "genesis"
-
-# Second block (auto-generated ID)
-ztbaddblock genesis.rom MyTrunk -t "Invoice #002"
-
-# Add a file with custom ID
-ztbaddblock genesis.rom MyTrunk -f contract.pdf -i "contract-2024-001"
-
-# Enable X1 mode for large files (CRC binding, no XOR)
-ztbaddblock genesis.rom MyTrunk -f large_document.pdf -x1 -i "large-doc"
-
-# Enable X2 mode for maximum security (CRC binding + on-disk XOR)
-ztbaddblock genesis.rom MyTrunk -f large_document.pdf -x2 -i "large-doc"</code></pre>
+# Add a file as the payload
+ztbaddblock . MyTrunk A0000001-0000-4000-8000-000000000004 A0000001-0000-4000-8000-000000000003 -f contract.pdf
+</code></pre>
         </div>
 
         <div class="command-section">
             <h2>ztbaddbranch - Create a Parallel Chain</h2>
             
             <h3>What it does:</h3>
-            <p>Creates a new branch that splits off from the trunk at the current point.</p>
+            <p>Creates a new branch that splits off from any existing block — typically the current tip of a trunk.</p>
             
             <h3>Why you need it:</h3>
             <p>Perfect for organizing data hierarchically. Think: trunk = company, branches = departments. Or trunk = financial year, branches = accounts.</p>
@@ -109,35 +101,27 @@ ztbaddblock genesis.rom MyTrunk -f large_document.pdf -x2 -i "large-doc"</code><
             
             <h3>What happens:</h3>
             <ul>
-                <li>Checks that the trunk exists</li>
-                <li>Checks that the branch name isn't already used</li>
-                <li>Creates the first block of the new branch</li>
-                <li>Links it to the current trunk tip</li>
-                <li>Future blocks can be added to this branch using <code>ztbaddblock</code></li>
+                <li>Writes a block linked to <code>prev_block_id</code>, with the branch flag set and the trunk's chain ID recorded in its header</li>
+                <li>This is otherwise an ordinary block — further blocks on the branch are added with the normal <code>ztbaddblock</code> tool</li>
             </ul>
             
             <h3>Examples:</h3>
             <pre><code># Create main company trunk
-ztbaddblock genesis.rom CompanyLedger -t "2024 Books"
+ztbaddblock . CompanyLedger B0000001-0000-4000-8000-000000000002 00000000-0000-0000-0000-000000000000 -t "2025 Books"
 
-# Branch off for departments (auto-generated IDs)
-ztbaddbranch genesis.rom CompanyLedger Sales -t "Sales Q1"
-ztbaddbranch genesis.rom CompanyLedger Marketing -t "Marketing Q1"
+# Branch off for departments
+ztbaddbranch . CompanyLedger Sales     B0000001-0000-4000-8000-000000000003 B0000001-0000-4000-8000-000000000002 -t "Sales Q1"
+ztbaddbranch . CompanyLedger Marketing B0000001-0000-4000-8000-000000000004 B0000001-0000-4000-8000-000000000002 -t "Marketing Q1"
 
-# Branch with custom ID
-ztbaddbranch genesis.rom CompanyLedger Engineering -t "Engineering Dept" -i "eng-root"
-
-# Now add blocks to branches
-ztbaddblock genesis.rom Sales -t "Sale #001"
-ztbaddblock genesis.rom Marketing -t "Campaign #001" -i "campaign-summer"</code></pre>
-            <p><strong>Note:</strong> Add <code>-x1</code> to any <code>ztbaddbranch</code> or <code>ztbaddblock</code> call for X1 mode (CRC binding, no XOR), or <code>-x2</code> for X2 mode (CRC binding + on-disk XOR). All blocks in a chain should use the same mode consistently.</p>
+# Now add blocks to a branch using ztbaddblock
+ztbaddblock . Sales B0000001-0000-4000-8000-000000000005 B0000001-0000-4000-8000-000000000003 -t "Sale #001"</code></pre>
         </div>
 
         <div class="command-section">
             <h2>ztbfetch - Read Your Data Back</h2>
             
             <h3>What it does:</h3>
-            <p>Retrieves and decodes a specific block from any chain.</p>
+            <p>Retrieves and decodes a specific block by its ID.</p>
             
             <h3>Why you need it:</h3>
             <p>To actually read the data you stored! Blocks are ZOSCII-encoded, so you need this tool to decode them.</p>
@@ -147,34 +131,30 @@ ztbaddblock genesis.rom Marketing -t "Campaign #001" -i "campaign-summer"</code>
             
             <h3>What happens:</h3>
             <ul>
-                <li>Finds the requested block file</li>
-                <li>Reconstructs the Rolling ROM (samples from previous blocks)</li>
-                <li>Decodes the ZOSCII-encoded data</li>
-                <li>Verifies the CRC32 checksum (detects tampering)</li>
+                <li>Loads the requested block file</li>
+                <li>Reconstructs the Rolling ROM it was encoded with</li>
+                <li>Decodes the ZOSCII-encoded section</li>
+                <li>Verifies the block's own hash and its binding to the previous block (detects tampering)</li>
                 <li>Shows you the decoded payload</li>
             </ul>
             
-            <h3>Examples:</h3>
-            <pre><code># Fetch block 3 from MyTrunk
-ztbfetch genesis.rom MyTrunk 3
-
-# Fetch from a branch
-ztbfetch genesis.rom Sales 2
+            <h3>Example:</h3>
+            <pre><code>ztbfetch . A0000001-0000-4000-8000-000000000003
 
 # Output shows:
-# - Block metadata (ID, timestamp, etc.)
-# - CRC32 verification
-# - Your decoded data</code></pre>
+# - Block header (block ID, prev ID, trunk ID, branch flag, block type)
+# - Hash and prev-hash verification results
+# - Your decoded payload</code></pre>
         </div>
 
         <div class="command-section">
             <h2>ztbverify - Prove Integrity</h2>
             
             <h3>What it does:</h3>
-            <p>Verifies that your blockchain is intact and untampered. Works backwards from the latest block to Genesis.</p>
+            <p>Verifies that your blockchain is intact and untampered, starting at a given block.</p>
             
             <h3>Why you need it:</h3>
-            <p>To prove your data hasn't been altered. If anyone modifies even one byte in block 5, verification will fail on block 6 (and all subsequent blocks).</p>
+            <p>To prove your data hasn't been altered. If anyone modifies even one byte in an earlier block, verification fails as soon as that block is reached.</p>
             
             <h3>When to use it:</h3>
             <ul>
@@ -186,139 +166,164 @@ ztbfetch genesis.rom Sales 2
             
             <h3>What happens:</h3>
             <ul>
-                <li>Scans all blocks in the chain</li>
-                <li>Rebuilds each block's Rolling ROM</li>
-                <li>Decodes each block</li>
-                <li>Verifies CRC32 checksums</li>
-                <li>Tests the tamperproof linking</li>
-                <li>Reports PASS/FAIL for each block</li>
+                <li>Fetches the named block (rebuilding its Rolling ROM and checking hashes, same as <code>ztbfetch</code>)</li>
+                <li>With <code>-walk</code>, follows <code>prev_block_id</code> back through the chain, repeating the check on every block, until it reaches the start of the chain or a truncation marker</li>
+                <li>Without <code>-walk</code>, checks only the one block you named</li>
             </ul>
             
             <h3>Options:</h3>
             <ul>
-                <li>No flag - Verify trunk and all branches</li>
-                <li><code>-t</code> - Verify trunk only</li>
-                <li><code>-b branchid</code> - Verify specific branch only</li>
-                <li><code>-bb</code> - Verify all branches only (skip trunk)</li>
+                <li>No flag - verify the named block only</li>
+                <li><code>-walk</code> - walk backwards and verify the entire chain</li>
             </ul>
             
             <h3>Examples:</h3>
-            <pre><code># Verify everything
-ztbverify genesis.rom MyTrunk
+            <pre><code># Verify just one block
+ztbverify . A0000001-0000-4000-8000-000000000004
 
-# Verify just the trunk
-ztbverify genesis.rom MyTrunk -t
-
-# Verify specific branch
-ztbverify genesis.rom MyTrunk -b Sales</code></pre>
+# Verify the whole chain back to the start
+ztbverify . A0000001-0000-4000-8000-000000000004 -walk</code></pre>
             
-            <p><strong>Result:</strong> If ANY block has been tampered with, verification fails and tells you exactly which block is corrupt.</p>
+            <p><strong>Result:</strong> if any block has been tampered with, verification stops and reports failure at that block.</p>
         </div>
 
         <div class="command-section">
-            <h2>ztbcheckpoint - Archive Old Data</h2>
+            <h2>ztbcheckpoint - Mark an Archival Boundary</h2>
             
             <h3>What it does:</h3>
-            <p>Creates an archival boundary that lets you move old blocks to slow/cheap storage while keeping the chain verifiable.</p>
+            <p>Writes a documented anchor point into the chain — a block whose only job is to carry a human-readable label, ready to be the basis of a later truncation.</p>
             
             <h3>Why you need it:</h3>
-            <p>Over time, chains grow huge. Checkpoints let you archive historical data without breaking the chain.</p>
+            <p>It's the first step in archiving old data: you mark a point in the chain, then use <code>ztbtruncate</code> to actually cut history off below it.</p>
             
             <h3>When to use it:</h3>
             <ul>
                 <li>End of financial year</li>
-                <li>When chain gets too large</li>
+                <li>When a chain gets too large</li>
                 <li>Before migrating to new storage</li>
-                <li>Creating self-contained archives</li>
+                <li>Any time you want a documented point to later archive from</li>
             </ul>
             
             <h3>What happens:</h3>
             <ul>
-                <li>Builds the Rolling ROM at the current chain tip</li>
-                <li>Saves that Rolling ROM as a new Genesis ROM file</li>
-                <li>New blocks use the checkpoint ROM as their genesis — a clean chain restart</li>
-                <li>Archive the old blocks + original Genesis ROM to cold storage</li>
-                <li>Both archive and active chain are fully self-contained and independently verifiable</li>
+                <li>Writes a normal-shaped block, but with block type <code>Checkpoint</code></li>
+                <li>The payload is your label text, nothing else</li>
+                <li>The chain continues exactly as before — adding a checkpoint doesn't change anything structurally by itself</li>
             </ul>
             
             <h3>Example:</h3>
-            <pre><code># At end of 2024
-ztbcheckpoint genesis.rom MyTrunk checkpoint.rom
+            <pre><code>ztbcheckpoint . FY2025 C0000001-0000-4000-8000-000000000004 C0000001-0000-4000-8000-000000000003 "End of financial year 2025"</code></pre>
+        </div>
 
-# Now you can:
-# 1. Move all old blocks + original genesis.rom to archive storage
-# 2. Use checkpoint.rom as genesis for new blocks
-# 3. Both archive and active chain verify independently</code></pre>
+        <div class="command-section">
+            <h2>ztbtruncate - Archive Old Data</h2>
+            
+            <h3>What it does:</h3>
+            <p>Cuts a chain's history off at a checkpoint, so everything below it can be moved to cold storage while the active chain stays fully verifiable on its own.</p>
+            
+            <h3>Why you need it:</h3>
+            <p>Over time, chains grow huge. Truncation lets you archive historical data without breaking the chain above the cut point.</p>
+            
+            <h3>When to use it:</h3>
+            <p>Right after you've placed a checkpoint, and <strong>before</strong> adding any further blocks above it.</p>
+            
+            <h3>What happens:</h3>
+            <ul>
+                <li>Reads the checkpoint's previous block ID</li>
+                <li>Builds the Rolling ROM exactly as it would have been built for the block after that one</li>
+                <li>Overwrites that previous block's file with a raw snapshot of that Rolling ROM — a self-contained 64KB starting point</li>
+                <li>The chain above the checkpoint is now independently verifiable without the original genesis block</li>
+            </ul>
+            
+            <div class="important">
+                <strong>Order matters:</strong> always checkpoint, then truncate, then continue adding blocks — in that order. If you add blocks above a checkpoint <em>before</em> truncating, then truncate afterwards, those already-written blocks will fail verification, because truncation changes what their Rolling ROM resolves to. Truncate first, then build forward from there.
+            </div>
+            
+            <h3>Example:</h3>
+            <pre><code># Build to the checkpoint
+ztbaddblock   . FY2025 C0000001-...0002 00000000-...-000000000000 -t "Block 1"
+ztbaddblock   . FY2025 C0000001-...0003 C0000001-...0002          -t "Block 2"
+ztbcheckpoint . FY2025 C0000001-...0004 C0000001-...0003          "End of FY2025"
+
+# Truncate immediately
+ztbtruncate   . C0000001-...0004
+
+# Now keep going — new blocks build correctly on the truncated chain
+ztbaddblock   . FY2026 C0000001-...0005 C0000001-...0004          "First FY2026 entry"</code></pre>
         </div>
 
         <div class="workflow">
             <h2>Real-World Workflow Example</h2>
-            <p><strong>Scenario:</strong> Accounting firm tracking invoices with separate accounts</p>
+            <p><strong>Scenario:</strong> Accounting firm tracking invoices for separate clients</p>
             
             <pre><code># 1. Start fresh
-ztbcreate selfie.jpg genesis.rom
+ztbcreate selfie.jpg . D0000001-0000-4000-8000-000000000001
 
 # 2. Create main trunk for 2025
-ztbaddblock genesis.rom FY2025 -t "Financial Year 2025" -i "fy2025-root"
+ztbaddblock . FY2025 D0000001-0000-4000-8000-000000000002 00000000-0000-0000-0000-000000000000 -t "Financial Year 2025"
 
-# 3. Create branches for different accounts
-ztbaddbranch genesis.rom FY2025 ClientA -t "Client A Account" -i "clientA-root"
-ztbaddbranch genesis.rom FY2025 ClientB -t "Client B Account"
+# 3. Create branches for different clients
+ztbaddbranch . FY2025 ClientA D0000001-0000-4000-8000-000000000003 D0000001-0000-4000-8000-000000000002 -t "Client A Account"
+ztbaddbranch . FY2025 ClientB D0000001-0000-4000-8000-000000000004 D0000001-0000-4000-8000-000000000002 -t "Client B Account"
 
-# 4. Add invoices to Client A (with custom IDs)
-ztbaddblock genesis.rom ClientA -t "Invoice #1001" -i "inv-1001"
-ztbaddblock genesis.rom ClientA -f invoice_1002.pdf -i "inv-1002"
+# 4. Add invoices to Client A
+ztbaddblock . ClientA D0000001-0000-4000-8000-000000000005 D0000001-0000-4000-8000-000000000003 -t "Invoice #1001"
+ztbaddblock . ClientA D0000001-0000-4000-8000-000000000006 D0000001-0000-4000-8000-000000000005 -f invoice_1002.pdf
 
-# 5. Add invoices to Client B
-ztbaddblock genesis.rom ClientB -t "Invoice #2001" -i "inv-2001"
+# 5. Add an invoice to Client B
+ztbaddblock . ClientB D0000001-0000-4000-8000-000000000007 D0000001-0000-4000-8000-000000000004 -t "Invoice #2001"
 
 # 6. Retrieve a specific invoice
-ztbfetch genesis.rom ClientA 2
+ztbfetch . D0000001-0000-4000-8000-000000000006
 
 # 7. Verify everything is intact
-ztbverify genesis.rom FY2025
+ztbverify . D0000001-0000-4000-8000-000000000006 -walk
 
-# 8. At year-end, create checkpoint
-ztbcheckpoint genesis.rom FY2025 checkpoint.rom
+# 8. At year-end, checkpoint and truncate
+ztbcheckpoint . FY2025 D0000001-0000-4000-8000-000000000008 D0000001-0000-4000-8000-000000000002 "End of FY2025"
+ztbtruncate   . D0000001-0000-4000-8000-000000000008
 
-# 9. Archive old blocks + genesis.rom, use checkpoint.rom for FY2026</code></pre>
+# 9. Archive everything below the truncated block, keep building forward for FY2026</code></pre>
         </div>
 
         <div class="key-concepts">
             <h2>Key Concepts for Users</h2>
             
             <h3>Tamperproof</h3>
-            <p>If you change ANY byte in block N, all blocks N+1 onwards fail verification. The ZOSCII pointer encoding makes forgery combinatorially impossible (10^152900 combinations).</p>
+            <p>If you change any byte in a block, every later block whose Rolling ROM sampled that block fails verification. The ZOSCII pointer encoding makes forgery combinatorially impossible (10^152900 combinations).</p>
             
-            <h3>Custom Block IDs (-i parameter)</h3>
-            <p>You can assign your own block IDs instead of auto-generated GUIDs. Use any string up to 36 characters. Examples: <code>-i 1</code>, <code>-i "invoice-001"</code>, <code>-i "fred"</code>, <code>-i "my-block-1"</code>. If you exceed 36 characters, the ID is silently truncated.</p>
+            <h3>Block IDs Are Yours to Manage</h3>
+            <p>There is no auto-generated numbering. Every block ID — a GUID or any string up to 36 characters — is supplied by you on the command line, and you're responsible for tracking which ID is the current "tip" of each chain between commands.</p>
             
-            <h3>X1 and X2 Extended Security Modes</h3>
-            <p>Both X1 (<code>-x1</code>) and X2 (<code>-x2</code>) add an additional layer on top of the standard tamper-evidence: every block commits to a CRC32 of the previous block's complete on-disk content, creating a dual-CRC constraint that makes forgery practically infeasible even beyond the standard combinatorial guarantee.</p>
-            <p>The difference is that X2 also physically XOR's the output block against the previous block file on disk. X1 gives you the dual-CRC binding without the XOR. X2 gives you both.</p>
-            <p><strong>When to use X1/X2:</strong> The rolling ROM samples the first 1KB of each block. For payloads under 1KB, the entire block is captured in that sample and the combinatorial tamper-evidence applies to the full payload — neither mode is needed. For payloads larger than 1KB, content beyond that boundary is protected only by CRC32 in normal mode. X1 and X2 both close this gap. Use normal mode for short records (invoices, transactions, log entries). Use <code>-x1</code> or <code>-x2</code> when storing large files such as PDFs, images, or contracts. The first block of a trunk is always stored plain even in X1/X2 mode — this is by design.</p>
+            <h3>Dual-Hash Block Binding</h3>
+            <p>Every block commits to two integrity hashes: a hash covering just the payload data (calculated before the data is encoded), and a hash of the previous block's complete file. The current block's hash is deliberately payload-only — it doesn't cover the header fields (block ID, previous block ID, branch info). That's intentional: keeping the hash limited to the payload means it can eventually be computed as the data streams in, rather than needing the whole block finished first. Header tampering is still caught, just by a different mechanism — the header sits within the portion of each block sampled into the Rolling ROM of later blocks, so it's protected the same combinatorial way the payload is. This dual-hash binding is a standard feature of all blocks — there are no optional modes. The first block of a chain has no predecessor; its prev-hash is zero by design.</p>
+            <p>The C command-line tools use CRC32 over the full payload as their hash algorithm. The C# reference library additionally supports a ZRollingHash algorithm and a 1KB-window variant of each, selectable per block — these are recognized but not yet computed by the C tools.</p>
             
+            <h3>Block Types</h3>
+            <p>Every block carries a <code>block_type</code> field in its header. The types are: <strong>Genesis</strong> (the root 64KB block), <strong>Normal</strong> (standard data — also used for branch blocks), <strong>Checkpoint</strong> (documented anchor point), <strong>Truncation</strong> (written by <code>ztbtruncate</code>; makes a chain self-contained without its original genesis block), <strong>Finalise</strong> (soft close marker), and <strong>Bridge</strong> (reserved).</p>
+
             <h3>No Decryption Needed</h3>
             <p>This isn't encryption - it's addressing. The data is encoded as pointers into the Rolling ROM. Without the exact Rolling ROM, the pointers are meaningless.</p>
             
             <h3>Independent Archives</h3>
-            <p>Checkpoints + Genesis copies let you create self-contained archives that verify independently. Perfect for legal compliance, backups, and long-term storage.</p>
+            <p>Checkpoints plus truncation let you create self-contained archives that verify independently. Perfect for legal compliance, backups, and long-term storage.</p>
             
             <h3>Branch Organization</h3>
-            <p>Use branches like folders. Trunk = main timeline, branches = parallel sub-timelines. All verified together.</p>
+            <p>Use branches like folders. Trunk = main timeline, branches = parallel sub-timelines. Both verify together by walking back through the branch into the trunk.</p>
         </div>
 
         <div class="quick-ref">
             <h2>Quick Reference</h2>
-            </table>
+            <table>
                 <thead><tr><th>Command</th><th>Purpose</th><th>Example</th></tr></thead>
                 <tbody>
-                    <tr><td>ztbcreate</td><td>Create Genesis ROM</td><td><code>ztbcreate selfie.jpg genesis.rom</code></td></tr>
-                    <tr><td>ztbaddblock</td><td>Add data block</td><td><code>ztbaddblock genesis.rom chain -t "text" -i "myid"</code></td></tr>
-                    <tr><td>ztbaddbranch</td><td>Create new branch</td><td><code>ztbaddbranch genesis.rom trunk branch -t "text"</code></td></tr>
-                    <tr><td>ztbfetch</td><td>Read block data</td><td><code>ztbfetch genesis.rom chain 3</code></td></tr>
-                    <tr><td>ztbverify</td><td>Verify integrity</td><td><code>ztbverify genesis.rom trunk</code></td></tr>
-                    <tr><td>ztbcheckpoint</td><td>Archive boundary</td><td><code>ztbcheckpoint genesis.rom chain checkpoint.rom</code></td></tr>
+                    <tr><td>ztbcreate</td><td>Create genesis block</td><td><code>ztbcreate selfie.jpg . &lt;new_id&gt;</code></td></tr>
+                    <tr><td>ztbaddblock</td><td>Add data block</td><td><code>ztbaddblock . chain &lt;new_id&gt; &lt;prev_id&gt; -t "text"</code></td></tr>
+                    <tr><td>ztbaddbranch</td><td>Create new branch</td><td><code>ztbaddbranch . trunk branch &lt;new_id&gt; &lt;prev_id&gt; -t "text"</code></td></tr>
+                    <tr><td>ztbcheckpoint</td><td>Mark archival boundary</td><td><code>ztbcheckpoint . chain &lt;new_id&gt; &lt;prev_id&gt; "label"</code></td></tr>
+                    <tr><td>ztbtruncate</td><td>Archive below checkpoint</td><td><code>ztbtruncate . &lt;checkpoint_id&gt;</code></td></tr>
+                    <tr><td>ztbfetch</td><td>Read block data</td><td><code>ztbfetch . &lt;block_id&gt;</code></td></tr>
+                    <tr><td>ztbverify</td><td>Verify integrity</td><td><code>ztbverify . &lt;block_id&gt; -walk</code></td></tr>
                 </tbody>
             </table>
         </div>

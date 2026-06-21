@@ -1,270 +1,177 @@
-// Cyborg ZTB Genesis ROM Creator v20260420
+// Cyborg ZTB Genesis Block Creator v20260618
 // (c) 2026 Cyborg Unicorn Pty Ltd.
 // This software is released under MIT License.
 //
-// Creates a 64KB Genesis ROM from 1-3 entropy source files (e.g. JPEG, MP3).
-// Usage: ztbcreate <input1> [input2] [input3] <output_genesis_rom>
+// Creates a genesis block (.ztb, exactly 65536 bytes) from 1-3 entropy source files.
+// Matches ZTBChain.Create() exactly.
+//
+// Usage: ztbcreate <source1> [source2] [source3] <workdir> <new_block_id>
 
 #include "ztbcommon.c"
-
-// --- Load a file into a buffer ---
-static uint8_t* load_source_file(const char *strFilename_a, long *lngSize_a)
-{
-    uint8_t *ptrData = NULL;
-    FILE *f = NULL;
-
-    *lngSize_a = 0;
-    f = fopen(strFilename_a, "rb");
-    if (f)
-    {
-        fseek(f, 0, SEEK_END);
-        *lngSize_a = ftell(f);
-        fseek(f, 0, SEEK_SET);
-
-        if (*lngSize_a > 0)
-        {
-            ptrData = (uint8_t*)malloc(*lngSize_a);
-            if (ptrData)
-            {
-                if (fread(ptrData, 1, *lngSize_a, f) != (size_t)*lngSize_a)
-                {
-                    free(ptrData);
-                    ptrData = NULL;
-                    *lngSize_a = 0;
-                }
-            }
-            else
-            {
-                *lngSize_a = 0;
-            }
-        }
-        fclose(f);
-    }
-
-    return ptrData;
-}
-
-// --- Analyze ROM entropy ---
-static void analyze_rom_entropy(const uint8_t *byRomData_a)
-{
-    uint32_t arrByteCounts[256] = {0};
-    size_t intI;
-
-    for (intI = 0; intI < ROM_SIZE; intI++)
-    {
-        arrByteCounts[byRomData_a[intI]]++;
-    }
-
-    uint32_t intMinCount = ROM_SIZE;
-    uint32_t intMaxCount = 0;
-    uint32_t intMissingBytes = 0;
-    int intJ;
-
-    for (intJ = 0; intJ < 256; intJ++)
-    {
-        if (arrByteCounts[intJ] == 0)
-        {
-            intMissingBytes++;
-        }
-        else
-        {
-            if (arrByteCounts[intJ] < intMinCount) { intMinCount = arrByteCounts[intJ]; }
-            if (arrByteCounts[intJ] > intMaxCount) { intMaxCount = arrByteCounts[intJ]; }
-        }
-    }
-
-    double dblExpected = ROM_SIZE / 256.0;
-
-    printf("\n--- ROM Entropy Analysis ---\n");
-    printf("Total bytes:           %d\n", ROM_SIZE);
-    printf("Expected per value:    %.1f\n", dblExpected);
-    printf("Minimum occurrences:   %u\n", intMinCount);
-    printf("Maximum occurrences:   %u\n", intMaxCount);
-    printf("Missing byte values:   %u\n", intMissingBytes);
-
-    if (intMissingBytes > 0)
-    {
-        printf("\n!! WARNING: %u byte values missing!\n", intMissingBytes);
-        printf("   This will cause encoding failures.\n");
-        printf("   Try different source files.\n");
-    }
-    else
-    {
-        printf("\n+ All 256 byte values present.\n");
-    }
-
-    double dblDeviation = ((double)intMaxCount - intMinCount) / dblExpected * 100.0;
-    printf("Distribution variance: %.1f%%\n", dblDeviation);
-
-    if (dblDeviation < 50.0)
-    {
-        printf("+ Excellent entropy.\n");
-    }
-    else if (dblDeviation < 100.0)
-    {
-        printf("+ Good entropy.\n");
-    }
-    else
-    {
-        printf("!! Fair entropy (consider different source files).\n");
-    }
-    printf("----------------------------\n");
-}
 
 int main(int argc, char *argv[])
 {
     int intResult = 0;
-    uint8_t *arrInputData[3] = {NULL, NULL, NULL};
-    long arrInputSize[3] = {0, 0, 0};
-    long arrShare[3] = {0, 0, 0};
-    double dblPos[3] = {0.0, 0.0, 0.0};
-    double dblStep[3] = {0.0, 0.0, 0.0};
-    uint8_t *byRomData = NULL;
-    int intInputCount = 0;
-    int intI = 0;
-    const char *strOutputFilename = NULL;
 
-    printf("ZTB Genesis ROM Creator v20260420\n");
+    printf("ZTB Genesis Block Creator v20260618\n");
     printf("(c) 2026 Cyborg Unicorn Pty Ltd - MIT License\n\n");
 
-    if (argc < 3 || argc > 5)
+    if (argc < 4 || argc > 6)
     {
-        fprintf(stderr, "Usage: %s <input1> [input2] [input3] <output_genesis_rom>\n", argv[0]);
-        fprintf(stderr, "Example: %s photo.jpg music.mp3 genesis.rom\n", argv[0]);
-        fprintf(stderr, "\nCreates a 64KB high-entropy Genesis ROM from 1-3 source files.\n");
-        fprintf(stderr, "Recommended sources: JPEG photos, MP3s, or any real-world binary files.\n");
-        fprintf(stderr, "The sources are never stored - only their entropy is sampled.\n");
+        fprintf(stderr, "Usage: %s <source1> [source2] [source3] <workdir> <new_block_id>\n", argv[0]);
+        fprintf(stderr, "Example: %s photo.jpg music.mp3 . A1B2C3D4-E5F6-4A7B-8C9D-E0F1A2B3C4D5\n", argv[0]);
         intResult = 1;
     }
 
     if (intResult == 0)
     {
-        // Last arg is always output, everything before is input
-        intInputCount = argc - 2;
-        strOutputFilename = argv[argc - 1];
+        // Last arg is block_id, second-to-last is workdir, everything before is sources
+        int intSourceCount  = argc - 3;
+        const char *strWorkDir_a   = argv[argc - 2];
+        const char *strNewBlockID_a = argv[argc - 1];
 
-        // Check output doesn't already exist
-        FILE *fCheck = fopen(strOutputFilename, "rb");
+        // Build output path
+        char strOutputPath[FILENAME_MAX];
+        snprintf(strOutputPath, FILENAME_MAX, "%s/%s.ztb", strWorkDir_a, strNewBlockID_a);
+
+        // Refuse duplicate (matches C# behaviour)
+        FILE *fCheck = fopen(strOutputPath, "rb");
         if (fCheck)
         {
             fclose(fCheck);
-            fprintf(stderr, "Error: Output file already exists: %s\n", strOutputFilename);
+            fprintf(stderr, "Error: Output file already exists: %s\n", strOutputPath);
             intResult = 1;
         }
-    }
-
-    // Load all input files
-    if (intResult == 0)
-    {
-        for (intI = 0; intI < intInputCount && intResult == 0; intI++)
-        {
-            printf("Loading source %d: %s\n", intI + 1, argv[intI + 1]);
-            arrInputData[intI] = load_source_file(argv[intI + 1], &arrInputSize[intI]);
-            if (!arrInputData[intI] || arrInputSize[intI] == 0)
-            {
-                fprintf(stderr, "Error: Cannot load source file: %s\n", argv[intI + 1]);
-                intResult = 1;
-            }
-            else
-            {
-                printf("  Loaded %ld bytes\n", arrInputSize[intI]);
-            }
-        }
-    }
-
-    // Build ROM by interleaved sampling (same logic as ucreate)
-    if (intResult == 0)
-    {
-        byRomData = (uint8_t*)malloc(ROM_SIZE);
-        if (!byRomData)
-        {
-            fprintf(stderr, "Error: Cannot allocate ROM buffer\n");
-            intResult = 1;
-        }
-    }
-
-    if (intResult == 0)
-    {
-        // Calculate each file's share of the ROM and step size
-        long intBytesPerFile = ROM_SIZE / intInputCount;
-        long intRemainder = ROM_SIZE % intInputCount;
-
-        for (intI = 0; intI < intInputCount; intI++)
-        {
-            arrShare[intI] = intBytesPerFile;
-            if (intI < intRemainder) { arrShare[intI]++; }
-            dblStep[intI] = (double)arrInputSize[intI] / (double)arrShare[intI];
-            dblPos[intI] = 0.0;
-        }
-
-        // Interleave samples from each source file
-        long intOutPos = 0;
-        int intFileIdx = 0;
-        while (intOutPos < ROM_SIZE)
-        {
-            for (intFileIdx = 0; intFileIdx < intInputCount && intOutPos < ROM_SIZE; intFileIdx++)
-            {
-                if (arrShare[intFileIdx] > 0)
-                {
-                    long intSamplePos = (long)dblPos[intFileIdx];
-                    if (intSamplePos >= arrInputSize[intFileIdx])
-                    {
-                        intSamplePos = arrInputSize[intFileIdx] - 1;
-                    }
-                    byRomData[intOutPos] = arrInputData[intFileIdx][intSamplePos];
-                    dblPos[intFileIdx] += dblStep[intFileIdx];
-                    arrShare[intFileIdx]--;
-                    intOutPos++;
-                }
-            }
-        }
-
-        printf("\nGenesis ROM built from %d source file(s)\n", intInputCount);
-        analyze_rom_entropy(byRomData);
 
         if (intResult == 0)
         {
-            printf("\nWriting Genesis ROM to: %s\n", strOutputFilename);
-            FILE *f = fopen(strOutputFilename, "wb");
-            if (!f)
+            // Load source files
+            uint8_t *arrSrc[3]  = {NULL, NULL, NULL};
+            long     arrLen[3]  = {0,    0,    0};
+            double   arrStep[3] = {0.0,  0.0,  0.0};
+            double   arrPos[3]  = {0.0,  0.0,  0.0};
+            int      intValid   = 1;
+
+            int intI;
+            for (intI = 0; intI < intSourceCount && intValid; intI++)
             {
-                fprintf(stderr, "Error: Cannot create output file\n");
-                intResult = 1;
-            }
-            else
-            {
-                if (fwrite(byRomData, 1, ROM_SIZE, f) != ROM_SIZE)
+                printf("Loading source %d: %s\n", intI + 1, argv[intI + 1]);
+                FILE *f = fopen(argv[intI + 1], "rb");
+                if (!f)
                 {
-                    fprintf(stderr, "Error: Write failed\n");
+                    fprintf(stderr, "Error: Cannot open source file: %s\n", argv[intI + 1]);
+                    intValid = 0;
+                }
+                else
+                {
+                    fseek(f, 0, SEEK_END);
+                    arrLen[intI] = ftell(f);
+                    fseek(f, 0, SEEK_SET);
+
+                    if (arrLen[intI] == 0)
+                    {
+                        fprintf(stderr, "Error: Source file is empty: %s\n", argv[intI + 1]);
+                        intValid = 0;
+                    }
+                    else
+                    {
+                        arrSrc[intI] = (uint8_t*)malloc(arrLen[intI]);
+                        if (!arrSrc[intI])
+                        {
+                            fprintf(stderr, "Error: Cannot allocate source buffer\n");
+                            intValid = 0;
+                        }
+                        else if (fread(arrSrc[intI], 1, arrLen[intI], f) != (size_t)arrLen[intI])
+                        {
+                            fprintf(stderr, "Error: Cannot read source file: %s\n", argv[intI + 1]);
+                            intValid = 0;
+                        }
+                        else
+                        {
+                            // Step matches C# exactly: step = srcLen / ROM_SIZE (not per-source share)
+                            arrStep[intI] = (double)arrLen[intI] / (double)ROM_SIZE;
+                            printf("  Loaded %ld bytes\n", arrLen[intI]);
+                        }
+                    }
+                    fclose(f);
+                }
+            }
+
+            if (!intValid) { intResult = 1; }
+
+            if (intResult == 0)
+            {
+                // Build genesis block (matches C# Create exactly)
+                // byte[0] = BLOCK_TYPE_GENESIS
+                // bytes[1..ROM_SIZE-1] = XOR blend of sources
+                uint8_t arrGenBlock[ROM_SIZE];
+                memset(arrGenBlock, 0, ROM_SIZE);
+                arrGenBlock[0] = BLOCK_TYPE_GENESIS;
+
+                int intOutI = 1;
+                while (intOutI < ROM_SIZE)
+                {
+                    uint8_t byVal = 0;
+                    int intJ      = 0;
+                    while (intJ < intSourceCount)
+                    {
+                        long lngPos = (long)arrPos[intJ];
+                        if (lngPos >= arrLen[intJ]) { lngPos = arrLen[intJ] - 1; }
+                        byVal       ^= arrSrc[intJ][lngPos];
+                        arrPos[intJ] += arrStep[intJ];
+                        intJ++;
+                    }
+                    arrGenBlock[intOutI] = byVal;
+                    intOutI++;
+                }
+
+                // Write via tmp then rename (matches C#)
+                char strTmp[FILENAME_MAX + 4];
+                snprintf(strTmp, FILENAME_MAX + 4, "%s.tmp", strOutputPath);
+
+                FILE *fOut = fopen(strTmp, "wb");
+                if (!fOut)
+                {
+                    fprintf(stderr, "Error: Cannot create output file: %s\n", strTmp);
                     intResult = 1;
                 }
                 else
                 {
-                    printf("+ Genesis ROM created successfully\n");
-                    printf("\n--- Sources used ---\n");
-                    for (intI = 0; intI < intInputCount; intI++)
+                    if (fwrite(arrGenBlock, 1, ROM_SIZE, fOut) != ROM_SIZE)
                     {
-                        printf("  %s (%ld bytes)\n", argv[intI + 1], arrInputSize[intI]);
+                        fprintf(stderr, "Error: Write failed\n");
+                        intResult = 1;
                     }
-                    printf("\n--- IMPORTANT SECURITY NOTES ---\n");
-                    printf("1. Keep this Genesis ROM file secure and backed up.\n");
-                    printf("2. All blocks depend on this file.\n");
-                    printf("3. Loss or corruption breaks verification.\n");
-                    printf("4. The source files used are NOT needed again.\n");
-                    printf("5. If any byte values are missing, try different source files.\n");
-                    printf("--------------------------------\n");
+                    fclose(fOut);
+
+                    if (intResult == 0)
+                    {
+                        // On Windows, rename() fails if destination exists (unlike POSIX).
+                        // Destination should not exist here (checked above), but remove
+                        // defensively in case of a stale .tmp/.ztb from an interrupted run.
+                        remove(strOutputPath);
+                        if (rename(strTmp, strOutputPath) != 0)
+                        {
+                            fprintf(stderr, "Error: Cannot rename tmp to output\n");
+                            intResult = 1;
+                        }
+                    }
                 }
-                fclose(f);
+
+                if (intResult == 0)
+                {
+                    printf("\n+ Genesis block created: %s\n", strOutputPath);
+                    printf("  Block ID: %s\n", strNewBlockID_a);
+                    printf("  Size:     %d bytes\n", ROM_SIZE);
+                }
+            }
+
+            for (intI = 0; intI < 3; intI++)
+            {
+                if (arrSrc[intI]) { free(arrSrc[intI]); }
             }
         }
     }
-
-    // Cleanup
-    for (intI = 0; intI < 3; intI++)
-    {
-        if (arrInputData[intI]) { free(arrInputData[intI]); }
-    }
-    if (byRomData) { free(byRomData); }
 
     return intResult;
 }
