@@ -2,7 +2,10 @@
 
 **Author:** Julian Cassin  
 **Date:** 2026-02-09
-**Version:** 1.0
+**Updated:** 2026-07-25
+**Version:** 1.1
+
+> **Scope note (2026-07-25):** This document proves ZOSCII's security for the **uniform-selection case** — where the encoder draws uniformly among the ROM positions holding a given value. This is done for clarity: fixing the selection rule lets the mechanism be shown concretely (e.g. output landing at 1/65536 per address). It is **one valid instance**, not a requirement. The general result — the same `I(M;A)=0` for *any* selection rule that reads the position set rather than the value, and for *any* ROM regardless of skew — is proved in the companion *Zero Mutual Information* document. Nothing here should be read as requiring a uniform or frequency-flat ROM; ZOSCII has no such requirement. "Uniform distribution" below refers to the uniform *draw among a value's instances* and to the resulting *output* distribution, never to a required property of the ROM.
 
 ## Executive Summary
 
@@ -55,6 +58,8 @@ Infosec
 ---
 
 ## Note on Mathematical Foundation
+
+> **This section is intuition and analogy, not part of the formal proof.** The information-theoretic result stands on the entropy and mutual-information arguments in the sections that follow; the LLM parallel below is an aid to understanding, not a step in the proof. Read it as motivation, not derivation.
 
 These security proofs use information theory concepts that are foundational to multiple fields including machine learning, natural language processing, and cryptography. The mathematical frameworks for entropy, cross-entropy, KL divergence, and mutual information were originally developed by Claude Shannon (1948) and have been extensively validated across diverse applications including modern Large Language Models (LLMs).
 
@@ -375,6 +380,8 @@ For ANY message M', there exists a ROM R' such that:
 
 ### Legal Implications
 
+> **Not legal advice.** What follows illustrates the *technical* fact — that the encoding provides no distinguisher between decodings — in a legal setting. Whether any court, in any jurisdiction, treats that fact as exculpatory is a legal question this document does not and cannot answer. The mathematics establishes only that no decoding can be shown to be the intended one from the addresses alone.
+
 **Scenario:** Government alleges "SECRET" was transmitted.
 
 **Defense:**
@@ -437,12 +444,13 @@ Output frequency = uniform (no pattern)
 Let f_in(c) = frequency of character c in message
 Let f_out(a) = frequency of address a in output
 
-For ZOSCII:
-  f_out(a) = 1/65536 for all addresses a
+For ZOSCII (uniform selection):
+  f_out(a) → uniform across a value's instances
   Regardless of f_in(c)
 
-Therefore: I(f_in ; f_out) = 0
-Frequency analysis provides ZERO information
+Therefore: the output address frequencies carry no image of the
+input character frequencies — f_out is independent of f_in.
+Frequency analysis provides ZERO information.
 ```
 
 ### The Frequency Paradox
@@ -674,7 +682,7 @@ The "Snake Oil Challenge" remains unbroken not because people haven't tried hard
 2. **Perfect Secrecy:** Shannon's theorem satisfied
 3. **Quantum Proof:** I = 0 immune to computation
 4. **Weaponized Ambiguity:** 256^n valid interpretations
-5. **Legal Immunity:** Intent mathematically unprovable
+5. **No technical distinguisher:** No test on the addresses identifies which decoding was intended (legal consequences are for courts, not mathematics, to decide)
 6. **Simple Implementation:** 2 lines of code
 7. **Permanent Security:** Mathematics doesn't change
 

@@ -2,7 +2,8 @@
 
 **Author:** Julian Cassin  
 **Date:** 2026-02-09
-**Version:** 1.0
+**Updated:** 2026-07-25
+**Version:** 1.1
 
 ## What does I(M; A)=0 mean?
 
@@ -46,6 +47,8 @@ Decode: M = R[a]
 - ✓ No ciphertext
 - ✓ Security: information-theoretic (not computational)
 - ✓ Quantum-proof by architecture
+
+**Note on ROM structure:** The proof above requires only that the selection not depend on the message value (the address is drawn from the set of positions holding that value, by a rule that reads the position set and not the value). It does **not** require the ROM to have uniform byte frequencies, nor any particular number of instances per value. A skewed ROM — a photo, a PDF, arbitrary fill — is fully valid; skew is not a defect. See the companion *Zero Mutual Information* proof for the general statement (any blind selection rule, any ROM).
 
 ---
 
