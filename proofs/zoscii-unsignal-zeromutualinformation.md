@@ -1,7 +1,7 @@
 # ZOSCII / UNSIGNAL — Zero Mutual Information
 
 **Status:** formal specification
-**Scope:** proves `I(M;A) = 0` for the ZOSCII primitive (Lemma 1, §5), identifies position as the sole channel prior knowledge can act on and structured-data misuse as its only exposure (§6), shows UNSIGNAL closes that channel (§7), and establishes that a sliding window over one ROM is separate ROMs for any bounded-span message (§8)
+**Scope:** proves `I(M;A) = 0` for the ZOSCII primitive (Lemma 1, §5); identifies position as the sole channel prior knowledge can act on and structured-data misuse as its only exposure (§6); states the primitive's implementation properties — platform invariance, minimal trusted computing base, timing (§6a); shows UNSIGNAL closes the position channel (§7); shows what tier-2 constructions inherit — integrity and threshold sharing (§7a); and establishes that a sliding window over one ROM is separate ROMs for any bounded-span message (§8)
 
 **This document proves. It does not specify.** The mechanism is defined elsewhere and is not restated:
 
@@ -15,8 +15,19 @@
 | Multi-ROM round-robin | `ZOSCII-Tango.md` |
 | Nibble width and bootstrap | `microZOSCII.md` |
 | Integrity inside the encoding | `ZOSCII-Rolling-Hash.md` |
+| Threshold secret-sharing over the encoding | `pentagone.md` |
 
-What is here and nowhere else: the exact condition under which `I(M;A)=0` holds (one line, §4), what the primitive does and does not claim across many messages (§6), and how UNSIGNAL supplies the rest (§7).
+What is here and nowhere else: the exact condition under which `I(M;A)=0` holds (one line, §4), what the primitive does and does not claim across many messages (§6), how UNSIGNAL supplies the rest (§7), and the primitive's implementation properties — platform invariance and minimal trusted computing base (§6a).
+
+### Three tiers
+
+The ZOSCII ecosystem is three layers, and every claim in this document is about the first:
+
+1. **The primitive — ZOSCII itself.** Blind selection over a ROM, `value = ROM[address]`, with a few compatibility parameters: **endianness, element size** (nibble / byte / word), **address size**. `I(M;A)=0` is proved here (§5) and holds for *every* setting of the parameters — they are compatibility knobs, not security knobs. This tier is fixed and provable.
+2. **Protocols — constructions on the primitive.** UNSIGNAL (§7), Tango, masks, microZOSCII, the rolling hash. Customisable: anyone can build one. The *reference* protocols are vetted, and each either inherits the primitive's security by composition (as UNSIGNAL does, §7.1) or carries its own argument. This tier is open.
+3. **Products — applications built with the toolkit.** Neptune and the like, using whatever primitive settings and protocols they choose. A product is not "ZOSCII"; it is built *with* ZOSCII. Product assurance is "it used vetted tier-1/tier-2 pieces correctly," not a mathematical claim, and is out of scope here.
+
+The parameters at tier 1 are compatibility parameters: two communicating parties must share them to interoperate, a solo user (Level 0) need not fix them at all, and **the security holds under any consistent choice**. Security does not require compatibility — see §6a.
 
 ---
 
@@ -185,6 +196,63 @@ The resolution is to stop encoding the medium. **Store secure files.** Keep the 
 
 ---
 
+## 6a. Implementation properties of the primitive
+
+These are properties of tier 1 — the primitive itself, before any protocol. They are the reason ZOSCII runs on 1970s hardware, ports without divergence, and carries almost no third-party bug surface.
+
+### 6a.1 Convention is orthogonal to security
+
+Endianness, element size, and address size are **compatibility parameters, not security parameters.** `I(M;A)=0` (§5) never reads them; the proof holds under any consistent setting. They matter only when two parties must agree — encoder and decoder, or one implementation reading another's output. So:
+
+- **Solo use (Level 0):** you encode and you decode. Pick any convention; you need only be consistent with yourself. Compatibility is irrelevant — there is no second party.
+- **Shared / federated:** a convention must be fixed, but *which* is arbitrary and is pinned by agreement between the parties, not by the security model.
+
+The same holds one tier up: Tango's layer count, prefix/suffix framing, and any new protocol built on the primitive are compatibility choices, not security-load-bearing. **Security does not require compatibility.** You can change any convention — or invent a new protocol — without touching `I(M;A)=0`, because the security is in ROM secrecy and blind selection, never in the wire format.
+
+### 6a.2 Platform invariance by absence
+
+The core operation is `value = ROM[address]` — an integer index into a byte array. Every class of behaviour that normally makes code diverge across platforms, compilers, and CPUs is simply **not present** in it:
+
+- **No floating point** -> no rounding mode, no IEEE-754 corner cases, no 80-bit-x87-vs-64-bit-SSE intermediates, no fused-multiply-add contraction, no `-ffast-math` reassociation. This is the sharpest avoided hazard: float results *genuinely differ across correct compilers and CPUs*, and any scheme whose output depends on them can pass on one toolchain and fail on another, invisibly. ZOSCII has no float in the path.
+- **No overflow-sensitive arithmetic** -> the index is a read, not a sum or product whose wraparound differs.
+- **No locale / collation / encoding** -> bytes are bytes; no string comparison, case-folding, or normalisation keyed to a locale table.
+- **No optimisation-level sensitivity** -> a lookup has no algebraic structure for `-O0` vs `-O2` to reorder; the result is identical at every optimisation level.
+- **Byte order** is the one place a multi-byte address touches endianness — and that is a chosen convention (§6a.1), consistent within an implementation, not a computation the platform decides.
+
+So a given consistent convention produces **bit-identical output on a Z80, an Intel 4004, a modern x86, a GPU** — not "approximately," but identically, because the operation is a byte index and there is no freedom in it for a platform to exercise. This is the same shape of argument as the security proof: the property holds because the thing that would break it *does not exist in the mechanism*.
+
+### 6a.3 Minimal trusted computing base
+
+The invariance of §6a.2 has a second payoff on the reliability and security axis, from the same cause. Conventional cryptography leans on the platform — RNG libraries, big-integer arithmetic, sometimes floating point, OS entropy calls, compiler math optimisation. Each is third-party code carrying its own bugs, CPU-erratum exposure, and cross-version drift, and these **conflate** into a large, uncontrolled surface: the attack-and-error footprint is the union of every implementation you touched.
+
+ZOSCII touches almost none of it. The decode path is `ROM[address]`. The one place a platform facility would normally be called is the selection RNG, and even there the design refuses to *depend* on the platform's numeric quality (see §6a.5). The third-party footprint is reduced to the byte-index operation. Two payoffs, one cause — the mechanism does almost nothing the platform could do differently:
+
+- **Correctness:** bit-identical cross-platform output (§6a.2).
+- **Reliability & security:** no imported library bug, no CPU-erratum exposure, no compiler-dependent behaviour — a minimal trusted computing base, and no floating point anywhere in the path.
+
+### 6a.4 Timing
+
+**Decode is constant-time by absence.** One indexed read per symbol, no branch on the data, no variable-length operation, no early-out. Nothing in the operation has a duration that depends on the value being decoded, because there is no data-dependent work. Uniform in the strong sense — not equalised, but absent of anything that could vary with the secret.
+
+**Encode is nearly so.** Each symbol calls selection, which has some duration, but that duration is not a function of *which* value is being encoded — you pick among a value's addresses, and the pick-cost does not encode the value. So even the encoder's one timing-variable step does not leak the plaintext through timing.
+
+**The discipline (tier 2/3, stated here because it bounds the tier-1 property): keep the loop pure.** The mechanism gives a constant-time core, but an implementer can *add* a timing leak by putting content-dependent logic inside the encode or decode loop — branching on a decoded value, flushing on a delimiter, special-casing a field. That creates data-dependent timing correlated with content, leaking structure the mechanism never would. Keep the loop to select-and-write or read-and-emit; do all operational logic before or after, separated from the crypto loop, so loop timing is a function of **length only, never content**.
+
+The test for any operation wrapped around the loop: does its timing vary with **content** (leaks) or only with **length or external noise** (safe)? Per-byte filesystem writes pass — their timing is skewed by OS buffering and scheduling, uncorrelated with the byte's value, so they add noise not signal. Buffer fills pass — timing depends on size, not on the values. A branch inside the loop on a decoded value fails. Unlike §6a.2, this is a protocol/product discipline, not a mechanism guarantee — the core is constant-time, but the implementer must not spend that property.
+
+### 6a.5 Seed note — selection without a platform RNG
+
+Where selection randomness comes from is a tier-2/3 implementation choice, not a primitive property, but it bears on §6a.3 so it is noted here.
+
+The primitive needs only *blind* selection (§4) — the address must not depend on the value. It does not specify the randomness source. Two options:
+
+- **Source-based selection.** Draw from a genuinely random source (captured physical entropy). No seed, no platform RNG, nothing to depend on. Preferred — it is the `randomness.md` position applied here.
+- **Seeded packaged RNG.** If the implementation is stuck with a language's seeded generator, seed it from **ROM XOR timer** — the ROM (the secret) for entropy, the timer for per-session variation so the same message does not reproduce the same stream. Both are raw inputs, not computations; the XOR is the single most portable operation there is; no platform RNG-quality is trusted.
+
+The timer carries **no security** and must not be relied on for unpredictability — that would be the CSPRNG mistake in miniature (`randomness.md`). Its only job is per-session freshness; its weakness is irrelevant because the ROM carries all security-relevant entropy (§4 holds regardless of the selection seed, and knowing the seed does not help without the ROM). Even this fallback keeps the third-party footprint to a clock read, whose only requirement is to *vary*, not to be correct or portable.
+
+---
+
 ## 7. UNSIGNAL — the construction that closes the position channel
 
 ZOSCII is the primitive; UNSIGNAL is the construction on top of it that supplies what the primitive does not claim — concealment of position. Mechanism per `unsignal-protocol.md` §2–4: `H1`/`H2` are absolute addresses in the first 64KB resolving to the low and high bytes of the session offset `o`; data addresses resolve against `W_o`; `H3`/`H4` resolve to prefix and suffix lengths.
@@ -247,7 +315,36 @@ Each drop-test above returns a *specific named signal from §6 or §7.2*, so the
 
 ---
 
+## 7a. Composition: what tier-2 constructions inherit
+
+UNSIGNAL (§7) is the first instance of a general pattern: a construction on the primitive inherits `I(M;A)=0` by composition rather than re-proving it, and adds one property the primitive does not claim. This section states two further inheritances — integrity and threshold sharing — each as a *consequence of the primitive's proved properties*, not a new mechanism. The full mechanisms live in their own specs (`ZOSCII-Rolling-Hash.md`, `pentagone.md`); what is here is only the inheritance argument.
+
+### 7a.1 Integrity inherited: tamper-evidence that cannot be faked
+
+The primitive gives confidentiality. Tamper-evidence is a separate property, and it is obtained — not added — by placing an integrity check *inside* the encoding. The reason it works rests on three things, of which only the third is the hash:
+
+1. **Label-blindness (§4)** — the attacker cannot *locate* the check. It is encoded as addresses indistinguishable from payload addresses, so it cannot be targeted, stripped, or isolated. This removes the find-and-replace-the-checksum attack.
+2. **Contraction through the secret (§9.2)** — the attacker cannot *forge a consistent* check even blind. They operate in address space (the bytes they can see and flip); the check lives in value space (the decoded plaintext); the map between the two is the 2→1 decode through the ROM they do not hold. Any edit they make in address space lands in value space as an uncontrolled, unpredictable change, and computing a compensating edit would require crossing the contraction — which requires the ROM. This removes the recompute-a-matching-checksum attack, the one move that defeats every checksum used *outside* an encoding.
+3. **A mismatch detector over the decoded values** — something must actually notice the discrepancy after decode. Even a 4-pass XOR chain (the ZOSCII rolling hash) does this at 1-in-2³².
+
+The load-bearing point: **the tamper-evidence is borrowed from the primitive, not supplied by the hash.** Properties (1) and (2) are already proved — §4 and §9.2 — and they deny the attacker every move that would let a weak hash's weakness matter. So the hash's own cryptographic strength is irrelevant; it only has to fire on a mismatch. "Tamper detection that cannot be faked" is therefore a composition result: label-blindness plus contraction, completed by any detector.
+
+**Inside vs outside is the whole distinction, and it is a matter of layer, not algorithm.** Outside the encoding, a checksum sits on the same bytes the attacker holds — no contraction between it and them — so they recompute and replace, and even a strong checksum is naked. Inside, the contraction sits between the attacker's reach (addresses) and the check's domain (values), and the contraction is ROM-gated. This also resolves the CRC32 question: CRC would inherit the same protection *if computed over the decoded values, inside the contraction* — its linearity is moot there because the attacker cannot reach the space where linearity would pay off. The hazard is that CRC is conventionally computed over the visible bytes, i.e. the address stream, which is the attacker's side of the contraction, where it gets no protection at all. The rolling hash is the reference primitive because it is *specified* to sit on the right side (plaintext, then encoded) and needs no lookup table (§6a.3), but the protection is the position, not the polynomial.
+
+### 7a.2 Threshold sharing: PENTAGONE — redundancy standalone, secrecy inherited
+
+PENTAGONE (`pentagone.md`) is the exception among tier-2 constructions: it is not fundamentally about ZOSCII at all. It distributes a payload across 5 shares such that any 3 reconstruct it, by a static C(5,3)=10 pattern table and the pigeonhole principle — no polynomial arithmetic, no field operations, no crypto capability required on the share servers. It has **two separable value propositions**, and only the second is an inheritance:
+
+**Redundancy, standalone.** On *any* payload — plaintext, already-encrypted, arbitrary bytes — PENTAGONE is a 3-of-5 fault-tolerance layer: any 3 shares reconstruct, up to 2 may be lost, offline, or corrupted. This needs no ZOSCII, no security, nothing under it. Its merit here is pure simplicity — a static table, sequential read/write, human-auditable, 8-bit-hardware compatible — and it competes with RAID/replication on that axis alone (`pentagone.md` §12). Used this way it inherits nothing, because it requires nothing.
+
+**Share-secrecy, inherited — optional.** *When* the payload underneath is UNSIGNAL-encoded, each share is additionally a subset of `I(M;A)=0` noise, so shares individually leak nothing. This is the inheritance, and the spec states its condition correctly (`pentagone.md` §9): the share-secrecy originates in the encoding, not in the split. The split adds threshold availability; the encoding adds secrecy; **neither does the other's job.**
+
+The SSS comparison applies only to the second case, and even there the honest form is **operational, not mathematical**: with an ITS payload underneath, PENTAGONE matches Shamir's Secret Sharing on the two operationally-relevant properties (any 3-of-5 reconstruct; fewer than 3 learn nothing), achieving them combinatorially rather than by Lagrange interpolation over a finite field. It is not SSS in the polynomial sense and does not claim to be, and the equivalence is conditional on the encoding being ITS — the same 3-of-5 split over a non-ITS payload gives threshold availability with no share-secrecy at all, which is exactly the standalone-redundancy case. That the security is *optional* is the point: PENTAGONE is a complete redundancy mechanism on its own and gains information-theoretic share-secrecy only when it happens to sit over an ITS encoding.
+
+---
+
 ## 8. Why a sliding window is separate ROMs
+
 
 The obvious objection to one ROM with a shifting origin is that shifted windows overlap, so they cannot be independent. The objection targets the wrong object.
 
@@ -387,6 +484,8 @@ You can use Diffie-Hellman if you like. It will deliver a ROM and everything dow
 
 The system is ITS end to end only when the ROM reached its holders by a means that is itself ITS or physical. Every mechanism in A.2 except this one qualifies.
 
+**In the reference implementation.** The shipped NuGet's `ROMExchange.DHExchange` is the concrete DH-rooted path: it runs standard 2048-bit MODP DH, and the resulting shared secret becomes a microROM that carries the real ROM over microZOSCII (`SendROM` / `ReceiveROM`). Everything downstream is ITS; the transit of the ROM is not, because its premise was established by a discrete-log exchange — this is exactly the cap above, in code. Two details worth noting: the DH private key is itself derived by ZOSCII-encoding a zero buffer with the caller's ROM (`ZEncode.Bytes(new byte[256], rom)`), so private-key entropy comes from blind selection with no platform RNG (§6a.5) — an elegance that does *not* lift the cap, since the *exchange* is still DH regardless of where the private key came from. And `GetBootstrapMethods()` is the registry where a non-computational root (typed microROM seed, barcode, pre-shared asset) would be registered to remove the cap entirely; DH is simply the method shipped today.
+
 ### A.5 There is no rotation
 
 Key rotation exists because keys have a cryptoperiod: they degrade with use, accumulate exposure with volume, and are replaced on a schedule to bound the damage. None of that applies here.
@@ -396,3 +495,46 @@ Key rotation exists because keys have a cryptoperiod: they degrade with use, acc
 **Nor does exposure accumulate across files.** Each session draws its own offset, so address `a` reads different bytes in different files. An observer cannot pool observations across files into a single picture, because the observations are not of the same window. Under UNSIGNAL there is no per-file length-dependent leak at all — §6's position channel, the only thing volume could feed, is closed by the offset (§7).
 
 Replacing a ROM is therefore an operational decision — personnel changed, custody is suspect, the organisation prefers a new one — never a cryptographic requirement. A.2's replacement entry describes how to carry out that decision, not a practice anything here recommends.
+
+---
+
+## Appendix B — Cryptographic, but not encryption
+
+> **Not legal advice.** This appendix is the author's technical characterisation and litigation position. It is not an export-classification determination. Export control is fact-specific, jurisdiction-specific, subject to change, and carries serious penalties — in Australia, criminal exposure of up to ten years for unpermitted supply or publication of controlled technology. Anyone exporting, supplying, publishing, or brokering ZOSCII-based work must obtain qualified export-control counsel and not rely on this document.
+
+ZOSCII is **cryptographic** — it provides confidentiality (`I(M;A)=0`), integrity (§7a.1), threshold sharing (§7a.2), and key exchange (Appendix A). That is not disputed and not disclaimed. What it does **not** contain is an **encryption operation**: there is no cipher, no `C = E(K, M)` transform, no encrypt step and no decrypt step. Decode is a memory load — `value = ROM[address]`, `ld a, (hl)` — a random choice of address on encode and an array read on decode. The distinction is not encryption-vs-nothing; it is encryption (one operation) vs cryptography (the field). ZOSCII is the second without the first.
+
+**Not encryption by definition, not by argument.** Whether something is encryption is a question of *what operation is performed*: encryption is a transform producing ciphertext from plaintext, and ZOSCII performs no such transform — it selects an index into a table. This is settled by the mechanism, the same way a load is not a multiply. It is not a position to be argued; it is what the operation is. A state cannot make it encryption by asserting so, any more than it can redefine array indexing — and a definition of encryption stretched wide enough to catch an index into a table catches indexing itself, which is incoherent.
+
+**So only two moves exist, and only one is available.** A control can reach ZOSCII *definitionally* ("this is encryption") — **not available**, for the reason above; or *operationally* ("the regulation's scope covers this activity regardless of mechanism") — the only move there is. An operational control governs conduct, not definitions: it need not call ZOSCII encryption, it need only assert that the law's scope is broad enough to reach a confidentiality technology that definitionally is not encryption. Everything contestable is therefore about the *reach of the regulation*, never about *what the thing is*. The mechanism is settled; only the scope of the law is arguable, and even a broad scope cannot relabel the operation — it can only claim authority over the activity.
+
+### B.1 Why this bears on the Australian export control
+
+Australia controls the export of cryptography by **listing**, not by capability. The operative instrument is the *Customs (Prohibited Exports) Regulations 1958*, regulation **13E**, which prohibits (without permission) the export of "goods specified in the **defence and strategic goods list**" or "goods containing **DSGL technology**." The technical thresholds themselves are not in that regulation — they live in the **Defence and Strategic Goods List**, a separate legislative instrument incorporated by reference. Under Category 5 Part 2 (Telecommunications and Information Security) the DSGL controls encryption above a strength threshold expressed in parameters such as **key length or field size** (e.g. classifying material over 512 bits as dual‑use).
+
+This structure matters. **The control operates by matching listed technical characteristics.** A good is caught because it *is specified* in the DSGL — because it meets the DSGL's technical criteria — not because of any effect it produces. The criterion measures **the strength parameter of a cipher**: "512 bits" indexes the computational hardness of an encryption algorithm — an RSA modulus, an ECC field, a symmetric key width.
+
+**The ROM is a key — and is not an encryption key.** Concede the first fully: the ROM is the secret you must hold to recover the message, a private key in the ordinary secrecy sense (§3.1), and it is large — 128KB, and it can be megabytes, with 32-bit addresses, all vastly over any bit threshold. None of that makes it an *encryption* key length in the DSGL's sense, because:
+
+- There is no encryption algorithm for it to be the key length **of**. Key length is a parameter of a cipher; there is no cipher.
+- Its size does not index computational hardness. The DSGL threshold is calibrated to the *computational* strength of *encryption*; ZOSCII's security is *information-theoretic* (§3, §5) and its ROM size indexes the *unguessability of a secret*, not the strength of a transform. Different kind of number.
+
+**Scaling up proves the point.** A real encryption-key-length control bites *harder* as the number grows — a 4096-bit cipher is more controlled than a 1024-bit one. ZOSCII does the opposite: enlarge the ROM to megabytes and widen addresses to 32 bits, and the mechanism is unchanged — still no cipher, still a random choice of address, still `ld a, (hl)`. A criterion that intensifies with magnitude for real ciphers and does *nothing* here, at any magnitude, is measuring a property that is not present. The listed parameter — cipher key-strength — has no referent in the mechanism, so there is nothing for the DSGL entry to match.
+
+### B.2 Technical listing versus capability — and where the real contest is
+
+The Australian control, as it currently stands, is **technical**: it catches what is *listed* in the DSGL by technical specification (§B.1). It is **not** a capability control — it does not catch a thing merely because that thing keeps information confidential. This is visible in the operative regulation itself: the permission criteria in reg 13E(4) are about *strategic risk* — whether goods may reach a sanctioned country, aid a WMD program, increase an adversary's military capability, or facilitate human-rights abuses — not about whether something provides secrecy. The whole apparatus is oriented to military and dual‑use *goods*, matched by *listed technical characteristics*.
+
+So under the current law the position is strong and narrow: ZOSCII is not listed, because it has none of the technical characteristics the cryptography entries specify (no cipher, no key-length parameter — §B.1). To bring it within the current control, a regulator would have to show it matches a specific DSGL technical entry, and there is no entry whose parameters it possesses.
+
+The genuinely different regime — the one that *would* reach a cryptographic-but-non-encryption confidentiality system — is a **capability** control: one that bites on the *effect* (keeping information confidential) regardless of mechanism or technical parameters. The author has been told, but has **not** personally verified, that some jurisdictions may lean this way. That is a *different kind of law* from the Australian technical-listing regime, and Australia has not enacted it. The contest, therefore, is not "does the current Australian control reach ZOSCII" (on its technical-listing terms, it does not) but "would a jurisdiction move to, or already have, a capability-defined control." Against a capability control the §B.1 argument does not help, because parameters were never the trigger.
+
+The author's position on the current Australian law: it is hard to bring a register-indirect memory load within a list written around encryption strength parameters, when the mechanism has no such parameter to match — and hard to maintain that a thing is "encrypted" when it was never decrypted to be read, the read being the decode and the decode a lookup. This is stated as a position, and the author accepts it may have to be tested. Keeping the protocols and implementations strictly free of any encryption operation is a deliberate design choice, and forcing any control to justify itself by capability rather than by technical match is one of its reasons.
+
+### B.3 Other jurisdictions
+
+Regimes differ in *kind*, and the distinction that matters is **technical-listing versus capability**. A technical-listing control (the current Australian model, §B.1–B.2) catches what matches specified technical parameters; a system with none of those parameters is not caught. A capability control catches confidentiality however achieved; being encryption-free does not help against it. Being encryption-free places ZOSCII outside a technical-listing control whose entries are cipher parameters; it does **not** place ZOSCII outside cryptography, nor outside a capability-defined control. The author has reviewed the current Australian instrument (*Customs (Prohibited Exports) Regulations 1958*, reg 13E, incorporating the Defence and Strategic Goods List by reference) and characterises it as technical-listing; the author has **not** reviewed the law of other jurisdictions and makes no claim about any of them, including the capability-style regime described to the author as existing elsewhere. See counsel per the disclaimer above.
+
+### B.4 A note for travellers
+
+**Not legal advice — do your own due diligence and check the laws of any country you plan to travel to before you go.** Many countries have export restrictions on encryption. ZOSCII and the UNSIGNAL Protocol **are not encryption** — by definition, not by argument (see above): they are index systems, and the methods are not secret — they are published, public, and free to everyone. Import or use restrictions on cryptographic tools are less common than export restrictions, but some countries do regulate them, so confirm for your destination rather than assume. If a country restricts the *export* of secure-encoding software, a cautious option is to uninstall or delete the software before you leave and reinstall it in your home country — though note that in some jurisdictions possession or prior use, not just carrying software across a border, can be the issue. When in doubt, consult qualified counsel for the specific country.
