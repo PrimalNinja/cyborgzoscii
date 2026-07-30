@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-ZOSCII (Zero Overhead Secure Code Information Interchange) achieves **information-theoretic security** through random selection from uniform distribution. This document summarizes how Information Theory provides mathematical validation of ZOSCII's security properties, and explains the key insights that make ZOSCII fundamentally different from encryption.
+ZOSCII (Zero Overhead Secure Code Information Interchange) achieves **information-theoretic security** through **blind selection** — the address is chosen without reference to the value it encodes — into a ROM whose contents are secret, so that any emitted address is consistent with every possible value. The security comes from these two facts together (blind selection, and the pointing-ambiguity of a hidden ROM); it does **not** come from the distribution of the selection, which may be uniform or arbitrarily skewed with no effect on the result. This document summarizes how Information Theory validates ZOSCII's security properties and explains what makes ZOSCII fundamentally different from encryption.
 
 ---
 
@@ -110,9 +110,9 @@ Without the correct ROM, you're not just "decoding incorrectly"—you're in a co
 
 The same information-theoretic principles that explain LLM token selection prove ZOSCII's security:
 - **LLMs:** Random selection from probability distribution → Models language uncertainty
-- **ZOSCII:** Random selection from uniform distribution → Creates perfect secrecy (I(M;A)=0)
+- **ZOSCII:** Blind selection into a hidden ROM → address is ambiguous across all values → perfect secrecy (I(M;A)=0)
 
-In both systems, the probabilistic nature is not a limitation—it's the fundamental mechanism that makes them work. For LLMs, probability distributions capture the inherent uncertainty in language. For ZOSCII, random selection from uniform distributions creates mathematical impossibility of decryption without the ROM.
+In both systems, the probabilistic nature is not a limitation—it's the fundamental mechanism that makes them work. For LLMs, probability distributions capture the inherent uncertainty in language. For ZOSCII, blind selection into a secret ROM makes every address ambiguous across all values, creating mathematical impossibility of decryption without the ROM. The distribution of the selection is irrelevant to this — uniform or skewed, the address is equally ambiguous.
 
 The universality of these proofs across domains (from LLM training to security analysis) demonstrates the fundamental nature of information-theoretic principles. The same mathematics that enables AI systems also proves ZOSCII's security properties.
 
@@ -147,7 +147,7 @@ encode = (rom, message) => [...message].map(char =>
 3. Output is an address pointing to that instance
 4. Decoding requires the ROM: `message[i] = ROM[address[i]]`
 
-**Key insight:** Random selection from uniform distribution creates perfect independence between message and addresses.
+**Key insight:** Blind selection — choosing the address without reference to the value — creates perfect independence between message and addresses. Combined with a secret ROM, the address is consistent with every value, so it carries zero information about the message. The selection's distribution (uniform or skewed) plays no part in this.
 
 ---
 
@@ -161,14 +161,14 @@ H(X) = Σ p(i) × log(1/p(i))
 ```
 
 **What this proves:**
-- ZOSCII address output has maximum entropy (uniform distribution)
-- Every address equally likely in output
-- No patterns to find
+- In the uniform-selection example, address output tends toward high entropy — but this is an *incidental* property of that example, not the source of security, and skewed selection would yield skewed output with identical security.
+- The security does not come from the output looking random. It comes from blind selection into a secret ROM: the address is ambiguous across all values whether or not the output is uniform.
+- Output entropy is a red herring here — a point elaborated in the companion `randomness.md`, which shows that "output looks uniform" is undetectability, not the security itself.
 
 **For ZOSCII:**
 ```
-H(Addresses) = maximum (uniform distribution)
-Maximum entropy = maximum uncertainty = maximum security
+Security = blind selection + secret ROM  (address ambiguous across all values)
+NOT from output entropy or output uniformity
 ```
 
 ### 2. Perfect Secrecy via Zero Mutual Information
@@ -378,6 +378,36 @@ For ANY message M', there exists a ROM R' such that:
    Intent cannot be determined
    ```
 
+### Protocols such as UNSIGNAL Protocl provide the following also
+
+**Given addresses A = [a1, a2, ..., an]:**
+
+1. **Captured ROM (R):**
+   ```
+   R[a1] = 'S'
+   R[a2] = 'E'
+   R[a3] = 'C'
+   R[a4] = 'R'
+   R[a5] = 'E'
+   R[a6] = 'T'
+   
+   decode(A, R) = "SECRET"
+   ```
+
+2. **Captured ROM (R):**
+   ```
+   R[a1] = 'P'
+   R[a2] = 'O'
+   R[a3] = 'E'
+   R[a4] = 'T'
+   R[a5] = 'R'
+   R[a6] = 'Y'
+   
+   decode(A, R) = "POETRY"
+   ```
+
+This is not a contradiction but rather the wrong assumption that a1 must be an absolute address within the ROM between encodings
+
 ### Legal Implications
 
 > **Not legal advice.** What follows illustrates the *technical* fact — that the encoding provides no distinguisher between decodings — in a legal setting. Whether any court, in any jurisdiction, treats that fact as exculpatory is a legal question this document does not and cannot answer. The mathematics establishes only that no decoding can be shown to be the intended one from the addresses alone.
@@ -432,11 +462,11 @@ Result: Cannot prosecute, First Amendment protected
 
 **ZOSCII output properties:**
 ```
-Every address equally likely (uniform distribution)
+Address chosen blind to the value (any distribution, uniform or skewed)
 No frequency correlation with input
 'E' might encode as: [1247, 3891, 12453, 48291, ...]
-Each address chosen randomly
-Output frequency = uniform (no pattern)
+Each address chosen blind to the value
+Input frequency leaves no image in the output
 ```
 
 **Mathematical proof:**
@@ -444,12 +474,13 @@ Output frequency = uniform (no pattern)
 Let f_in(c) = frequency of character c in message
 Let f_out(a) = frequency of address a in output
 
-For ZOSCII (uniform selection):
-  f_out(a) → uniform across a value's instances
-  Regardless of f_in(c)
+Because selection is blind (the address is chosen without reading
+the value), f_out carries no image of f_in — the input frequencies
+do not propagate into the output frequencies. This holds for ANY
+selection distribution, uniform or skewed; it is the blindness,
+not the distribution, that breaks the link.
 
-Therefore: the output address frequencies carry no image of the
-input character frequencies — f_out is independent of f_in.
+Therefore: f_out is independent of f_in.
 Frequency analysis provides ZERO information.
 ```
 
@@ -595,9 +626,9 @@ Perfect independence maintained
 
 **2. Maximum Entropy**
 ```
-H(Addresses) = maximum (uniform distribution)
-Maximum uncertainty = no patterns to find
-Entropy cannot be reduced by observation
+Address is ambiguous across all values (blind selection + secret ROM)
+No patterns to find — independent of the selection distribution
+Uncertainty cannot be reduced by observation without the ROM
 ```
 
 **3. Perfect Secrecy**
@@ -631,13 +662,13 @@ Cannot be broken because independence is structural
 **ZOSCII is:**
 - Information theory (mathematical impossibility)
 - Perfect secrecy (Shannon's theorem satisfied)
-- Simple implementation (random selection from uniform)
+- Simple implementation (blind selection — address chosen without reading the value)
 - **Provably secure regardless of computational power**
 
 ### The Validation Chain
 
 **Information theory teaches:**
-1. **Entropy** → ZOSCII achieves maximum
+1. **Entropy** → the address is ambiguous across all values (blind selection + secret ROM)
 2. **Cross-entropy** → Wrong models need MORE information (none available)
 3. **KL Divergence** → Even correct models face infinite information gap
 4. **Mutual Information** → Zero correlation = zero information leakage
@@ -661,7 +692,7 @@ Cannot be broken because independence is structural
 - No arms race possible
 
 **ZOSCII provides information-theoretic security through:**
-- Random selection from uniform distribution (implementation)
+- Blind selection into a secret ROM — address chosen without reading the value (implementation)
 - Zero mutual information I(M;A) = 0 (mathematics)
 - Perfect independence P(M,A) = P(M) × P(A) (structure)
 - **Two lines of code, infinite security**
