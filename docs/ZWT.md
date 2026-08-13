@@ -12,7 +12,7 @@ A quantum-proof, opaque session/attestation token. The JWT analogue for ZOSCII: 
 | Key | Held by | Role |
 |-----|---------|------|
 | **SHAREDROM** | Issuer + Relying Party | Shared per-relationship key |
-| **ISSUERROM** | Issuer only | Issuer's private ROM — never shared. One for all relying parties, or one per relying party |
+| **ISSUERROM1** and **ISSUERROM2** | Issuer only | Issuer's private ROM — never shared. One for all relying parties, or one per relying party |
 
 ---
 
@@ -25,9 +25,9 @@ issuerdata = encode(ISSUERROM1, encode(ISSUERROM2, rollinghash(issuersignature +
 zwt             = encode(SHAREDROM, rollinghash(sharedsignature + sharedclaims + issuerdata))
 ```
 
-The `sharedsignature` is **bound inside** `issuersignature`: since `issuersignature = encode(ISSUERROM, rollinghash(sharedsignature + privateclaims))`, a valid `sharedsignature` is defined by matching the copy the issuer sealed — not by the shared key alone.
+The `sharedsignature` and `issuersignature` are identical values.
 
-In the concrete construction, `encode(ROM, ...)` is a reversible UNSIGNAL encoding of a **frame** (see Wire format below), and `rollinghash(...)` is a 4-byte integrity field carried *inside* that frame — not a one-way wrapper around the payload. So `encode` and `decode` are inverses: the relying party opens the shared block with SHAREDROM and reads the fields back out; the issuer opens the issuer block with ISSUERROM. The rolling hash is verified on open, binding every field (version, lengths, and blobs).
+In the concrete construction, `encode(ROM, ...)` is a reversible UNSIGNAL encoding of a **frame** (see Wire format below), and `rollinghash(...)` is a 4-byte integrity field carried *inside* that frame — not a one-way wrapper around the payload. So `encode` and `decode` are inverses: the relying party opens the shared block with SHAREDROM and reads the fields back out; the issuer additionally opens the issuer block with ISSUERROM1 and ISSUERROM2. The rolling hash is verified on open, binding every field (version, lengths, and blobs).
 
 ---
 
@@ -35,12 +35,9 @@ In the concrete construction, `encode(ROM, ...)` is a reversible UNSIGNAL encodi
 
 The token is a flat, versioned structure, UNSIGNAL-encoded — readable on any target (Z80, 6502, C, C#, Python) with nothing but base-plus-offset arithmetic. All multi-byte integers are **little-endian**.
 
-A ZWT is a single token: a **shared block** the relying party opens with SHAREDROM, whose
-`issuersignature` field is itself an **issuer block** the issuer opens with ISSUERROM. Both
-have the same shape — a header (rolling-hash CRC, version, one 2-byte length per field),
-then the fields. The whole token reads top to bottom:
+A ZWT is a single token: a **shared block** the relying party opens with SHAREDROM, whose `issuersignature` field is itself an **issuer block** the issuer opens additionally with ISSUERROM1 and ISSUERROM2. 
 
-AI: change below to the following:
+Both have the same shape — a header (rolling-hash CRC, version, one 2-byte length per field), then the fields. The whole token reads top to bottom:
 
 ```
 offset  size  field
@@ -61,11 +58,8 @@ offset  size  field
 			+..	..	private claims
 ```
 
-The issuer block is built and UNSIGNAL-encoded first, then carried verbatim as the
-`issuersignature` field of the shared block. The relying party opens only the shared block;
-the issuer block nested inside stays opaque to it and is opened separately by the issuer.
-Each block's rolling hash covers everything in that block after its own 4-byte hash — its
-version, its length table, and its fields.
+The issuer data is built and UNSIGNAL-encoded first, then carried verbatim as the `issuerdata` or issuerblock field of the shared block. The relying party opens only the shared block; the issuer block nested inside stays opaque to it and is opened separately by the issuer.
+Each block's rolling hash covers everything in that block after its own 4-byte hash — its version, its length table, and its fields.
 
 **Design choices, and why:**
 
