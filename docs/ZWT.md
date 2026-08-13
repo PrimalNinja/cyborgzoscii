@@ -28,7 +28,7 @@ The `sharedsignature` is **bound inside** `issuersignature`: since `issuersignat
 
 In the concrete construction, `encode(ROM, ...)` is a reversible UNSIGNAL encoding of a **frame** (see Wire format below), and `rollinghash(...)` is a 4-byte integrity field carried *inside* that frame — not a one-way wrapper around the payload. So `encode` and `decode` are inverses: the relying party opens the shared block with SHAREDROM and reads the fields back out; the issuer opens the issuer block with ISSUERROM. The rolling hash is verified on open, binding every field (version, lengths, and blobs).
 
-The `issuerdata` is double encoded because the relying party has the plain text of the GUID, double encoding removes any possiblity of plain text attack of the issuers privateclaims.
+The `issuerdata` is double encoded because the relying party has the plain text of the sharedsignature, double encoding removes any possiblity of plain text attack of the issuers privateclaims.
 
 ---
 
