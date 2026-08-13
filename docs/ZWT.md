@@ -20,11 +20,70 @@ A quantum-proof, opaque session/attestation token. The JWT analogue for ZOSCII: 
 
 ```
 sharedsignature = a GUID or similar
-issuersignature = encode(ISSUERROM, rollinghash(sharedsignature + privateclaims))   // issuer seals the shared-sig with its private ROM
-zwt             = encode(SHAREDROM, rollinghash(sharedsignature + issuersignature + sharedclaims))
+issuerdata = encode(ISSUERROM1, encode(ISSUERROM2, rollinghash(sharedsignature + privateclaims)))   // issuer seals the shared-sig with its private ROM
+zwt             = encode(SHAREDROM, rollinghash(sharedsignature + sharedclaims + issuerdata))
 ```
 
 The `sharedsignature` is **bound inside** `issuersignature`: since `issuersignature = encode(ISSUERROM, rollinghash(sharedsignature + privateclaims))`, a valid `sharedsignature` is defined by matching the copy the issuer sealed — not by the shared key alone.
+
+In the concrete construction, `encode(ROM, ...)` is a reversible UNSIGNAL encoding of a **frame** (see Wire format below), and `rollinghash(...)` is a 4-byte integrity field carried *inside* that frame — not a one-way wrapper around the payload. So `encode` and `decode` are inverses: the relying party opens the shared block with SHAREDROM and reads the fields back out; the issuer opens the issuer block with ISSUERROM. The rolling hash is verified on open, binding every field (version, lengths, and blobs).
+
+The `issuerdata` is double encoded because the relying party has the plain text of the GUID, double encoding removes any possiblity of plain text attack of the issuers privateclaims.
+
+---
+
+## Wire format
+
+The token is a flat, versioned structure, UNSIGNAL-encoded — readable on any target (Z80, 6502, C, C#, Python) with nothing but base-plus-offset arithmetic. All multi-byte integers are **little-endian**.
+
+A ZWT is a single token: a **shared block** the relying party opens with SHAREDROM, whose
+`issuersignature` field is itself an **issuer block** the issuer opens with ISSUERROM. Both
+have the same shape — a header (rolling-hash CRC, version, one 2-byte length per field),
+then the fields. The whole token reads top to bottom:
+
+AI: change below to the following:
+
+```
+offset  size  field
+------  ----  --------------------------------------------------------------
+(UNSIGNALed with shared ROM)
+0		4	rolling hash (CRC)
+4		2	version						- 0
+6		2	length of sharedsignature	(LE)
+8		2	length of sharedclaims		(LE)
+10  	..	sharedsignature
+..      ..	sharedclaims
+
+(Double UNSIGNALed with issuer ROMs 1 & 2)
+1..		..	issuerdata
+			+0	4	rolling hash (CRC)
+			+4	2	version						-0
+			+6	2	length of issuersignature	(LE)
+			+8	..	issuersignature
+			+..	..	private claims
+```
+
+The issuer block is built and UNSIGNAL-encoded first, then carried verbatim as the
+`issuersignature` field of the shared block. The relying party opens only the shared block;
+the issuer block nested inside stays opaque to it and is opened separately by the issuer.
+Each block's rolling hash covers everything in that block after its own 4-byte hash — its
+version, its length table, and its fields.
+
+**Reading a frame** (both parties, any platform):
+
+1. Take the first 4 bytes as the rolling hash; compute the rolling hash over bytes `[4 .. end]` and compare. Mismatch → reject.
+2. Byte at offset 4 is the version. Unknown version → reject (or branch to that version's reader).
+3. Read the fixed number of 16-bit LE lengths starting at offset 5 (2 for the issuer block, 3 for the shared block).
+4. Blobs begin immediately after the length table. Field *i* starts at `header_end + sum(len[0..i-1])` and runs for `len[i]` bytes. The blobs must exactly fill the remainder of the frame.
+
+**Design choices, and why:**
+
+- **No pointers, only lengths.** Fields are in fixed order, so each blob starts where the previous ended — a pointer would just be the running sum of prior lengths. Dropping pointers means the only 16-bit limit is each *length* field, giving every segment its own full 64 KB range while the whole frame may exceed 64 KB.
+- **No field-count byte, no type tags, no field IDs.** The segment schema is fixed per version and known by both parties out of band. A reader already knows it is parsing a 2-field issuer block or a 3-field shared block, so self-description would be dead weight. Parties simply read the segments they hold the key for — the RP reads `sharedsignature` + `sharedclaims` with SHAREDROM; the issuer reads `sharedsignature` + `privateclaims` with ISSUERROM.
+- **Version byte for forward compatibility.** Version 0 fixes the segment list above. A future version may append segments without breaking version-0 readers; the version byte is inside the hash coverage, so it cannot be altered undetected.
+- **Hash covers everything except itself.** The 4-byte rolling hash at offset 0 is computed over the version byte, the length table, and all blobs (`frame[4 .. end]`). Version and lengths are therefore integrity-bound, not just the payload.
+
+Because `issuersignature` is itself a complete UNSIGNAL-encoded block carried inside the shared block, private claims pass through UNSIGNAL twice (issuer block then shared block) and shared claims once. A typical token — a 16-byte GUID `sharedsignature` with short claims — lands around **0.9–1.2 KB**; the size is dominated by UNSIGNAL's two layers of random padding rather than the claims, so putting GUID-sized values in the claims barely changes it.
 
 ---
 
