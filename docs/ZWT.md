@@ -84,10 +84,7 @@ Each block's rolling hash covers everything in that block after its own 4-byte h
 - **No field-count byte, no type tags, no field IDs.** The segment schema is fixed per version and known by both parties out of band. A reader already knows it is parsing a 2-field issuer block or a 3-field shared block, so self-description would be dead weight. Parties simply read the segments they hold the key for — the RP reads `sharedsignature` + `sharedclaims` with SHAREDROM; the issuer reads `issuersignature` + `privateclaims` with ISSUERROM1 and ISSUERROM2.
 - **Version byte for forward compatibility.** Version 0 fixes the segment list above. A future version may append segments without breaking version-0 readers; the version byte is inside the hash coverage, so it cannot be altered undetected.
 - **Hash covers everything except itself.** The 4-byte rolling hash at offset 0 is computed over the version byte, the length table, and all blobs (`frame[4 .. end]`). Version and lengths are therefore integrity-bound, not just the payload.
-- **Double UNSIGNAL encoded issuer data.** The `issuerdata` is double encoded because the relying party
-has the plain text of the `sharedsignature`; double encoding removes any possibility of a plain text attack on
-the issuer's `privateclaims`. `issuersignature` and `privateclaims` could individually be single layered
-but double layering both has the same overhead with greater protection.
+- **Double UNSIGNAL encoded issuer data.** The `issuerdata` is double encoded because the relying party has the plain text of the `sharedsignature`; double encoding removes any possibility of a plain text attack on the issuer's `privateclaims` (if it were to use the same ROM as the `issuersignature`). `issuersignature` and `privateclaims` could individually be single layered but double layering both has the same overhead with greater protection.
 
 Because `issuerdata` is itself a complete double UNSIGNAL-encoded block carried inside the shared block, `privateclaims` passes through UNSIGNAL three times (twice from the issuer block's own double encoding, once more when the shared block that contains it is encoded) while `sharedclaims` passes through once.
 
