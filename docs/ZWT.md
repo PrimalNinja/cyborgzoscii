@@ -20,7 +20,8 @@ A quantum-proof, opaque session/attestation token. The JWT analogue for ZOSCII: 
 
 ```
 sharedsignature = a GUID or similar
-issuerdata = encode(ISSUERROM1, encode(ISSUERROM2, rollinghash(sharedsignature + privateclaims)))   // issuer seals the shared-sig with its private ROM
+issuersignature = sharedsignature
+issuerdata = encode(ISSUERROM1, encode(ISSUERROM2, rollinghash(issuersignature + privateclaims)))   // issuer seals the shared-sig with its private ROM
 zwt             = encode(SHAREDROM, rollinghash(sharedsignature + sharedclaims + issuerdata))
 ```
 
@@ -73,8 +74,9 @@ version, its length table, and its fields.
 - **Version byte for forward compatibility.** Version 0 fixes the segment list above. A future version may append segments without breaking version-0 readers; the version byte is inside the hash coverage, so it cannot be altered undetected.
 - **Hash covers everything except itself.** The 4-byte rolling hash at offset 0 is computed over the version byte, the length table, and all blobs (`frame[4 .. end]`). Version and lengths are therefore integrity-bound, not just the payload.
 - **Double UNSIGNAL encoded issuer data.** The `issuerdata` is double encoded because the relying party
-has the plain text of the sharedsignature, double encoding removes any possiblity of plain text attack of
-the issuers privateclaims.
+has the plain text of the `sharedsignature`, double encoding removes any possiblity of plain text attack of
+the issuers `privateclaims`. `issuersignature` and `privateclaims` could individually be single layered
+but double layering both has the same overhead with greater protection.
 
 Because `issuersignature` is itself a complete double UNSIGNAL-encoded block carried inside the shared block, private claims pass through UNSIGNAL three times (issuer block then shared block) and shared claims once. A typical token — a 16-byte GUID `sharedsignature` with short claims — lands around **0.9–1.2 KB**; the size is dominated by UNSIGNAL's three layers of random padding rather than the claims, so putting GUID-sized values in the claims barely changes it.
 
