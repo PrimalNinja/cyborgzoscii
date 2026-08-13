@@ -273,6 +273,42 @@ The addresses in C are a mix of A and B. Without the right mask, it looks like r
 - **Coercion resistance:** Decoy message satisfies the adversary
 - **Sprite/transparency layering:** Like 8-bit graphics, masks overlay and remove data layers
 
+## Mode 11: ZWT Mode (ZOSCII Web Tokens)
+
+**Property:** Opaque, unforgeable attestation tokens — an issuer vouches for a subject to a relying party, with the token's payload and verification structure both concealed
+
+**Security:** Information-theoretic opacity (I(M;A)=0); only the issuer can mint a valid token, enforced by a shared-signature bound inside an issuer-private signature
+
+**Key Distribution:** SHAREDROM shared per issuer↔relying-party relationship; ISSUERROM held by the issuer only (one for all relying parties, or one per relying party)
+
+**How it works:**
+
+- Issuer holds ISSUERROM (private) and shares a SHAREDROM with each relying party.
+- A `sharedsignature` (a GUID or similar) is sealed inside an `issuersignature` by encoding it with ISSUERROM:
+  - `issuersignature = encode(ISSUERROM, rollinghash(sharedsignature + privateclaims))`
+- The token wraps both, plus relying-party-readable claims, under SHAREDROM:
+  - `zwt = encode(SHAREDROM, rollinghash(sharedsignature + issuersignature + sharedclaims))`
+- The relying party opens the ZWT with SHAREDROM and reads the `sharedsignature` and shared claims.
+- The issuer verifies the `sharedsignature` matches the copy it sealed inside `issuersignature`.
+
+**Security Properties:**
+
+- **Opaque payload:** The entire token is UNSIGNAL-encoded — payload, signatures, and structure are indistinguishable from noise. Unlike JWT (plaintext base64), a ZWT reveals nothing.
+- **Concealed verification structure:** An observer cannot tell how many signatures exist, which keys govern them, or where they sit in the stream.
+- **Issuer-only forgery resistance:** A valid `sharedsignature` is defined by matching the copy sealed inside `issuersignature` — only ISSUERROM can produce that. Even a fully compromised relying party cannot mint a token the issuer will accept.
+- **Cross-site inert:** A ZWT is unvalidatable by any party without the relationship key — no audience (`aud`) check needed; misuse is structural.
+- **Quantum-proof:** No asymmetric primitive; nothing for Shor's algorithm to attack.
+
+**Use Cases:**
+
+- **Federated login:** Issuer attests a user to a relying party without the relying party ever holding the issuer's private ROM.
+- **Compromise-surviving attestation:** The issuer-private signature stays unforgeable even if a relying party's shared key leaks.
+- **Opaque session tokens:** Session state that reveals nothing to the client holding it, unlike readable JWT payloads.
+- **Multi-party mutual attestation:** Each party seals a common shared GUID with its own ROM; segments are independently verifiable, mutually bound, and unforgeable by other parties.
+
+**Why This Differs from JWT:**
+JWT payloads are plaintext (base64) and rely on asymmetric signatures that are quantum-threatened. ZWT payloads are information-theoretically opaque, the verification structure is concealed, audience binding is structural, and no asymmetric primitive is used.
+
 ## Combined Modes
 
 - **Secure Blockchain with Private Payloads:** Mode 5 (Integrity Proof) for blockchain structure, Mode 1 or 2a (Deniability) for ZOSCII-encoded payloads within blocks; public can verify integrity, only ROM holders read content
