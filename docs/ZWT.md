@@ -20,11 +20,11 @@ A quantum-proof, opaque session/attestation token. The JWT analogue for ZOSCII: 
 
 ```
 sharedsignature = a GUID or similar
-googlesignature = encode(ISSUERROM, rollinghash(sharedsignature + privateclaims))   // issuer seals the shared-sig with its private ROM
-zwt             = encode(SHAREDROM, rollinghash(sharedsignature + googlesignature + sharedclaims))
+issuersignature = encode(ISSUERROM, rollinghash(sharedsignature + privateclaims))   // issuer seals the shared-sig with its private ROM
+zwt             = encode(SHAREDROM, rollinghash(sharedsignature + issuersignature + sharedclaims))
 ```
 
-The `sharedsignature` is **bound inside** `googlesignature`: since `googlesignature = encode(ISSUERROM, rollinghash(sharedsignature + privateclaims))`, a valid `sharedsignature` is defined by matching the copy the issuer sealed — not by the shared key alone.
+The `sharedsignature` is **bound inside** `issuersignature`: since `issuersignature = encode(ISSUERROM, rollinghash(sharedsignature + privateclaims))`, a valid `sharedsignature` is defined by matching the copy the issuer sealed — not by the shared key alone.
 
 ---
 
@@ -33,15 +33,15 @@ The `sharedsignature` is **bound inside** `googlesignature`: since `googlesignat
 | Verifier | Checks | With |
 |----------|--------|------|
 | **Relying Party** | can open the ZWT and read `sharedsignature` + shared claims | SHAREDROM |
-| **Issuer** | `sharedsignature` matches the copy sealed in `googlesignature` | ISSUERROM |
+| **Issuer** | `sharedsignature` matches the copy sealed in `issuersignature` | ISSUERROM |
 
 ---
 
 ## Why nobody but the issuer can forge a valid token
 
 - A forger without SHAREDROM can't open or produce a ZWT — outsiders locked out.
-- A relying party **holds** SHAREDROM, so it can produce *a* `sharedsignature` — but it **cannot** produce a matching `googlesignature`, because that requires ISSUERROM (issuer-only).
-- A `sharedsignature` is only **valid** when it matches the copy sealed inside `googlesignature`.
+- A relying party **holds** SHAREDROM, so it can produce *a* `sharedsignature` — but it **cannot** produce a matching `issuersignature`, because that requires ISSUERROM (issuer-only).
+- A `sharedsignature` is only **valid** when it matches the copy sealed inside `issuersignature`.
 - Therefore only the issuer can produce a valid token. A forged shared-sig has no matching sealed copy and fails.
 
 **Even a fully compromised relying party cannot mint a token the issuer will accept.**
@@ -65,11 +65,11 @@ The `sharedsignature` is **bound inside** `googlesignature`: since `googlesignat
 | Gap | Note |
 |-----|------|
 | **Replay to the legitimate relying party** | A stolen ZWT can be replayed *to its intended recipient*. Bind a server-issued nonce inside the token; avoid clock-based expiry (clocks are attacker-influenceable). |
-| **Revocation** | Stateless local verification can't revoke mid-life. If needed, verify `googlesignature` via issuer introspection instead — gains revocation, costs a round-trip. |
+| **Revocation** | Stateless local verification can't revoke mid-life. If needed, verify `issuersignature` via issuer introspection instead — gains revocation, costs a round-trip. |
 
 ---
 
 ## Notes
 
-- `sharedclaims` are readable by the relying party (opened with SHAREDROM); `privateclaims` are sealed inside `googlesignature` and readable only by the issuer.
-- SHAREDROM is per-relationship, so a relying party forging a *shared*-sig could only ever affect its own door — a non-event — and the binding to `googlesignature` prevents even that from producing an issuer-valid token.
+- `sharedclaims` are readable by the relying party (opened with SHAREDROM); `privateclaims` are sealed inside `issuersignature` and readable only by the issuer.
+- SHAREDROM is per-relationship, so a relying party forging a *shared*-sig could only ever affect its own door — a non-event — and the binding to `issuersignature` prevents even that from producing an issuer-valid token.
