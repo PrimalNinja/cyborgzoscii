@@ -28,8 +28,6 @@ The `sharedsignature` is **bound inside** `issuersignature`: since `issuersignat
 
 In the concrete construction, `encode(ROM, ...)` is a reversible UNSIGNAL encoding of a **frame** (see Wire format below), and `rollinghash(...)` is a 4-byte integrity field carried *inside* that frame — not a one-way wrapper around the payload. So `encode` and `decode` are inverses: the relying party opens the shared block with SHAREDROM and reads the fields back out; the issuer opens the issuer block with ISSUERROM. The rolling hash is verified on open, binding every field (version, lengths, and blobs).
 
-The `issuerdata` is double encoded because the relying party has the plain text of the sharedsignature, double encoding removes any possiblity of plain text attack of the issuers privateclaims.
-
 ---
 
 ## Wire format
@@ -48,14 +46,13 @@ offset  size  field
 ------  ----  --------------------------------------------------------------
 (UNSIGNALed with shared ROM)
 0		4	rolling hash (CRC)
-4		2	version						- 0
-6		2	length of sharedsignature	(LE)
-8		2	length of sharedclaims		(LE)
+4		2	version								- 0
+6		2	length of sharedsignature			(LE)
+8		2	length of sharedclaims				(LE)
 10  	..	sharedsignature
 ..      ..	sharedclaims
 
-(Double UNSIGNALed with issuer ROMs 1 & 2)
-1..		..	issuerdata
+..		..	issuerdata							(Double UNSIGNALed with issuer ROMs 1 & 2)
 			+0	4	rolling hash (CRC)
 			+4	2	version						-0
 			+6	2	length of issuersignature	(LE)
@@ -69,21 +66,17 @@ the issuer block nested inside stays opaque to it and is opened separately by th
 Each block's rolling hash covers everything in that block after its own 4-byte hash — its
 version, its length table, and its fields.
 
-**Reading a frame** (both parties, any platform):
-
-1. Take the first 4 bytes as the rolling hash; compute the rolling hash over bytes `[4 .. end]` and compare. Mismatch → reject.
-2. Byte at offset 4 is the version. Unknown version → reject (or branch to that version's reader).
-3. Read the fixed number of 16-bit LE lengths starting at offset 5 (2 for the issuer block, 3 for the shared block).
-4. Blobs begin immediately after the length table. Field *i* starts at `header_end + sum(len[0..i-1])` and runs for `len[i]` bytes. The blobs must exactly fill the remainder of the frame.
-
 **Design choices, and why:**
 
 - **No pointers, only lengths.** Fields are in fixed order, so each blob starts where the previous ended — a pointer would just be the running sum of prior lengths. Dropping pointers means the only 16-bit limit is each *length* field, giving every segment its own full 64 KB range while the whole frame may exceed 64 KB.
 - **No field-count byte, no type tags, no field IDs.** The segment schema is fixed per version and known by both parties out of band. A reader already knows it is parsing a 2-field issuer block or a 3-field shared block, so self-description would be dead weight. Parties simply read the segments they hold the key for — the RP reads `sharedsignature` + `sharedclaims` with SHAREDROM; the issuer reads `sharedsignature` + `privateclaims` with ISSUERROM.
 - **Version byte for forward compatibility.** Version 0 fixes the segment list above. A future version may append segments without breaking version-0 readers; the version byte is inside the hash coverage, so it cannot be altered undetected.
 - **Hash covers everything except itself.** The 4-byte rolling hash at offset 0 is computed over the version byte, the length table, and all blobs (`frame[4 .. end]`). Version and lengths are therefore integrity-bound, not just the payload.
+- **Double UNSIGNAL encoded issuer data.** The `issuerdata` is double encoded because the relying party
+has the plain text of the sharedsignature, double encoding removes any possiblity of plain text attack of
+the issuers privateclaims.
 
-Because `issuersignature` is itself a complete UNSIGNAL-encoded block carried inside the shared block, private claims pass through UNSIGNAL twice (issuer block then shared block) and shared claims once. A typical token — a 16-byte GUID `sharedsignature` with short claims — lands around **0.9–1.2 KB**; the size is dominated by UNSIGNAL's two layers of random padding rather than the claims, so putting GUID-sized values in the claims barely changes it.
+Because `issuersignature` is itself a complete double UNSIGNAL-encoded block carried inside the shared block, private claims pass through UNSIGNAL three times (issuer block then shared block) and shared claims once. A typical token — a 16-byte GUID `sharedsignature` with short claims — lands around **0.9–1.2 KB**; the size is dominated by UNSIGNAL's three layers of random padding rather than the claims, so putting GUID-sized values in the claims barely changes it.
 
 ---
 
