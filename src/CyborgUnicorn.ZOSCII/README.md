@@ -78,6 +78,21 @@ Scan returns string[] (unidentified names) or null on failure
 Identify returns string[] (identified names) or null on failure
 
 ```csharp
+MQClient(int intTimeoutSeconds_a = 60)
+void SetUserAgentRandom()
+void SetUserAgentNone()
+void SetUserAgent(string strUserAgent_a)
+MQCheckStatus Check(string strServerURL_a, string strQueueGUID_a, string strAfterPointer_a)
+MQFetchResult FetchNext(string strServerURL_a, string strQueueGUID_a, string strAfterPointer_a)
+MQPublishResult Publish(string strServerURL_a, string strQueueGUID_a, byte[] arrData_a, string strNonce_a = "", int intRetentionDays_a = 7)
+MQFetchResult Get(string strServerURL_a, string strStoredName_a)
+string[] Identify(string strServerURL_a, string[] arrNames_a)
+MQPublishResult Put(string strServerURL_a, byte[] arrData_a, string strNonce_a = "", int intRetentionDays_a = 7)
+string[] Scan(string strServerURL_a)
+MQPublishResult Replicate(string strRemoteServerURL_a, string strRemoteQueueGUID_a, string strLocalServerURL_a, string strTargetQueueGUID_a, string strLastPointer_a, out string strNewPointer_a, int intRetentionDays_a = 7)
+```
+
+```csharp
 var mq = new MQClient();              // default 60s timeout
 var mq = new MQClient(120);           // custom timeout
 
@@ -182,6 +197,21 @@ Truncation block: `<BlockID>.ztb` (111 + 65536 bytes: raw header + raw ROM, not 
 `ZTBChain.NULL_GUID`           — `"00000000-0000-0000-0000-000000000000"`
 `ZTBChain.GENESIS_SIZE_PUBLIC` — 65536
 `ZTBChain.HEADER_RAW_SIZE`     — 111
+
+```csharp
+public static bool Create(string strNewBlockID_a, string[] arrSourcePaths_a, string strWorkDir_a, string strChainID_a)
+public static ZTBChain Open(string strWorkDir_a, string strChainID_a, ZTBHashType objHashType_a = ZTBHashType.RollingFull)
+public ZTBBlockResult AddBlock(string strNewBlockID_a, string strPrevBlockID_a, byte[] arrPayload_a)
+public ZTBBlockResult AddBlockText(string strNewBlockID_a, string strPrevBlockID_a, string strText_a)
+public ZTBBlockResult AddBlockFile(string strNewBlockID_a, string strPrevBlockID_a, string strFilePath_a)
+public ZTBBlockResult AddCheckpoint(string strNewBlockID_a, string strPrevBlockID_a, string strLabel_a)
+public ZTBBlockResult AddBranch(string strNewBlockID_a, string strPrevBlockID_a, byte[] arrPayload_a, string strTrunkChainID_a)
+public ZTBBlockResult FetchBlock(string strBlockID_a)
+public ZTBVerifyResult Verify(string strBlockID_a, bool blnWalk_a)
+public ZTBBlockResult Truncate(string strNewBlockID_a, string strCheckpointBlockID_a)
+public ZTBBlockResult Finalise(string strNewBlockID_a, string strPrevBlockID_a, string strLabel_a)
+public void Dispose()
+```
 
 ```csharp
 // Create genesis block from 1-3 entropy source files (JPEG, MP3, etc.)
