@@ -1,6 +1,6 @@
 # ZOSCII: Zero Overhead Secure Code Information Interchange
 
-**Author:** Julian Cassin  
+**Author:** Julian Cassin
 **Date:** 2026-03-11
 **Version:** 1.1
 
@@ -44,7 +44,7 @@ Why use less than 64KB then?  The reason is to cater for smaller computers as no
 
 # What is microZOSCII?
 
-MicroZOSCII is a variant of ZOSCII using 4bit bytes or nibbles (on most computers). Aren't bytes always 8 bit? No! They are ALMOST 100% of the time 8 bit. Using nibbles allows microZOSCII to have a 256byte or less ROM with the same combinatoric probability as full ZOSCII - but the entropy and randomness are very important. microZOSCII is primarily useful for bootstrapping a full 64KB ROM from a small 2 x 54 character string, or 3 x 54 character string - these combined 108 characters or 162 characters allow for strage in session cookies, phone contact lists, instant messager lists or split among personnel on a submarine for a simple boostrap to be QRCode scanned, typed in, NFC scanned etc. 
+MicroZOSCII is a variant of ZOSCII using 4bit bytes or nibbles (on most computers). Aren't bytes always 8 bit? No! They are ALMOST 100% of the time 8 bit. Using nibbles allows microZOSCII to have a 256byte or less ROM with the same combinatoric probability as full ZOSCII - but the entropy and randomness are very important. microZOSCII is primarily useful for bootstrapping a full 64KB ROM from a small 2 x 54 character string, or 3 x 54 character string - these combined 108 characters or 162 characters allow for strage in session cookies, phone contact lists, instant messager lists or split among personnel on a submarine for a simple boostrap to be QRCode scanned, typed in, NFC scanned etc.
 
 MicroZOSCII is under UNINTELLIGENCE licence here: https://github.com/PrimalNinja/cyborgzoscii-u
 
@@ -144,7 +144,7 @@ decode = (r,a) => a.map(a => r[a]).join('');
 // This software is released under MIT License.
 
 // Function to convert string or binary data to ZOSCII address sequence
-// arrBinaryData_a: Uint8Array containing the ROM/binary data  
+// arrBinaryData_a: Uint8Array containing the ROM/binary data
 // mixedInputData_a: String or Uint8Array containing the data to convert
 // arrMemoryBlocks_a: array of {start: startAddress, size: blockSize} objects
 // cbConverter_a: encoding conversion function (e.g., petsciiToAscii, ebcdicToAscii) or null
@@ -154,13 +154,13 @@ decode = (r,a) => a.map(a => r[a]).join('');
 function toZOSCII(arrBinaryData_a, mixedInputData_a, arrMemoryBlocks_a, cbConverter_a, intUnmappableChar_a)
 {
     var intStartTime = new Date().getTime();
-    
+
     var intI;
     var intBlock;
     var intResultIndex = 0;
     var intResultCount = 0;
     var intDebugMissing = 0;
-    
+
     var arrByteCounts = new Array(256);
     var arrByteAddresses = new Array(256);
     var arrOffsets = new Array(256);
@@ -169,31 +169,31 @@ function toZOSCII(arrBinaryData_a, mixedInputData_a, arrMemoryBlocks_a, cbConver
     var intByte;
     var intIndex;
     var objBlock;
-    
+
     // Convert input to consistent format
     var arrInputData_a;
     var blnIsString = false;
-    
-    if (typeof mixedInputData_a === 'string') 
+
+    if (typeof mixedInputData_a === 'string')
     {
         // Handle string input - convert to UTF-8 bytes
         arrInputData_a = new TextEncoder().encode(mixedInputData_a);
         blnIsString = true;
-    } 
-    else 
+    }
+    else
     {
         // Handle Uint8Array input
         arrInputData_a = mixedInputData_a;
         blnIsString = false;
     }
-    
+
     // Initialize counters
     for (intI = 0; intI < 256; intI++)
     {
         arrByteCounts[intI] = 0;
         arrInputCounts[intI] = 0;
     }
-    
+
     // Pass 1: Count occurrences by iterating through blocks
     for (intBlock = 0; intBlock < arrMemoryBlocks_a.length; intBlock++)
     {
@@ -204,14 +204,14 @@ function toZOSCII(arrBinaryData_a, mixedInputData_a, arrMemoryBlocks_a, cbConver
             arrByteCounts[intByte]++;
         }
     }
-    
+
     // Pass 2: Pre-allocate exact-sized arrays
     for (intI = 0; intI < 256; intI++)
     {
         arrByteAddresses[intI] = new Array(arrByteCounts[intI]);
         arrOffsets[intI] = 0;
     }
-    
+
     // Pass 3: Populate arrays by iterating through blocks
     for (intBlock = 0; intBlock < arrMemoryBlocks_a.length; intBlock++)
     {
@@ -223,18 +223,18 @@ function toZOSCII(arrBinaryData_a, mixedInputData_a, arrMemoryBlocks_a, cbConver
             arrOffsets[intByte]++;
         }
     }
-    
+
     // Build result array with random addresses - pre-allocate and avoid push()
     for (intI = 0; intI < arrInputData_a.length; intI++)
     {
         intIndex = arrInputData_a[intI];  // Direct byte value
-        
+
         // Apply encoding conversion if provided
         if (cbConverter_a)
         {
             intIndex = cbConverter_a(intIndex, intUnmappableChar_a);
         }
-        
+
         if (intIndex >= 0 && intIndex < 256 && arrByteAddresses[intIndex] && arrByteAddresses[intIndex].length > 0)
         {
             intResultCount++;
@@ -246,12 +246,12 @@ function toZOSCII(arrBinaryData_a, mixedInputData_a, arrMemoryBlocks_a, cbConver
             {
                 var strHexByte = arrInputData_a[intI].toString(16).toUpperCase();
                 if (strHexByte.length < 2) strHexByte = "0" + strHexByte;
-                
-                if (blnIsString) 
+
+                if (blnIsString)
                 {
                     console.log("Missing character: '" + String.fromCharCode(arrInputData_a[intI]) + "' (code " + arrInputData_a[intI] + "/0x" + strHexByte + " -> " + intIndex + ")");
-                } 
-                else 
+                }
+                else
                 {
                     console.log("Missing byte: " + arrInputData_a[intI] + " (0x" + strHexByte + " -> " + intIndex + ")");
                 }
@@ -259,12 +259,12 @@ function toZOSCII(arrBinaryData_a, mixedInputData_a, arrMemoryBlocks_a, cbConver
         }
     }
 
-    if (blnIsString) 
+    if (blnIsString)
     {
         console.log("Characters found in ROM: " + intResultCount);
         console.log("Characters missing from ROM: " + intDebugMissing);
-    } 
-    else 
+    }
+    else
     {
         console.log("Bytes found in ROM: " + intResultCount);
         console.log("Bytes missing from ROM: " + intDebugMissing);
@@ -275,7 +275,7 @@ function toZOSCII(arrBinaryData_a, mixedInputData_a, arrMemoryBlocks_a, cbConver
     for (intI = 0; intI < arrInputData_a.length; intI++)
     {
         intIndex = arrInputData_a[intI];  // Direct byte value
-        
+
         // Apply encoding conversion if provided
         if (cbConverter_a)
         {
@@ -293,14 +293,14 @@ function toZOSCII(arrBinaryData_a, mixedInputData_a, arrMemoryBlocks_a, cbConver
 
     var intEndTime = new Date().getTime();
     var intElapsedMs = intEndTime - intStartTime;
-    
+
     console.log("ZOSCII Performance:");
     console.log("- Binary size: " + arrBinaryData_a.length + " bytes");
     console.log("- Input length: " + arrInputData_a.length + (blnIsString ? " characters" : " bytes"));
     console.log("- Memory blocks: " + arrMemoryBlocks_a.length);
     console.log("- Execution time: " + intElapsedMs + "ms");
     console.log("- Output addresses: " + arrResult.length);
-    
+
     return {
         addresses: arrResult,
         inputCounts: arrInputCounts,
@@ -348,38 +348,38 @@ static void buildLookupTable(RomData* ptrRom_a)
     long lngROMSize = 0;
     long lngI = 0;
     int intI = 0;
-    
+
     // Initialize lookup array
     for (intI = 0; intI < 256; intI++)
     {
         ptrRom_a->arrLookup[intI].ptrAddresses = NULL;
         ptrRom_a->arrLookup[intI].intCount = 0;
     }
-    
+
     // ROM addresses are 16-bit, so only use first 64KB
     lngROMSize = ptrRom_a->lngROMSize;
     if (lngROMSize > 65536L)
     {
         lngROMSize = 65536L;
     }
-    
+
     // Count occurrences
     for (lngI = 0; lngI < lngROMSize; lngI++)
     {
         arrCounts[ptrRom_a->ptrROMData[lngI]]++;
     }
-    
+
     // Allocate memory for each byte value
     for (intI = 0; intI < 256; intI++)
     {
         if (arrCounts[intI] > 0)
         {
-            ptrRom_a->arrLookup[intI].ptrAddresses = 
+            ptrRom_a->arrLookup[intI].ptrAddresses =
                 (uint32_t*)malloc(arrCounts[intI] * sizeof(uint32_t));
             ptrRom_a->arrLookup[intI].intCount = 0;
         }
     }
-    
+
     // Fill addresses
     for (lngI = 0; lngI < lngROMSize; lngI++)
     {
@@ -393,9 +393,9 @@ static void buildLookupTable(RomData* ptrRom_a)
     {
         intRomHash = (intRomHash * 33) + ptrRom_a->ptrROMData[lngI];
     }
-    
+
     intRomHash ^= (uint32_t)time(NULL);
-    
+
     srand(intRomHash);
 }
 
@@ -403,30 +403,30 @@ static RomData* loadRom(const char* strFilename_a)
 {
     RomData* ptrRom = NULL;
     FILE* ptrROM = NULL;
-    
+
     ptrRom = (RomData*)malloc(sizeof(RomData));
     if (ptrRom)
     {
         // Initialize
         memset(ptrRom, 0, sizeof(RomData));
-        
+
         ptrROM = fopen(strFilename_a, "rb");
         if (ptrROM)
         {
             fseek(ptrROM, 0, SEEK_END);
             ptrRom->lngROMSize = ftell(ptrROM);
             fseek(ptrROM, 0, SEEK_SET);
-            
+
             if (ptrRom->lngROMSize > ZOSCII_ROM_LOAD_MAX)
             {
                 ptrRom->lngROMSize = ZOSCII_ROM_LOAD_MAX;
             }
-            
+
             ptrRom->ptrROMData = (uint8_t*)malloc(ptrRom->lngROMSize);
             if (ptrRom->ptrROMData)
             {
                 fread(ptrRom->ptrROMData, 1, ptrRom->lngROMSize, ptrROM);
-                
+
                 // Pre-build lookup table for reuse across multiple encodes
                 buildLookupTable(ptrRom);
             }
@@ -435,7 +435,7 @@ static RomData* loadRom(const char* strFilename_a)
                 free(ptrRom);
                 ptrRom = NULL;
             }
-            
+
             fclose(ptrROM);
         }
         else
@@ -444,21 +444,21 @@ static RomData* loadRom(const char* strFilename_a)
             ptrRom = NULL;
         }
     }
-    
+
     return ptrRom;
 }
 
 static void unloadRom(RomData* ptrRom_a)
 {
     int intI = 0;
-    
+
     if (ptrRom_a)
     {
         if (ptrRom_a->ptrROMData)
         {
             free(ptrRom_a->ptrROMData);
         }
-        
+
         for (intI = 0; intI < 256; intI++)
         {
             if (ptrRom_a->arrLookup[intI].ptrAddresses)
@@ -466,7 +466,7 @@ static void unloadRom(RomData* ptrRom_a)
                 free(ptrRom_a->arrLookup[intI].ptrAddresses);
             }
         }
-        
+
         free(ptrRom_a);
     }
 }
@@ -477,7 +477,7 @@ static bool encodeFile(const RomData* ptrRom_a, const char* strInputFile_a, cons
     FILE* ptrInput = NULL;
     FILE* ptrOutput = NULL;
     int intCh = 0;
-    
+
     ptrInput = fopen(strInputFile_a, "rb");
     if (ptrInput)
     {
@@ -495,13 +495,13 @@ static bool encodeFile(const RomData* ptrRom_a, const char* strInputFile_a, cons
                     fwrite(&intAddress, sizeof(uint16_t), 1, ptrOutput);
                 }
             }
-            
+
             blnSuccess = true;
             fclose(ptrOutput);
         }
         fclose(ptrInput);
     }
-    
+
     return blnSuccess;
 }
 
@@ -510,7 +510,7 @@ int main(int intArgC_a, char* strArgv_a[])
     int intResult = 1;
     RomData* ptrRom = NULL;
     bool blnEncodeOk = false;
-    
+
 #ifdef _WIN32
     _setmode(_fileno(stdin), _O_BINARY);
     _setmode(_fileno(stdout), _O_BINARY);
@@ -525,7 +525,7 @@ int main(int intArgC_a, char* strArgv_a[])
         if (ptrRom)
         {
             blnEncodeOk = encodeFile(ptrRom, strArgv_a[2], strArgv_a[3]);
-            
+
             if (blnEncodeOk)
             {
                 intResult = 0;
@@ -534,7 +534,7 @@ int main(int intArgC_a, char* strArgv_a[])
             {
                 fprintf(stderr, "Encode failed\n");
             }
-            
+
             unloadRom(ptrRom);
         }
         else
@@ -546,7 +546,7 @@ int main(int intArgC_a, char* strArgv_a[])
     {
         fprintf(stderr, "Usage: %s <romfile> <inputdatafile> <encodedoutput>\n", strArgv_a[0]);
     }
-    
+
     return intResult;
 }
 
@@ -567,7 +567,7 @@ int main(int intArgC_a, char* strArgv_a[])
 
 #define ZOSCII_ROM_LOAD_MAX 131072L
 
-typedef struct 
+typedef struct
 {
     uint8_t* ptrROMData;
     long lngROMSize;
@@ -577,28 +577,28 @@ static RomData* loadRom(const char* strFilename_a)
 {
     RomData* ptrRom = NULL;
     FILE* ptrROM = NULL;
-    
+
     ptrROM = fopen(strFilename_a, "rb");
-    if (ptrROM) 
+    if (ptrROM)
     {
         ptrRom = malloc(sizeof(RomData));
-        if (ptrRom) 
+        if (ptrRom)
         {
             fseek(ptrROM, 0, SEEK_END);
             ptrRom->lngROMSize = ftell(ptrROM);
             fseek(ptrROM, 0, SEEK_SET);
-            
-            if (ptrRom->lngROMSize > ZOSCII_ROM_LOAD_MAX) 
+
+            if (ptrRom->lngROMSize > ZOSCII_ROM_LOAD_MAX)
             {
                 ptrRom->lngROMSize = ZOSCII_ROM_LOAD_MAX;
             }
-            
+
             ptrRom->ptrROMData = malloc(ptrRom->lngROMSize);
-            if (ptrRom->ptrROMData) 
+            if (ptrRom->ptrROMData)
             {
                 fread(ptrRom->ptrROMData, 1, ptrRom->lngROMSize, ptrROM);
-            } 
-            else 
+            }
+            else
             {
                 free(ptrRom);
                 ptrRom = NULL;
@@ -606,15 +606,15 @@ static RomData* loadRom(const char* strFilename_a)
         }
         fclose(ptrROM);
     }
-    
+
     return ptrRom;
 }
 
 static void freeRom(RomData* ptrRom_a)
 {
-    if (ptrRom_a) 
+    if (ptrRom_a)
     {
-        if (ptrRom_a->ptrROMData) 
+        if (ptrRom_a->ptrROMData)
         {
             free(ptrRom_a->ptrROMData);
         }
@@ -631,52 +631,52 @@ static bool decodeFile(const RomData* ptrRom_a, const char* strInputFile_a, cons
     long lngInputSize = 0;
     long lngSlots = 0;
     long lngI = 0;
-    
+
     ptrInput = fopen(strInputFile_a, "rb");
-    if (ptrInput) 
+    if (ptrInput)
     {
         // Get input file size to calculate number of slots
         fseek(ptrInput, 0, SEEK_END);
         lngInputSize = ftell(ptrInput);
         fseek(ptrInput, 0, SEEK_SET);
-        
+
         // Each slot is 2 bytes (16-bit address)
         lngSlots = lngInputSize / 2;
-        
-        if (lngSlots >= 0) 
+
+        if (lngSlots >= 0)
         {
             ptrOutput = fopen(strOutputFile_a, "wb");
-            if (ptrOutput) 
+            if (ptrOutput)
             {
                 // Decode each slot
-                for (lngI = 0; lngI < lngSlots; lngI++) 
+                for (lngI = 0; lngI < lngSlots; lngI++)
                 {
-                    if (fread(arrBuf, 2, 1, ptrInput) != 1) 
+                    if (fread(arrBuf, 2, 1, ptrInput) != 1)
                     {
                         break;
                     }
-                    
+
                     uint16_t intAddr = (uint16_t)arrBuf[0] | ((uint16_t)arrBuf[1] << 8);
-                    if (intAddr < ptrRom_a->lngROMSize) 
+                    if (intAddr < ptrRom_a->lngROMSize)
                     {
-                        if (fputc(ptrRom_a->ptrROMData[intAddr], ptrOutput) == EOF) 
+                        if (fputc(ptrRom_a->ptrROMData[intAddr], ptrOutput) == EOF)
                         {
                             break;
                         }
                     }
                 }
-                
-                if (lngI == lngSlots) 
+
+                if (lngI == lngSlots)
                 {
                     blnSuccess = true;
                 }
-                
+
                 fclose(ptrOutput);
             }
         }
         fclose(ptrInput);
     }
-    
+
     return blnSuccess;
 }
 
@@ -685,7 +685,7 @@ int main(int argc_a, char* strArgv_a[])
     int intResult = 1;
     RomData* ptrRom = NULL;
     bool blnDecodeOk = false;
-    
+
 #ifdef _WIN32
     _setmode(_fileno(stdin), _O_BINARY);
     _setmode(_fileno(stdout), _O_BINARY);
@@ -694,33 +694,33 @@ int main(int argc_a, char* strArgv_a[])
     printf("ZOSCII Decoder v20260303\n");
     printf("(c) 2026 Cyborg Unicorn Pty Ltd - MIT License\n\n");
 
-    if (argc_a == 4) 
+    if (argc_a == 4)
     {
         ptrRom = loadRom(strArgv_a[1]);
-        if (ptrRom) 
+        if (ptrRom)
         {
             blnDecodeOk = decodeFile(ptrRom, strArgv_a[2], strArgv_a[3]);
             freeRom(ptrRom);
-            
-            if (blnDecodeOk) 
+
+            if (blnDecodeOk)
             {
                 intResult = 0;
-            } 
-            else 
+            }
+            else
             {
                 fprintf(stderr, "Decode failed\n");
             }
-        } 
-        else 
+        }
+        else
         {
             perror("Failed to load ROM");
         }
-    } 
-    else 
+    }
+    else
     {
         fprintf(stderr, "Usage: %s <romfile> <encoded> <output>\n", strArgv_a[0]);
     }
-    
+
     return intResult;
 }
 
@@ -747,7 +747,7 @@ __constant__ int32_t ARR_POSITION_LENGTHS[256];
 // Xorshift32: Branchless Entropy Generation
 __device__ inline int32_t fast_rand(int32_t& int_state) {
     int_state ^= int_state << 13;
-    int_state ^= int_state >> 17; 
+    int_state ^= int_state >> 17;
     int_state ^= int_state << 5;
     return int_state & 0x7FFFFFFF;
 }
@@ -764,21 +764,21 @@ __global__ void zoscii_encode_kernel(
     // 64-bit Addressing to bypass 2.1B boundary
     size_t sz_warp_id = (size_t)((blockIdx.x * blockDim.x + threadIdx.x) / 32);
     int int_lane_id = threadIdx.x % 32;
-    
+
     if (sz_warp_id >= (size_t)int_batch_size) return;
-    
+
     int32_t int_rand_state = ptr_rand_states[sz_warp_id];
     int int_per_thread = (int_msg_len + 31) / 32;
     int int_start = int_lane_id * int_per_thread;
     int int_end = min(int_start + int_per_thread, int_msg_len);
-    
+
     size_t sz_base_idx = sz_warp_id * (size_t)int_msg_len;
-    
+
     for (int i = int_start; i < int_end; i++) {
         int int_byte = ptr_messages[sz_base_idx + i] & 0xFF;
         int int_off = ARR_POSITION_OFFSETS[int_byte];
         int int_len = ARR_POSITION_LENGTHS[int_byte];
-        
+
         if (int_len > 0) {
             int32_t int_val = fast_rand(int_rand_state);
             ptr_encoded[sz_base_idx + i] = ptr_lookup_table[int_off + (int_val % int_len)];
@@ -797,7 +797,7 @@ __global__ void zoscii_decode_kernel(
 ) {
     size_t sz_idx = (size_t)blockIdx.x * blockDim.x + threadIdx.x;
     size_t sz_total = (size_t)int_batch_size * int_msg_len;
-    
+
     for (size_t i = sz_idx; i < sz_total; i += (size_t)gridDim.x * blockDim.x) {
         ptr_decoded[i] = ptr_rom[ptr_encoded[i] & 0xFFFF];
     }
@@ -833,7 +833,7 @@ intptr_t sharpen(int int_max_batch, torch::Tensor obj_rom_tensor, int int_rom_si
     cudaMemcpyToSymbol(ARR_POSITION_LENGTHS, arr_lengths, 256 * sizeof(int32_t));
     cudaMalloc(&obj_h->ptr_all_positions, int_total_accum * sizeof(int32_t));
     cudaMemcpy(obj_h->ptr_all_positions, arr_pos_cpu, int_total_accum * sizeof(int32_t), cudaMemcpyHostToDevice);
-    
+
     cudaMalloc(&obj_h->ptr_rand_states, int_max_batch * sizeof(int32_t));
     int32_t* arr_seeds = new int32_t[int_max_batch];
     for (int i = 0; i < int_max_batch; i++) { arr_seeds[i] = i * 0x9e3779b1 + 12345; }
@@ -905,27 +905,27 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
 # Performance
 
 ======================================================================
-⚡ JAVASCRIPT CRYPTO PERFORMANCE COMPARISON
+JAVASCRIPT CRYPTO PERFORMANCE COMPARISON
    (CryptoJS 4.1.1 vs ZOSCII)
 ======================================================================
-📊 PERFORMANCE SUMMARY (Operations/Second):
+PERFORMANCE SUMMARY (Operations/Second):
 System              Encode/Encrypt   Decode/Decrypt   Size Ratio
-─────────────────────────────────────────────────────────────────
+-----------------------------------------------------------------
 ZOSCII                217,391        416,666   2.00x
 AES-256                11,363         12,820   1.42x
 SHA-256                53,763   (one-way only)   N/A
-🎯 KEY FINDINGS:
+KEY FINDINGS:
 ENCODING/ENCRYPTION SPEED:
-  • ZOSCII encode is 19.1x FASTER than AES-256 encrypt
+  - ZOSCII encode is 19.1x FASTER than AES-256 encrypt
 DECODING/DECRYPTION SPEED:
-  • ZOSCII decode is 32.5x FASTER than AES-256 decrypt
-💡 OBSERVATIONS:
-  • ZOSCII decode (416,666 ops/sec) is 1.9x faster than encode
-  • This is because decode is simple ROM lookup, encode requires random selection
-  • AES encrypt/decrypt speeds are similar (balanced cipher operations)
-✓ Correctness: ZOSCII=PASS, AES=PASS
+  - ZOSCII decode is 32.5x FASTER than AES-256 decrypt
+OBSERVATIONS:
+  - ZOSCII decode (416,666 ops/sec) is 1.9x faster than encode
+  - This is because decode is simple ROM lookup, encode requires random selection
+  - AES encrypt/decrypt speeds are similar (balanced cipher operations)
+[OK] Correctness: ZOSCII=PASS, AES=PASS
 
-content# python zoscii_testharness.py 
+content# python zoscii_testharness.py
 JIT compiling ZOSCII Tri-Sword Engine...
 ninja: no work to do.
 
@@ -935,20 +935,20 @@ ZOSCII 64KB TRI-SWORD PERFORMANCE AUDIT
 Batch      | Encode (ms)  | Decode (ms)  | Encode MB/s  | Decode MB/s  | JS Encode x  | Correct
 --------------------------------------------------------------------------------------------------------------
 ZOSCII Tri-Sword initialized with 5,000 batch capacity
-5000       |       0.75 |       0.31 |     3419.4 |     8169.1 |      16140x | ✓
+5000       |       0.75 |       0.31 |     3419.4 |     8169.1 |      16140x | [OK]
 ZOSCII Tri-Sword initialized with 50,000 batch capacity
-50000      |       6.13 |       2.01 |     4175.9 |    12765.1 |      19710x | ✓
+50000      |       6.13 |       2.01 |     4175.9 |    12765.1 |      19710x | [OK]
 ZOSCII Tri-Sword initialized with 500,000 batch capacity
-500000     |      58.16 |      17.79 |     4401.7 |    14392.6 |      20776x | ✓
+500000     |      58.16 |      17.79 |     4401.7 |    14392.6 |      20776x | [OK]
 ZOSCII Tri-Sword initialized with 2,000,000 batch capacity
-2000000    |     128.13 |      41.91 |     7992.1 |    24434.3 |      37723x | ✓
+2000000    |     128.13 |      41.91 |     7992.1 |    24434.3 |      37723x | [OK]
 ZOSCII Tri-Sword initialized with 3,500,000 batch capacity
-3500000    |     335.29 |      71.47 |     5344.6 |    25072.1 |      25227x | ✓
+3500000    |     335.29 |      71.47 |     5344.6 |    25072.1 |      25227x | [OK]
 
 Randomness Verification:
 ZOSCII Tri-Sword initialized with 1,000 batch capacity
   Same positions: 2/512 (Ideal: <5)
-  True ZOSCII: ✓
+  True ZOSCII: [OK]
 
 
 Note: 8bit Computer BASIC's are realtime and fast enough for 100% secure chat.  For binary files they are of course slower - especially if streaming from floppy disc - but still faster than every compression tool available to them.
@@ -988,17 +988,17 @@ Notes: I have no doubt this will be realtime as per interpreted BASICs above - i
 ; MAIN ENCODER ENTRY POINT
 ; ============================================
 ENCODE_SETUP:
-    ; Initialize message length (must be ≤64)
+    ; Initialize message length (must be <=64)
     FIM P6, 0x40     ; Load 0x40 into R12:R13
     LD R12           ; Get high nibble (4)
     XCH R12          ; R12 = 4 (represents 64 in loop logic)
-    
+
     ; Initialize input pointer (P2 = R4:R5)
     FIM P2, 0x40     ; Input buffer at 0x40
-    
+
     ; Initialize output pointer (P3 = R6:R7)
     FIM P3, 0x80     ; Output buffer at 0x80
-    
+
     ; Initialize PRNG seed
     JMS PRNG_INIT
 
@@ -1010,13 +1010,13 @@ ENCODE_LOOP:
     SRC P2           ; Select RAM at R4:R5
     RDM              ; Read character
     XCH R13          ; R13 = target character
-    
+
     ; Get random instance number (0-255)
     JMS PRNG_NEXT    ; Returns 8-bit value in R10:R11
-    
+
     ; Initialize ROM search pointer
     FIM P1, 0x00     ; Start at ROM address 0x000
-    
+
     ; Initialize instance counter to 0
     LDM 0
     XCH R8           ; R8 = 0 (high nibble)
@@ -1030,23 +1030,23 @@ SEARCH_LOOP:
     SRC P1           ; Set ROM address from R2:R3
     FIN P0           ; Fetch ROM byte into R0:R1
     LD R1            ; Get the data byte (low nibble)
-    
+
     ; Compare with target character
     CLC              ; Clear carry
     SUB R13          ; ACC = ROM[addr] - target
     JCN NZ, NOT_MATCH ; If not zero, not a match
-    
+
     ; Found a match - check if it's the Nth instance
     LD R9            ; Get instance counter low
     CLC
     SUB R11          ; Compare with target instance low
     JCN NZ, NOT_NTH  ; Low nibbles don't match
-    
+
     LD R8            ; Get instance counter high
     CLC
     SUB R10          ; Compare with target instance high
     JCN Z, FOUND_IT  ; Both nibbles match - this is the one!
-    
+
 NOT_NTH:
     ; Increment instance counter (8-bit)
     ISZ R9, SEARCH_LOOP ; Inc low nibble, continue if not zero
@@ -1076,30 +1076,30 @@ FOUND_IT:
     SRC P3           ; Select output RAM
     LD R2            ; Get address low nibble
     WRM              ; Write to RAM
-    
+
     ; Increment output pointer with carry
     ISZ R6, CONT1    ; Inc low nibble
     ISZ R7, CONT1    ; Inc high on carry
-    
+
 CONT1:
     ; High byte: R3 (middle nibble of address)
     SRC P3           ; Update selection (pointer changed)
     LD R3            ; Get address middle nibble
     WRM              ; Write to RAM
-    
+
     ; Increment output pointer with carry
     ISZ R6, CONT2
     ISZ R7, CONT2
-    
+
 CONT2:
     ; Increment input pointer with carry
     ISZ R4, CONT3
     ISZ R5, CONT3
-    
+
 CONT3:
     ; Decrement message counter and loop
     ISZ R12, ENCODE_LOOP ; 4004 ISZ skips if result is ZERO
-    
+
     BBL 0            ; Return success
 
 ; ============================================
@@ -1113,13 +1113,13 @@ PRNG_INIT:
     SRC P3
     LDM 0x0A         ; Seed high nibble
     WRM
-    
+
     ISZ R6, PRNGI2
 PRNGI2:
     SRC P3
     LDM 0x05         ; Seed low nibble (0xA5)
     WRM
-    
+
     BBL 0
 
 PRNG_NEXT:
@@ -1128,23 +1128,23 @@ PRNG_NEXT:
     SRC P3
     RDM              ; Read high nibble
     XCH R14          ; Store in R14
-    
+
     ISZ R6, PRNGN2
 PRNGN2:
     SRC P3
     RDM              ; Read low nibble
     XCH R15          ; Store in R15
-    
+
     ; Perform 8 shift iterations for full byte
     LDM 8
     XCH R13          ; R13 = iteration counter
-    
+
 PRNG_SHIFT:
     ; Get LSB of R15
     LD R15
     RAR              ; Rotate right through carry
     JCN C, PRNG_TAP  ; If LSB was 1, apply taps
-    
+
     ; Shift right (R14:R15 >> 1)
     LD R14
     RAR              ; Shift high nibble right
@@ -1153,7 +1153,7 @@ PRNG_SHIFT:
     RAR              ; Shift low nibble right
     XCH R15
     JUN PRNG_CONT
-    
+
 PRNG_TAP:
     ; Apply XOR taps (0x60 = bits 6,5)
     LD R14
@@ -1163,14 +1163,14 @@ PRNG_TAP:
     LDM 6            ; Tap bits
     ADD R14
     XCH R14          ; XOR high nibble
-    
+
     LD R15
     RAR
     XCH R15
 
 PRNG_CONT:
     ISZ R13, PRNG_SHIFT
-    
+
     ; Store updated state
     FIM P3, 0x30
     SRC P3
@@ -1181,15 +1181,15 @@ PRNGN3:
     SRC P3
     LD R15
     WRM
-    
+
     ; Return value in R10:R11
     LD R14
     XCH R10
     LD R15
     XCH R11
-    
+
     BBL 0
-	
+
 ; ============================================
 ; ZOSCII DECODER for Intel 4004 - UNTESTED
 ; Input: Address pairs in OUTPUT_BUFFER (RAM)
@@ -1217,10 +1217,10 @@ DECODE_SETUP:
     FIM P6, 0x40     ; Load 0x40 into R12:R13
     LD R12           ; Get high nibble (4)
     XCH R12          ; R12 = 4 (represents 64 pairs)
-    
+
     ; Initialize input pointer (address buffer)
     FIM P2, 0x80     ; Input addresses at 0x80
-    
+
     ; Initialize output pointer (plaintext buffer)
     FIM P3, 0x40     ; Output plaintext at 0x40
 
@@ -1232,22 +1232,22 @@ DECODE_LOOP:
     SRC P2           ; Select input address buffer
     RDM              ; Read low nibble
     XCH R2           ; Store in ROM pointer low
-    
+
     ; Increment input pointer with carry
     ISZ R4, CONT1
     ISZ R5, CONT1
-    
+
 CONT1:
     ; Read address MID nibble from RAM
     SRC P2           ; Re-select (pointer changed)
     RDM              ; Read middle nibble
     XCH R3           ; Store in ROM pointer mid
-    
+
     ; Note: 4004 has 12-bit addressing (3 nibbles)
     ; We're only storing/reading 2 nibbles (8 bits)
     ; This limits us to 256 ROM addresses
     ; For full 4K ROM, need to store 3 nibbles
-    
+
     ; Increment input pointer with carry
     ISZ R4, CONT2
     ISZ R5, CONT2
@@ -1260,15 +1260,15 @@ CONT2:
     ; physical access to the ROM contents
     ; ========================================
     SRC P1           ; Set ROM address from R2:R3
-    FIN P0           ; Hardware fetch: ROM[addr] → R0:R1
-    
+    FIN P0           ; Hardware fetch: ROM[addr] -> R0:R1
+
     ; The byte we want is in R1 (low nibble of ROM word)
     LD R1            ; Get the plaintext character
-    
+
     ; Store plaintext byte to output buffer
     SRC P3           ; Select output buffer
     WRM              ; Write character to RAM
-    
+
     ; Increment output pointer with carry
     ISZ R6, CONT3
     ISZ R7, CONT3
@@ -1277,7 +1277,7 @@ CONT3:
     ; Decrement pair counter and loop
     ; ISZ on 4004 skips next instruction if result is ZERO
     ISZ R12, DECODE_LOOP
-    
+
     BBL 0            ; Return success
 
 ; ============================================
@@ -1291,9 +1291,9 @@ CONT3:
 ;    XCH R2
 ;    ISZ R4, DL1
 ;    ISZ R5, DL1
-;    
+;
 ;DL1:
-;    ; Read address MID nibble  
+;    ; Read address MID nibble
 ;    SRC P2
 ;    RDM
 ;    XCH R3
@@ -1312,12 +1312,12 @@ CONT3:
 ;    ; The 4004 SRC command only uses R2:R3 for addressing
 ;    ; To support 12-bit (4K), need custom ROM access
 ;    ; This would require bank-switching or external logic
-;    
+;
 ;    ; Standard approach: Use R2:R3 (8-bit = 256 addresses)
 ;    SRC P1
 ;    FIN P0
 ;    LD R1
-;    
+;
 ;    SRC P3
 ;    WRM
 ;    ISZ R6, DL4
@@ -1342,7 +1342,7 @@ CLEAR_OUTPUT:
     FIM P3, 0x40     ; Output buffer start
     LDM 0x04         ; Counter high nibble (64 bytes)
     XCH R12
-    
+
 CLR_LOOP:
     SRC P3
     LDM 0            ; Zero
@@ -1358,7 +1358,7 @@ CLR2:
 ; ============================================
 ; 1. ROM addressing is 12-bit (0x000-0xFFF = 4096 bytes)
 ;    but SRC only uses R2:R3 (8 bits = 256 addresses)
-;    
+;
 ; 2. FIN instruction: Fetches 8-bit word from ROM
 ;    into register pair (R0:R1, R2:R3, etc.)
 ;    Format: [R(n)] = high nibble, [R(n+1)] = low nibble
@@ -1373,4 +1373,3 @@ CLR2:
 ; 5. This implementation uses 8-bit addresses (256 slots)
 ;    which is sufficient for most character sets
 ; ============================================
-

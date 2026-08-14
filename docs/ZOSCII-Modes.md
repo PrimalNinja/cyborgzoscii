@@ -107,7 +107,7 @@
 
 **Use Cases:**
 
-- **Software/Firmware Signing:** Sign a ROM with itself — only those with the original ROM can verify authenticity
+- **Software/Firmware Signing:** Sign a ROM with itself - only those with the original ROM can verify authenticity
 - **Hardware Attestation:** Prove a device has the correct ROM without revealing it
 - **Secure Boot:** Self-sign the boot ROM; verification ensures no tampering
 - **Identity Anchoring:** A ROM's self-signature serves as a cryptographic identity fingerprint
@@ -119,13 +119,13 @@ Let ROM = R (64KB). Signature S = ZOSCII_Encode(R, R).
 
 Verification: ZOSCII_Decode(R, S) = R if and only if the decoding ROM is identical to the original.
 
-This is a form of **zero-knowledge possession proof** — the verifier learns nothing about R except that the prover has the correct one.
+This is a form of **zero-knowledge possession proof** - the verifier learns nothing about R except that the prover has the correct one.
 
 ## Mode 7: Agent Delegation Mode (007 Mode)
 
 **Property:** Hierarchical, delegatable, self-destructing signatures for field agents
 
-**Security:** Information-theoretic — no mathematical assumptions. Delegated signatures can be destroyed without compromising the master.
+**Security:** Information-theoretic - no mathematical assumptions. Delegated signatures can be destroyed without compromising the master.
 
 **Key Distribution:** Master (M) issues unique signature-ROMs to each agent. Agents never see the master ROM.
 
@@ -133,8 +133,8 @@ This is a form of **zero-knowledge possession proof** — the verifier learns no
 
 - Master M creates a master ROM (R_master).
 - M generates unique signature-ROMs (S_001, S_002, ..., S_007) by encoding random data **using R_master**.
-- Each signature-ROM S_agent is a fully functional encoding table — not a fragment, not a partial key.
-- Agents receive only their signature-ROM — never R_master. **Master M still keeps a copy of the S ROMs given to the agents.**
+- Each signature-ROM S_agent is a fully functional encoding table - not a fragment, not a partial key.
+- Agents receive only their signature-ROM - never R_master. **Master M still keeps a copy of the S ROMs given to the agents.**
 - In the field, Agent 007 uses S_007 to encode sensitive data.
 - Agent 007 then **destroys S_007** (secure erase).
 - The encoded data can now **only** be decoded by M using **their copy of S_007**.
@@ -152,29 +152,29 @@ This is a form of **zero-knowledge possession proof** — the verifier learns no
 **Security Properties:**
 
 - **No single point of compromise:** Compromised agent reveals only their own signature-ROM, not the master.
-- **Self-destructing credentials:** Destroy signature-ROM → all future data encoded with it becomes undecodable _even to the agent who created it_.
+- **Self-destructing credentials:** Destroy signature-ROM -> all future data encoded with it becomes undecodable _even to the agent who created it_.
 - **Recursive delegation:** Any agent can become a "master" for a lower-tier agent without exposing the original master.
-- **Deniable chain:** M can deny ever issuing a signature to Agent 007 — the signature-ROM proves nothing without R_master.
+- **Deniable chain:** M can deny ever issuing a signature to Agent 007 - the signature-ROM proves nothing without R_master.
 - **Quantum-proof:** I(M;A)=0 at every layer.
 
 **Use Cases:**
 
 - **Intelligence Operations:** M (station chief) issues signature-ROMs to field agents. Agents destroy signatures after use. Captured agents reveal nothing.
 - **Corporate Espionage Countermeasures:** Executives issue delegatable signatures to project leads, who issue to team members. Revocation = destroy signature.
-- **Whistleblower Protection:** Source receives a signature-ROM from a journalist. Source encodes evidence, destroys signature. Journalist decodes with master. Source cannot be compelled to decode — they no longer have the means.
+- **Whistleblower Protection:** Source receives a signature-ROM from a journalist. Source encodes evidence, destroys signature. Journalist decodes with master. Source cannot be compelled to decode - they no longer have the means.
 - **Roleplaying as Secret Agents (for fun):** Anyone can experience agent-style delegation with better security than real agents likely have.
 - **Temporary Access Credentials:** Issue a signature-ROM that self-destructs after N uses (by destroying it). No need for CRL, OCSP, or expiry dates.
 
 **Why No Other Crypto Can Do This:**
-Traditional PKI requires certificate revocation lists, OCSP stapling, or expiry dates. Private keys cannot be "partially destroyed" — once compromised, all past/future data is vulnerable.
+Traditional PKI requires certificate revocation lists, OCSP stapling, or expiry dates. Private keys cannot be "partially destroyed" - once compromised, all past/future data is vulnerable.
 
-ZOSCII Mode 7 allows **true cryptographic deletion** of signing capability without affecting the master. The signature-ROM is not a pointer to a master key — it is a **standalone encoding table**. Destroy it, and the ability to decode data encoded with it is **provably, permanently gone**.
+ZOSCII Mode 7 allows **true cryptographic deletion** of signing capability without affecting the master. The signature-ROM is not a pointer to a master key - it is a **standalone encoding table**. Destroy it, and the ability to decode data encoded with it is **provably, permanently gone**.
 
 This is not key revocation. This is **key annihilation**.
 
 ## Mode 8: Masked Encoding & Decoding Mode
 
-**Property:** Controlled entropy — masks define which addresses are valid for encoding and which bytes are accepted during decoding
+**Property:** Controlled entropy - masks define which addresses are valid for encoding and which bytes are accepted during decoding
 
 **Security:** Perfect plausible deniability with zero garbage; controlled application of physical entropy
 
@@ -196,7 +196,7 @@ This is not key revocation. This is **key annihilation**.
 
 **Use Cases:**
 
-- **Perfect plausible deniability:** Encode a real message with one mask, and a decoy with another — both decode cleanly.
+- **Perfect plausible deniability:** Encode a real message with one mask, and a decoy with another - both decode cleanly.
 - **Controlled entropy generation:** Use different physical entropy sources (JPEGs, MP3s) for different regions of the ROM.
 - **Noise injection control:** Mask out noise that would otherwise corrupt the decoded output.
 - **Channel separation:** Multiple messages in the same ROM, each using a different mask.
@@ -206,22 +206,22 @@ This is not key revocation. This is **key annihilation**.
 
 **Property:** Map addresses from one ROM space to another via a translation ROM
 
-**Security:** New layer of indirection — translation ROM is the shared secret, not the original ROM
+**Security:** New layer of indirection - translation ROM is the shared secret, not the original ROM
 
 **Key Distribution:** Translation ROM shared between parties; original ROMs can be different
 
 **How it works:**
 
-- Sender encodes message using ROM1 → Address list A (addresses in ROM1 space)
-- Translation ROM maps each address in A to an address in ROM2 space → Address list B
-- Receiver decodes Address list B using ROM2 → Message
+- Sender encodes message using ROM1 -> Address list A (addresses in ROM1 space)
+- Translation ROM maps each address in A to an address in ROM2 space -> Address list B
+- Receiver decodes Address list B using ROM2 -> Message
 
-The message is encoded in ROM1 and decoded in ROM2 — but the addresses are transformed in between by the translation ROM.  For translation ROMs, use ZOSCII in word mode, looking up words in the translation ROM that redirect to words in the new ROM.
+The message is encoded in ROM1 and decoded in ROM2 - but the addresses are transformed in between by the translation ROM.  For translation ROMs, use ZOSCII in word mode, looking up words in the translation ROM that redirect to words in the new ROM.
 
 **Transcoding Speed:**
 
 - Full re-encoding requires re-encoding the entire message (slow)
-- Translation ROM only maps addresses (fast — O(1) per address)
+- Translation ROM only maps addresses (fast - O(1) per address)
 - If redistribution of randomness is not required, transcoding is extremely fast
 
 **Security Properties:**
@@ -229,7 +229,7 @@ The message is encoded in ROM1 and decoded in ROM2 — but the addresses are tra
 - **Deniability:** Sender can claim they used ROM1; receiver can show ROM2
 - **Obfuscation:** Address list is transformed before transmission
 - **Compatibility:** Different ROMs can be used without re-encoding
-- **Key exchange:** Translation ROM is the shared secret — not the ROM itself
+- **Key exchange:** Translation ROM is the shared secret - not the ROM itself
 
 **Use Cases:**
 
@@ -243,17 +243,17 @@ The message is encoded in ROM1 and decoded in ROM2 — but the addresses are tra
 
 **Property:** Merge multiple encoded streams into a single address list using different masks
 
-**Security:** Controlled entropy — each mask decodes to a different message; adversary cannot separate the sources without all masks
+**Security:** Controlled entropy - each mask decodes to a different message; adversary cannot separate the sources without all masks
 
 **Key Distribution:** Each mask distributed independently; different masks for different parties
 
 **How it works:**
 
-- Encode real message with Mask 1 → Address set A
-- Encode noise message with Mask 2 → Address set B
-- Merge A and B → Combined address set C
-- Decode with Mask 1 → Real message (A extracted)
-- Decode with Mask 2 → Noise message (B extracted)
+- Encode real message with Mask 1 -> Address set A
+- Encode noise message with Mask 2 -> Address set B
+- Merge A and B -> Combined address set C
+- Decode with Mask 1 -> Real message (A extracted)
+- Decode with Mask 2 -> Noise message (B extracted)
 
 The addresses in C are a mix of A and B. Without the right mask, it looks like random noise. With the right mask, you can extract either the real message or the noise.
 
@@ -275,34 +275,37 @@ The addresses in C are a mix of A and B. Without the right mask, it looks like r
 
 ## Mode 11: ZWT Mode (ZOSCII Web Tokens)
 
-**Property:** Opaque, unforgeable attestation tokens — an issuer vouches for a subject to a relying party, with the token's payload and verification structure both concealed
+**Property:** Opaque, unforgeable attestation tokens - an issuer vouches for a subject to a relying party, with the token's payload and verification structure both concealed
 
-**Security:** Information-theoretic opacity (I(M;A)=0); only the issuer can mint a valid token, enforced by a shared-signature bound inside an issuer-private signature
+**Security:** Information-theoretic opacity (I(M;A)=0); only the issuer can mint a valid token, enforced by a shared-signature bound inside a double-encoded issuer block sealed with the issuer's private ROM pair
 
-**Key Distribution:** SHAREDROM shared per issuer↔relying-party relationship; ISSUERROM held by the issuer only (one for all relying parties, or one per relying party)
+**Key Distribution:** SHAREDROM shared per issuer<->relying-party relationship; ISSUERROM1 and ISSUERROM2 held by the issuer only (one pair for all relying parties, or one pair per relying party)
 
 **How it works:**
 
-- Issuer holds ISSUERROM (private) and shares a SHAREDROM with each relying party.
-- A `sharedsignature` (a GUID or similar) is sealed inside an `issuersignature` by encoding it with ISSUERROM:
-  - `issuersignature = encode(ISSUERROM, rollinghash(sharedsignature + privateclaims))`
-- The token wraps both, plus relying-party-readable claims, under SHAREDROM:
-  - `zwt = encode(SHAREDROM, rollinghash(sharedsignature + issuersignature + sharedclaims))`
+- Issuer holds ISSUERROM1 and ISSUERROM2 (private) and shares a SHAREDROM with each relying party.
+- A `sharedsignature` (a GUID or similar) is the value the issuer seals; `issuersignature = sharedsignature`.
+- The issuer builds an issuer block - a flat frame `[hash][version][len][issuersignature][privateclaims]` - and seals it by double UNSIGNAL-encoding it, once with each issuer ROM:
+  - `issuerdata = encode(ISSUERROM1, encode(ISSUERROM2, issuerblock))`
+  - Double encoding removes any known-plaintext foothold on `privateclaims`, since the relying party already holds the plaintext `sharedsignature`.
+- The token is a shared block - a flat frame `[hash][version][len][len][sharedsignature][sharedclaims][issuerdata]` - encoded under SHAREDROM:
+  - `zwt = encode(SHAREDROM, sharedblock)`
+- Each block carries a 4-byte rolling-hash (CRC) at its front, covering version, lengths, and fields; the last field in each block carries no length and runs to the end of the block.
 - The relying party opens the ZWT with SHAREDROM and reads the `sharedsignature` and shared claims.
-- The issuer verifies the `sharedsignature` matches the copy it sealed inside `issuersignature`.
+- The issuer reverses the double encoding (`decode(ISSUERROM1)` then `decode(ISSUERROM2)`) and verifies the presented `sharedsignature` matches the copy sealed inside the issuer block.
 
 **Security Properties:**
 
-- **Opaque payload:** The entire token is UNSIGNAL-encoded — payload, signatures, and structure are indistinguishable from noise. Unlike JWT (plaintext base64), a ZWT reveals nothing.
+- **Opaque payload:** The entire token is UNSIGNAL-encoded - payload, signatures, and structure are indistinguishable from noise. Unlike JWT (plaintext base64), a ZWT reveals nothing.
 - **Concealed verification structure:** An observer cannot tell how many signatures exist, which keys govern them, or where they sit in the stream.
-- **Issuer-only forgery resistance:** A valid `sharedsignature` is defined by matching the copy sealed inside `issuersignature` — only ISSUERROM can produce that. Even a fully compromised relying party cannot mint a token the issuer will accept.
-- **Cross-site inert:** A ZWT is unvalidatable by any party without the relationship key — no audience (`aud`) check needed; misuse is structural.
+- **Issuer-only forgery resistance:** A valid `sharedsignature` is defined by matching the copy sealed inside the double-encoded issuer block - only the ISSUERROM1/ISSUERROM2 pair can produce that. Even a fully compromised relying party cannot mint a token the issuer will accept.
+- **Cross-site inert:** A ZWT is unvalidatable by any party without the relationship key - no audience (`aud`) check needed; misuse is structural.
 - **Quantum-proof:** No asymmetric primitive; nothing for Shor's algorithm to attack.
 
 **Use Cases:**
 
 - **Federated login:** Issuer attests a user to a relying party without the relying party ever holding the issuer's private ROM.
-- **Compromise-surviving attestation:** The issuer-private signature stays unforgeable even if a relying party's shared key leaks.
+- **Compromise-surviving attestation:** The double-encoded issuer block stays unforgeable even if a relying party's shared key leaks.
 - **Opaque session tokens:** Session state that reveals nothing to the client holding it, unlike readable JWT payloads.
 - **Multi-party mutual attestation:** Each party seals a common shared GUID with its own ROM; segments are independently verifiable, mutually bound, and unforgeable by other parties.
 
@@ -322,21 +325,21 @@ JWT payloads are plaintext (base64) and rely on asymmetric signatures that are q
 ## Key Distinctions
 
 - **Deniability vs Integrity:** Deniability (Mode 1): "Cannot prove what this is"; Integrity (Mode 5): "Can prove this hasn't changed"
-- **Authentication vs Verification:** Real-time authentication ❌ not suitable; Historical verification ✅ perfect (ZTB proves data unchanged since creation)
-- **Signature vs Traditional Crypto:** Mode 6 (Signature) requires no asymmetric math — pure structural self-reference; verification is instant O(1) lookup
+- **Authentication vs Verification:** Real-time authentication [NO] not suitable; Historical verification [YES] perfect (ZTB proves data unchanged since creation)
+- **Signature vs Traditional Crypto:** Mode 6 (Signature) requires no asymmetric math - pure structural self-reference; verification is instant O(1) lookup
 - **Agent Delegation vs PKI:** Mode 7 (Agent Delegation) allows true cryptographic deletion of signing capability; PKI only offers revocation (which can be reversed) and leaves private keys exposed
 - **Quantum Proof:** All modes are quantum-proof; ZOSCII files cannot reveal original data even with unlimited computing power; plausible deniability ensures observers cannot know content without key/encodings
-- **Mask vs Key:** Masks (Modes 8-10) are logical filters, not cryptographic keys — they control address validity and decoding acceptance, not mathematical transformations
+- **Mask vs Key:** Masks (Modes 8-10) are logical filters, not cryptographic keys - they control address validity and decoding acceptance, not mathematical transformations
 - **Translation vs Re-encoding:** Mode 9 (Translation ROM) maps addresses directly (fast); re-encoding redistributes randomness (slower). Both are secure, but translation is faster when randomness redistribution is not required.
 
 ## Important Notes
 
 - With traditional encryption, your data remains in the encrypted file; losing the key makes recovery extremely unlikely, though theoretically possible with future breakthroughs
 - With ZOSCII, your data is **never stored** in the encoded file; losing the Genesis ROM or local key material means data is irretrievably lost
-- During transmission, ZOSCII sends the treasure map, not the treasure — without the Genesis ROM, the signal is indistinguishable from random noise
-- Mode 6 (Signature Mode) is unique to ZOSCII — no traditional cryptographic signature works this way; it's a pure structural self-reference with zero mathematical assumptions
-- Mode 7 (Agent Delegation) is also unique — no other system allows recursive, delegatable, self-destructing signatures with information-theoretic security
-- Modes 8-10 (Masks, Translation, Merging) are new primitives not in the original 7 usage modes — they represent the next evolution of ZOSCII's capabilities
+- During transmission, ZOSCII sends the treasure map, not the treasure - without the Genesis ROM, the signal is indistinguishable from random noise
+- Mode 6 (Signature Mode) is unique to ZOSCII - no traditional cryptographic signature works this way; it's a pure structural self-reference with zero mathematical assumptions
+- Mode 7 (Agent Delegation) is also unique - no other system allows recursive, delegatable, self-destructing signatures with information-theoretic security
+- Modes 8-10 (Masks, Translation, Merging) are new primitives not in the original 7 usage modes - they represent the next evolution of ZOSCII's capabilities
 - The "controlled entropy" of Modes 8-10 allows physical entropy sources to be placed exactly where you want them, enabling perfect plausible deniability with zero garbage
 
 ---

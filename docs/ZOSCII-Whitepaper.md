@@ -2,7 +2,7 @@
 
 *The Most Important Security Story You Will Ever Read*
 
-**Cyborg Unicorn** • December 5, 2025  
+**Cyborg Unicorn** - December 5, 2025
 *(c) 2026 Cyborg Unicorn Pty Ltd - MIT License*
 
 ---
@@ -21,7 +21,7 @@ AES-256, considered military-grade encryption, has a keyspace of 10^77 possibili
 
 When you send a ZOSCII message, you're not encrypting anything.
 
-You're generating a sequence of random-looking numbers—addresses that point to specific bytes in a secret file (the ROM) that only exists on sender and receiver devices.
+You're generating a sequence of random-looking numbers-addresses that point to specific bytes in a secret file (the ROM) that only exists on sender and receiver devices.
 
 The server stores these addresses. That's it.
 
@@ -29,23 +29,23 @@ No ciphertext. No encrypted payload. No data whatsoever.
 
 Just noise.
 
-Without the exact ROM on your device, those numbers are mathematically, provably, absolutely meaningless. Not "hard to crack"—impossible to crack, even with infinite computing power.
+Without the exact ROM on your device, those numbers are mathematically, provably, absolutely meaningless. Not "hard to crack"-impossible to crack, even with infinite computing power.
 
 That's information-theoretic security. The same principle that makes a one-time pad unbreakable, now practical and usable in real systems.
 
-With encryption, you're relying on the computational difficulty of breaking an algorithm. With ZOSCII, there's no algorithm to break—the information simply isn't there.
+With encryption, you're relying on the computational difficulty of breaking an algorithm. With ZOSCII, there's no algorithm to break-the information simply isn't there.
 
 ## Perfect Forward Secrecy Without the Protocol Overhead
 
 Here's where it gets interesting.
 
-Encryption systems achieve "Perfect Forward Secrecy" by adding complex session key protocols on top of the base encryption—ephemeral Diffie-Hellman exchanges, constant key rotation, careful state management.
+Encryption systems achieve "Perfect Forward Secrecy" by adding complex session key protocols on top of the base encryption-ephemeral Diffie-Hellman exchanges, constant key rotation, careful state management.
 
 ZOSCII doesn't need any of that.
 
 **Perfect forward secrecy is inherent.**
 
-Because there's no data in the message itself, there's nothing on the server to compromise. A total server breach—database dump, memory extraction, everything—reveals exactly zero information about past communications.
+Because there's no data in the message itself, there's nothing on the server to compromise. A total server breach-database dump, memory extraction, everything-reveals exactly zero information about past communications.
 
 The protection that encryption protocols spend enormous complexity trying to achieve is simply built into ZOSCII's fundamental architecture.
 
@@ -53,7 +53,7 @@ No additional layers. No protocol handshakes. No session state to manage.
 
 It just is.
 
-Encryption protocols like TLS 1.3 need hundreds of lines of specification to achieve forward secrecy. ZOSCII has it by design—zero protocol overhead, zero additional complexity.
+Encryption protocols like TLS 1.3 need hundreds of lines of specification to achieve forward secrecy. ZOSCII has it by design-zero protocol overhead, zero additional complexity.
 
 ## Perfect Past Security: The Capability Encryption Can Never Offer
 
@@ -61,13 +61,13 @@ But ZOSCII goes further with something genuinely unprecedented.
 
 **Retroactive information destruction.**
 
-With encryption, your data sits on a drive as ciphertext—scrambled, but theoretically decryptable if someone gets your key or breaks the algorithm someday. Delete your key and you lose access, but the encrypted data remains, waiting.
+With encryption, your data sits on a drive as ciphertext-scrambled, but theoretically decryptable if someone gets your key or breaks the algorithm someday. Delete your key and you lose access, but the encrypted data remains, waiting.
 
 With ZOSCII: access your files (decode addresses with ROM), then delete the ROM.
 
 Those files are now gone. Forever. For everyone. Provably.
 
-Not "we can't decrypt them"—the information no longer exists in any recoverable form.
+Not "we can't decrypt them"-the information no longer exists in any recoverable form.
 
 No future quantum computer can help. No mathematical breakthrough changes anything. The addresses that remain on your drive are pure noise with zero information content.
 
@@ -75,21 +75,21 @@ This is perfect past security, and encryption systems fundamentally cannot do it
 
 ZOSCII with a deleted ROM is mathematically immune to any future threat.
 
-Delete your AES key and the ciphertext on your drive still contains all the information—just locked. Delete your ZOSCII ROM and the information is provably, permanently gone. That's the difference between locked and nonexistent.
+Delete your AES key and the ciphertext on your drive still contains all the information-just locked. Delete your ZOSCII ROM and the information is provably, permanently gone. That's the difference between locked and nonexistent.
 
 ## Automatic Rolling Keys, Zero Overhead
 
 Want perfect forward secrecy with automatic key rotation? ZOSCII has it built in.
 
-Every single message encoded with ZOSCII uses a completely different, non-deterministic mapping. The same ROM, the same plaintext—different addresses every single time.
+Every single message encoded with ZOSCII uses a completely different, non-deterministic mapping. The same ROM, the same plaintext-different addresses every single time.
 
 This means automatic rolling keys with zero additional implementation. Each message is inherently isolated from every other message, even when using the same ROM.
 
 No key derivation functions. No ratcheting protocols. No state synchronization. No additional complexity whatsoever.
 
-The non-deterministic encoding is the rolling key mechanism—and it happens automatically, every single time, at zero computational cost.
+The non-deterministic encoding is the rolling key mechanism-and it happens automatically, every single time, at zero computational cost.
 
-Encryption protocols like Signal use complex double-ratchet algorithms to achieve forward secrecy through key rotation. ZOSCII gets the same isolation property for free—it's inherent in how the encoding works, not an additional protocol layer.
+Encryption protocols like Signal use complex double-ratchet algorithms to achieve forward secrecy through key rotation. ZOSCII gets the same isolation property for free-it's inherent in how the encoding works, not an additional protocol layer.
 
 ## Automatic Network Segmentation in Shared Airspace
 
@@ -97,7 +97,7 @@ Here's a capability that changes everything for IoT, vehicles, drones, and indus
 
 **Perfect communication isolation without network infrastructure.**
 
-Deploy hundreds of devices—sensors, drones, autonomous vehicles, industrial controllers—all broadcasting in the same airspace, on the same frequencies, with complete security separation.
+Deploy hundreds of devices-sensors, drones, autonomous vehicles, industrial controllers-all broadcasting in the same airspace, on the same frequencies, with complete security separation.
 
 How? Each communication group uses a different ROM.
 
@@ -105,21 +105,21 @@ How? Each communication group uses a different ROM.
 - Industrial sensors share ROM-B
 - Vehicle platoon C shares ROM-C
 
-When device A1 broadcasts its ZOSCII-encoded data, every device in the airspace can receive it. But only devices with ROM-A can decode it. To everyone else—devices with ROM-B, ROM-C, or any other ROM—it's just meaningless noise.
+When device A1 broadcasts its ZOSCII-encoded data, every device in the airspace can receive it. But only devices with ROM-A can decode it. To everyone else-devices with ROM-B, ROM-C, or any other ROM-it's just meaningless noise.
 
 No network authentication. No access control lists. No routing protocols. No VLANs or network segmentation.
 
 **The ROM IS the network segmentation.**
 
-Devices automatically filter out everything they can't decode—not because of protocol rules, but because there's literally no information there without the correct ROM.
+Devices automatically filter out everything they can't decode-not because of protocol rules, but because there's literally no information there without the correct ROM.
 
 Want cross-fleet communication? Give specific devices multiple ROMs. Want to add a new device to a group? Share that group's ROM. Want to revoke access? Delete the ROM from that device.
 
 All of this works in hostile RF environments, contested airspace, or completely offline scenarios where traditional network security is impossible to implement.
 
-Traditional IoT security requires complex authentication protocols, network isolation, and constant connectivity to certificate authorities. ZOSCII turns ROM distribution into network access control—simple, offline, and mathematically perfect.
+Traditional IoT security requires complex authentication protocols, network isolation, and constant connectivity to certificate authorities. ZOSCII turns ROM distribution into network access control-simple, offline, and mathematically perfect.
 
-## 100% Transparent, Tamperproof Blockchain—Already Built
+## 100% Transparent, Tamperproof Blockchain-Already Built
 
 And then there's the blockchain that solves what everyone else is still arguing about.
 
@@ -135,17 +135,17 @@ With ZOSCII Tamperproof Blockchain, the security just is. It's built into the fu
 
 You want a tamperproof ledger for supply chain tracking? Use it. You want verifiable credentials? Use it. You want transparent voting records? Use it. You want an immutable audit trail? Use it.
 
-You don't need to worry about the security because the security isn't negotiable—it's information-theoretic.
+You don't need to worry about the security because the security isn't negotiable-it's information-theoretic.
 
 ## How It Actually Works
 
-Traditional blockchains rely on computational difficulty—mining, hashing, proof-of-work. The security assumption is: "it's too expensive to forge blocks."
+Traditional blockchains rely on computational difficulty-mining, hashing, proof-of-work. The security assumption is: "it's too expensive to forge blocks."
 
 But quantum computers don't care about computational expense.
 
 The ZOSCII Tamperproof Blockchain uses combinatorial impossibility instead.
 
-Each block encodes its data as pointers into the previous block's 64KB rolling ROM—a composite sample of all previous blocks in its lineage. To tamper with a block, an attacker would need to reconstruct the next block such that its pointers still coincidentally align to correct values in the altered ROM.
+Each block encodes its data as pointers into the previous block's 64KB rolling ROM-a composite sample of all previous blocks in its lineage. To tamper with a block, an attacker would need to reconstruct the next block such that its pointers still coincidentally align to correct values in the altered ROM.
 
 The number of valid permutations? Approximately 10^152900.
 
@@ -157,7 +157,7 @@ That's mathematically impossible to break, even with unlimited quantum computing
 
 No SHA-256. No lattice cryptography. No hoping your algorithm survives the next breakthrough.
 
-The security comes from information theory and combinatorial mathematics—immune to Shor's algorithm, immune to Grover's algorithm, immune to any quantum attack that could ever exist.
+The security comes from information theory and combinatorial mathematics-immune to Shor's algorithm, immune to Grover's algorithm, immune to any quantum attack that could ever exist.
 
 You never have to upgrade the security. You never have to migrate to new algorithms. It's future-proof by mathematical proof.
 
@@ -169,14 +169,14 @@ ZOSCII Tamperproof Blockchain uses sideways transaction chains:
 
 - Each wallet gets its own genesis block on the main chain
 - All transactions for that wallet go into a dedicated side-chain
-- Wallet lookup is instant—query the side-chain, not the entire blockchain
-- Full integrity maintained—each side-chain is cryptographically linked to the main chain
+- Wallet lookup is instant-query the side-chain, not the entire blockchain
+- Full integrity maintained-each side-chain is cryptographically linked to the main chain
 
 ## 100% Transparent Yet Secure
 
 Here's the paradigm shift: structural integrity is decoupled from data confidentiality.
 
-The blockchain structure is completely transparent and publicly verifiable—anyone can validate the chain's integrity by checking the pointer mathematics.
+The blockchain structure is completely transparent and publicly verifiable-anyone can validate the chain's integrity by checking the pointer mathematics.
 
 But the data payload? That can be:
 
@@ -187,7 +187,7 @@ But the data payload? That can be:
 
 You get complete transparency for verification and perfect confidentiality for sensitive data. Traditional blockchains force you to choose one or the other.
 
-This means you can build applications where the integrity is publicly auditable but the data remains private—without complex layer-2 solutions or zero-knowledge proofs.
+This means you can build applications where the integrity is publicly auditable but the data remains private-without complex layer-2 solutions or zero-knowledge proofs.
 
 ## Perfect for 'Proof of Something'
 
@@ -197,7 +197,7 @@ Embed a block identifier in the physical document (degree, certificate, deed). A
 
 No trusted authority needed. No centralized registry. No certificate revocation lists.
 
-The blockchain itself is the proof—transparent, permanent, and mathematically tamperproof.
+The blockchain itself is the proof-transparent, permanent, and mathematically tamperproof.
 
 ## Live. Now. Open Source.
 
@@ -211,13 +211,13 @@ MIT Licensed. Ready to deploy.
 
 While the crypto industry debates which post-quantum blockchain will emerge in 5-10 years, ZOSCII Tamperproof Blockchain is production-ready today.
 
-For anyone who needs a blockchain, this is the one where the security is already solved—permanently.
+For anyone who needs a blockchain, this is the one where the security is already solved-permanently.
 
-Bitcoin's SHA-256 security relies on computational difficulty (10^77 operations). Ethereum 2.0 adds complexity with proof-of-stake. ZOSCII Tamperproof Blockchain: 10^152900 combinatorial impossibility—no mining, no staking, just mathematics that cannot be broken. And you never have to think about it.
+Bitcoin's SHA-256 security relies on computational difficulty (10^77 operations). Ethereum 2.0 adds complexity with proof-of-stake. ZOSCII Tamperproof Blockchain: 10^152900 combinatorial impossibility-no mining, no staking, just mathematics that cannot be broken. And you never have to think about it.
 
 ## Real-Time Performance on Decades-Old Hardware
 
-ZOSCII decodes blazingly fast—real-time performance even on a Z80 processor from the 1970s.
+ZOSCII decodes blazingly fast-real-time performance even on a Z80 processor from the 1970s.
 
 Why? Because there's no cryptographic computation happening. No AES rounds, no modular exponentiation, no lattice math.
 
@@ -227,7 +227,7 @@ A modern browser? Instant. A Raspberry Pi? Effortless. An embedded device with 1
 
 This means ZOSCII works everywhere encryption struggles: IoT devices, legacy systems, resource-constrained environments where modern crypto algorithms are prohibitively expensive.
 
-AES-256 decryption requires multiple rounds of complex transformations. Post-quantum algorithms like Kyber are even more computationally intensive. ZOSCII? Simple array lookups—fast enough for 1970s hardware.
+AES-256 decryption requires multiple rounds of complex transformations. Post-quantum algorithms like Kyber are even more computationally intensive. ZOSCII? Simple array lookups-fast enough for 1970s hardware.
 
 ## Simplicity That Defies Belief
 
@@ -239,7 +239,7 @@ Not a library call. Not a framework. Not thousands of lines of carefully audited
 
 One line of code. Total.
 
-For decoding a single byte, it's literally a single CPU instruction—an array lookup. That's it.
+For decoding a single byte, it's literally a single CPU instruction-an array lookup. That's it.
 
 No AES S-boxes. No modular arithmetic. No rounds of permutations and substitutions. No lattice reductions. No polynomial multiplications.
 
@@ -247,7 +247,7 @@ Just: `ROM[address]`
 
 Done.
 
-This simplicity isn't a weakness—it's the ultimate strength. The fewer moving parts, the fewer attack surfaces. The simpler the implementation, the easier to audit, verify, and trust.
+This simplicity isn't a weakness-it's the ultimate strength. The fewer moving parts, the fewer attack surfaces. The simpler the implementation, the easier to audit, verify, and trust.
 
 Due to this simplicity, it's hard to implement it wrongly. You don't have interoperability nightmares between different library versions. You don't have compiler optimizations breaking constant-time guarantees. You don't have CPU-specific instruction sets causing failures on different architectures.
 
@@ -269,15 +269,15 @@ Download it. Run every quantum algorithm ever invented against it. Throw nation-
 
 You get nothing.
 
-The equivalent keyspace for brute force attacks is exponential—even a message with just 10 bytes has 256^10 possible ROM combinations (that's roughly 10^24 possibilities). Scale that to 64 bytes and you're at 10^154. At 128 bytes: 10^308. At 256 bytes: 10^616. At 512 bytes: 10^1233. At 1024 bytes: 10^2466. At 1MB: 10^2,515,456. At 5MB: 10^12,577,280. At 10MB: 10^25,154,560.
+The equivalent keyspace for brute force attacks is exponential-even a message with just 10 bytes has 256^10 possible ROM combinations (that's roughly 10^24 possibilities). Scale that to 64 bytes and you're at 10^154. At 128 bytes: 10^308. At 256 bytes: 10^616. At 512 bytes: 10^1233. At 1024 bytes: 10^2466. At 1MB: 10^2,515,456. At 5MB: 10^12,577,280. At 10MB: 10^25,154,560.
 
 The numbers become so incomprehensibly vast they lose meaning entirely.
 
-But here's the critical difference: encryption keyspaces can theoretically be searched given enough time and computing power. ZOSCII's address space cannot be brute forced because there is no information in that file to extract. It's not encrypted data waiting to be decrypted—it's addresses that only mean something when paired with a specific, secret ROM.
+But here's the critical difference: encryption keyspaces can theoretically be searched given enough time and computing power. ZOSCII's address space cannot be brute forced because there is no information in that file to extract. It's not encrypted data waiting to be decrypted-it's addresses that only mean something when paired with a specific, secret ROM.
 
-Try that with an encrypted file and you're hoping your algorithm holds. With ZOSCII, you know it's secure—mathematically, information-theoretically, permanently.
+Try that with an encrypted file and you're hoping your algorithm holds. With ZOSCII, you know it's secure-mathematically, information-theoretically, permanently.
 
-AES-256's keyspace of 10^77 is enormous—but it's a fixed target. A 128-byte ZOSCII message already has 10^308 combinations, and that's just the beginning. More importantly: with encryption, finding the right key reveals the data. With ZOSCII, there is no "right" answer to find.
+AES-256's keyspace of 10^77 is enormous-but it's a fixed target. A 128-byte ZOSCII message already has 10^308 combinations, and that's just the beginning. More importantly: with encryption, finding the right key reveals the data. With ZOSCII, there is no "right" answer to find.
 
 ## Available Now. MIT Licensed. No Waiting.
 
@@ -287,13 +287,13 @@ ZOSCII is here. Today. Open source. MIT Licensed.
 
 No patents. No waiting for standards bodies. No vendor lock-in. No wondering if the "quantum-resistant" algorithm you picked will actually resist quantum computers.
 
-ZOSCII doesn't care about quantum computers. It's not resistant to them—it's immune to them, by mathematical proof.
+ZOSCII doesn't care about quantum computers. It's not resistant to them-it's immune to them, by mathematical proof.
 
 You don't need to wait for the next generation of cryptography.
 
 You can build with it right now.
 
-Post-quantum encryption algorithms like Kyber and Dilithium are still being standardized, with migration expected to take years. ZOSCII is quantum-proof by mathematical principle—available now, not eventually.
+Post-quantum encryption algorithms like Kyber and Dilithium are still being standardized, with migration expected to take years. ZOSCII is quantum-proof by mathematical principle-available now, not eventually.
 
 ## The Danger of ZOSCII: Perfect Security Has Perfect Consequences
 
@@ -305,13 +305,13 @@ Not "probably gone." Not "really hard to recover." Not "we'll need some time to 
 
 Gone. Permanently. Mathematically provably unrecoverable.
 
-This isn't a weakness—it's the direct, unavoidable consequence of information-theoretic security.
+This isn't a weakness-it's the direct, unavoidable consequence of information-theoretic security.
 
 With encryption, there's always a theoretical hope: maybe quantum computers will break it someday, maybe there's a backdoor, maybe brute force will eventually succeed. Your encrypted data sits there, waiting, theoretically decryptable.
 
 With ZOSCII, there is no hope. There is no backdoor. There is no "eventual breakthrough" that will recover your data.
 
-The information doesn't exist without the ROM. It's not locked—it's absent.
+The information doesn't exist without the ROM. It's not locked-it's absent.
 
 This is what perfect security actually means: perfect protection and perfect loss if you lose the key.
 
@@ -319,7 +319,7 @@ Encryption systems can offer password recovery, key escrow, cryptographic backdo
 
 ZOSCII offers none of that. No recovery mechanism. No reset option. No "forgot my ROM" button.
 
-This is a feature, not a bug—but it demands absolute responsibility.
+This is a feature, not a bug-but it demands absolute responsibility.
 
 ## The Solution: Shamir's Secret Sharing
 
@@ -356,11 +356,11 @@ If you're going to use ZOSCII:
 
 The same property that makes ZOSCII unbreakable by any adversary also makes it unrecoverable by any means.
 
-That's not a warning to scare you away—it's a reminder that real security has real consequences.
+That's not a warning to scare you away-it's a reminder that real security has real consequences.
 
 Perfect security is final.
 
-With encryption, lost keys might eventually be recovered through backdoors, vulnerabilities, or future computing advances. With ZOSCII, lost ROMs mean lost data—mathematically, permanently, provably. But with proper backup strategies like Shamir's Secret Sharing, you can have both perfect security and practical resilience.
+With encryption, lost keys might eventually be recovered through backdoors, vulnerabilities, or future computing advances. With ZOSCII, lost ROMs mean lost data-mathematically, permanently, provably. But with proper backup strategies like Shamir's Secret Sharing, you can have both perfect security and practical resilience.
 
 ## The Oxymoron of Security: 100% ITS with Openly Public Keys
 
@@ -372,15 +372,15 @@ No secret key exchange. No encrypted channels. No trusted intermediaries. No com
 
 Just: "Let's use that picture of the Eiffel Tower on Wikipedia today."
 
-Both parties download the same public image. That image becomes the ROM. Messages encoded with it are absolutely, mathematically unbreakable—even though the "key" is sitting on a public website for anyone to see.
+Both parties download the same public image. That image becomes the ROM. Messages encoded with it are absolutely, mathematically unbreakable-even though the "key" is sitting on a public website for anyone to see.
 
 ### How is This Possible?
 
-Because ZOSCII security doesn't come from keeping the ROM secret—it comes from knowing which ROM was used and when.
+Because ZOSCII security doesn't come from keeping the ROM secret-it comes from knowing which ROM was used and when.
 
-An attacker intercepts your message. To them, it's just noise—random-looking addresses with no distinguishing features. They can't even tell it's ZOSCII-encoded versus any other kind of data.
+An attacker intercepts your message. To them, it's just noise-random-looking addresses with no distinguishing features. They can't even tell it's ZOSCII-encoded versus any other kind of data.
 
-But even if you told them "Yes, this is ZOSCII, and we're using public images as ROMs"—they're still completely helpless.
+But even if you told them "Yes, this is ZOSCII, and we're using public images as ROMs"-they're still completely helpless.
 
 Which image? Which website? Which of the billions of publicly accessible files on the internet? Which time window?
 
@@ -390,7 +390,7 @@ They'd need to:
 - Know the exact timing of when you switched ROMs
 - Match the correct ROM to the correct message
 
-The keyspace isn't 256^message_length for one specific ROM—it's (number of possible public files) × (number of possible time windows) × 256^message_length.
+The keyspace isn't 256^message_length for one specific ROM-it's (number of possible public files) x (number of possible time windows) x 256^message_length.
 
 In essence: 10^trillions.
 
@@ -400,7 +400,7 @@ Not millions. Not billions. Trillions in the exponent.
 
 Traditional encryption requires secure key exchange. You need to secretly share keys through encrypted channels, in-person meetings, or complex key distribution protocols.
 
-With ZOSCII, two people can agree to use public images—via a casual conversation, a phone call, a compromised channel, even in front of adversaries—and still achieve perfect security.
+With ZOSCII, two people can agree to use public images-via a casual conversation, a phone call, a compromised channel, even in front of adversaries-and still achieve perfect security.
 
 "Hey, let's use today's Astronomy Picture of the Day." "Sounds good."
 
@@ -413,12 +413,12 @@ The security comes from the agreement and timing, not from the secrecy of the RO
 - **Journalists and sources:** Agree on a public image in person, communicate securely afterward
 - **Emergency communications:** Pre-arrange a sequence of public images before crisis situations
 - **Dissidents and activists:** Use well-known public files, change daily based on agreed schedule
-- **Business communications:** Reference public domain content—no corporate key infrastructure needed
-- **IoT devices:** All use the same public ROM, updated via routine firmware—no unique key provisioning
+- **Business communications:** Reference public domain content-no corporate key infrastructure needed
+- **IoT devices:** All use the same public ROM, updated via routine firmware-no unique key provisioning
 
-The moment you realize you can use a public Wikipedia image as an unbreakable encryption key is the moment you understand ZOSCII isn't just different—it's a completely different paradigm.
+The moment you realize you can use a public Wikipedia image as an unbreakable encryption key is the moment you understand ZOSCII isn't just different-it's a completely different paradigm.
 
-Traditional encryption: The key must remain absolutely secret, requiring complex secure distribution. ZOSCII: The "key" can be publicly posted on the internet—security comes from knowing which one to use and when. That's not a security compromise; that's information theory rewriting the rules.
+Traditional encryption: The key must remain absolutely secret, requiring complex secure distribution. ZOSCII: The "key" can be publicly posted on the internet-security comes from knowing which one to use and when. That's not a security compromise; that's information theory rewriting the rules.
 
 ## Weaponized Ambiguity: Unidentifiable by Design
 
@@ -426,7 +426,7 @@ Before an adversary can attempt to break ZOSCII, they first need to know they're
 
 They can't.
 
-ZOSCII-encoded data has no signature, no header, no identifying markers, no statistical patterns. To any observer—even one with unlimited computing power—it's indistinguishable from:
+ZOSCII-encoded data has no signature, no header, no identifying markers, no statistical patterns. To any observer-even one with unlimited computing power-it's indistinguishable from:
 
 - Random noise
 - Encrypted data (AES, RSA, or any algorithm)
@@ -438,7 +438,7 @@ An adversary intercepts your transmission and faces a fundamental problem: they 
 
 This weaponized ambiguity is inherent to ZOSCII's design. Because the encoded data consists purely of addresses with no embedded structure, metadata, or algorithmic fingerprint, there is no distinguishing characteristic to detect.
 
-Traditional encryption algorithms have identifiable patterns—file headers, key exchange protocols, algorithmic signatures in the ciphertext structure. ZOSCII has none of these.
+Traditional encryption algorithms have identifiable patterns-file headers, key exchange protocols, algorithmic signatures in the ciphertext structure. ZOSCII has none of these.
 
 The first layer of defense: they can't identify the target.
 
@@ -452,17 +452,17 @@ You're wrong. And here's why.
 
 With encryption, when you brute force and find a key that produces valid plaintext, you know you've found THE answer. The ciphertext deterministically decrypts to one specific result.
 
-With ZOSCII, even if you somehow tried every possible ROM combination (which you can't), you'd get thousands—maybe millions—of valid-looking results.
+With ZOSCII, even if you somehow tried every possible ROM combination (which you can't), you'd get thousands-maybe millions-of valid-looking results.
 
 Is that 5-byte message:
 
-01 02 03 04 05?  
-BINGO?  
-HELLO?  
-YAHOO?  
-AAAAA?  
-ABORT?  
-START?  
+01 02 03 04 05?
+BINGO?
+HELLO?
+YAHOO?
+AAAAA?
+ABORT?
+START?
 LATER?
 
 You have no way to know.
@@ -471,21 +471,21 @@ Because ZOSCII encoding is non-deterministic, different ROMs will decode the sam
 
 ### This IS Information-Theoretic Security
 
-Here's the critical insight: plausible deniability isn't just a nice feature—it's the mathematical proof that ZOSCII is information-theoretically secure.
+Here's the critical insight: plausible deniability isn't just a nice feature-it's the mathematical proof that ZOSCII is information-theoretically secure.
 
-With encryption, the ciphertext contains all the information (just scrambled). There IS a correct answer hiding in there—the adversary just can't extract it without the key.
+With encryption, the ciphertext contains all the information (just scrambled). There IS a correct answer hiding in there-the adversary just can't extract it without the key.
 
-With ZOSCII, the addresses contain NO information without the ROM. The information literally doesn't exist in the encoded data—it only comes into existence when paired with the specific ROM.
+With ZOSCII, the addresses contain NO information without the ROM. The information literally doesn't exist in the encoded data-it only comes into existence when paired with the specific ROM.
 
 The fact that you can decode to "HELLO" or "BINGO" or "ABORT" with equal mathematical validity proves that the information isn't in the addresses. It's only created by the combination of addresses + ROM.
 
 This is Shannon's information theory in action: if multiple messages are equally likely given what the adversary can observe, then the adversary has gained zero information from the observation.
 
-The plausible deniability property isn't a clever trick—it's the fundamental proof that ZOSCII achieves perfect secrecy.
+The plausible deniability property isn't a clever trick-it's the fundamental proof that ZOSCII achieves perfect secrecy.
 
 ### Why Encryption Can't Do This
 
-Encrypted data, when decrypted correctly, produces one valid, verifiable result—whether that's readable text, a valid binary file, executable code, or any structured data.
+Encrypted data, when decrypted correctly, produces one valid, verifiable result-whether that's readable text, a valid binary file, executable code, or any structured data.
 
 When AES decrypts correctly, you get the original data with all its structure intact. When it decrypts incorrectly, you get garbage that fails validation.
 
@@ -504,16 +504,16 @@ This means:
 
 You can encode a message that decodes to "Meeting at noon" with ROM-A and "Cancel everything" with ROM-B. Same addresses. Different meanings. Mathematically indistinguishable.
 
-You can decode to a valid JPEG with one ROM, a valid PDF with another, executable code with a third—all from the same addresses. All mathematically valid. No way to prove which is "real."
+You can decode to a valid JPEG with one ROM, a valid PDF with another, executable code with a third-all from the same addresses. All mathematically valid. No way to prove which is "real."
 
 Try doing that with AES.
 
-AES-256 with 10^77 keyspace produces ONE definitive plaintext when decrypted correctly. A 5-byte ZOSCII message with 10^24 possible ROMs produces countless plausible plaintexts with no way to verify which is "correct." The plausible deniability isn't a feature—it's the mathematical proof of information-theoretic security that encryption fundamentally cannot provide.
+AES-256 with 10^77 keyspace produces ONE definitive plaintext when decrypted correctly. A 5-byte ZOSCII message with 10^24 possible ROMs produces countless plausible plaintexts with no way to verify which is "correct." The plausible deniability isn't a feature-it's the mathematical proof of information-theoretic security that encryption fundamentally cannot provide.
 
 ## The Paradigm Shift
 
 - Encryption tries to make data unreadable. **ZOSCII removes the data entirely.**
-- Encryption builds stronger algorithms and hopes they hold. **ZOSCII relies on information theory—mathematics that cannot be broken, even in principle.**
+- Encryption builds stronger algorithms and hopes they hold. **ZOSCII relies on information theory-mathematics that cannot be broken, even in principle.**
 - Encryption treats forward secrecy and past security as complex protocol add-ons. **ZOSCII has them built into its fundamental nature.**
 - Encryption struggles with performance and key management overhead. **ZOSCII runs in real-time on hardware from the 1970s with near-zero overhead.**
 
@@ -523,13 +523,13 @@ It's a different category of security entirely.
 
 ## Real Implementations. Production Ready. MIT Licensed.
 
-ZOSCII isn't theoretical—it's deployed, documented, and ready to use:
+ZOSCII isn't theoretical-it's deployed, documented, and ready to use:
 
-- **🎺 ZOSCII TrumpetBlower** - Post-quantum secure whistleblower platform. Host your own or use existing instances. Because trumpets are louder than whistles.
-- **📨 ZOSCII MQ** - Production-ready, scalable message queue with pub/sub architecture and regional replication.
-- **💬 ZOSCII BB** - Public bulletin board with secure messaging without server-side data exposure. The foundation for truly private communications.
-- **💬 ZOSCII Chat** - Real-time secure communications. Meta—add ZOSCII to WhatsApp already!
-- **🚗 ZOSCII Automotive Security** - Secure vehicle-to-vehicle and vehicle-to-infrastructure communications. If you're implementing automotive security, call me for validation—or figure it out yourself if you're smart enough.
+- **ZOSCII TrumpetBlower** - Post-quantum secure whistleblower platform. Host your own or use existing instances. Because trumpets are louder than whistles.
+- **ZOSCII MQ** - Production-ready, scalable message queue with pub/sub architecture and regional replication.
+- **ZOSCII BB** - Public bulletin board with secure messaging without server-side data exposure. The foundation for truly private communications.
+- **ZOSCII Chat** - Real-time secure communications. Meta-add ZOSCII to WhatsApp already!
+- **ZOSCII Automotive Security** - Secure vehicle-to-vehicle and vehicle-to-infrastructure communications. If you're implementing automotive security, call me for validation-or figure it out yourself if you're smart enough.
 
 All MIT Licensed. All production-ready. All quantum-proof by design.
 
@@ -544,7 +544,7 @@ If you're building systems that need:
 - Performance on any hardware (including legacy and embedded)
 - Public storage of sensitive data (without access control dependencies)
 
-Then ZOSCII isn't just an option—it's the only option that delivers all of this, right now, with mathematical certainty.
+Then ZOSCII isn't just an option-it's the only option that delivers all of this, right now, with mathematical certainty.
 
 ## Ready to Build the Unbreakable?
 
