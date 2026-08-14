@@ -1,6 +1,6 @@
 # ZWT -- ZOSCII Web Tokens
 
-**Version 0.2 (DRAFT)**
+**Version 0.2 (DRAFT)** (document version; the wire `version` byte is still 0)
 **Author:** Julian Cassin
 
 A quantum-proof, opaque session/attestation token. The JWT analogue for ZOSCII: an issuer attests a user to a relying party, but unlike JWT the token is information-theoretically opaque and its verification structure is concealed. No asymmetric primitive -- nothing for Shor's algorithm to attack.
@@ -87,7 +87,7 @@ Each block's rolling hash covers everything after its own 4-byte hash -- version
 
 `privateclaims` passes through UNSIGNAL three times (twice from the issuer block's double encoding, once more when the shared block is encoded). `sharedclaims` passes through once.
 
-A typical token -- a 16-byte GUID `sharedsignature` with short claims -- is approximately **0.9-1.2 KB**.
+A typical token -- a 16-byte GUID `sharedsignature` with short claims -- is approximately **1.8-3.2 KB** (measured: empty-claims baseline ~1.8 KB, short claims ~3.2 KB). The size is dominated by the three UNSIGNAL layers' random padding rather than the claims, so putting GUID-sized values in the claims barely changes it.
 
 ---
 
@@ -123,6 +123,15 @@ Updating shared claims creates a **new token** with the same `sharedsignature` a
 ## Ping-Pong (Challenge-Response)
 
 The RP initiates a challenge-response protocol by updating the nonce in `sharedclaims`. The issuer validates the nonce and acts upon it once.
+
+**Nonces can be used two ways, depending on what you need to prove:**
+
+| Mode | Rule | Proves | Use case |
+|------|------|--------|----------|
+| **Fresh (random)** | issuer accepts any nonce not seen before, and records it as used | the message was **not replayed** | session tokens, general replay prevention |
+| **Incremental (+step)** | issuer issues nonce R and accepts only R + expected step in return | the responder **read this specific token live** (not an old capture) | challenge-response, the FOB-CAR flow below |
+
+Fresh proves *not-replayed*; incremental proves *live-response-to-my-challenge*. The FOB-CAR workflow below uses the **incremental** mode (CAR issues R, FOB returns R + 1). The generic session-token flow uses the **fresh** mode. They are two deliberate strategies, not variants of one.
 
 ### Nonce and Challenge ID in Issuer Claims
 
@@ -222,12 +231,12 @@ The token is never modified. It is replaced with a new token after each exchange
 
 ### Why This Works
 
-- RP can update `sharedclaims.nonce` (it is in the shared envelope)
-- Issuer validates the new nonce is fresh (not used before)
-- Issuer updates `privateclaims.nonce` to match
-- Challenge ID tracks which request this belongs to
-- The binding between sharedsig and issuerdata is preserved
-- Replay attacks are prevented -- used nonces are rejected
+- **RP pong:** the RP updates `sharedclaims.nonce` only (it is in the shared envelope); `issuerdata` is unchanged, so this is *not* a re-issue -- the same sealed private nonce stays in place.
+- **Issuer validation:** the issuer reads the private nonce from the (unchanged) `issuerdata` and checks the RP's shared nonce against it -- fresh (unused) in fresh mode, or exactly R + step in incremental mode.
+- **Issuer ping:** when the issuer sends the next challenge it issues a **new token** (new `issuerdata`) carrying the next private nonce. Updating the private nonce is always a full re-issue, never an in-place edit.
+- Challenge ID tracks which request this belongs to.
+- The binding between `sharedsignature` and `issuerdata` is preserved across the exchange.
+- Replay is prevented -- used nonces are rejected.
 
 ---
 
@@ -249,6 +258,42 @@ Single ping-pong prevents replay because a captured nonce cannot be reused.
 
 However, relay still works. An attacker forwards messages between FOB and CAR in real-time. The attacker passes the challenge from CAR to FOB and the response from FOB to CAR. The CAR accepts because the response is valid.
 
+### How a Relay Attack Actually Succeeds
+
+It is worth being precise about the one attack the timing bound is guarding against, because a relay does not break any crypto -- it defeats *distance*.
+
+**Scope: this applies to passive proximity unlock (PKES) only.** The relay attack works only when the car is continuously interrogating for a nearby FOB and the FOB **auto-responds with no human action** -- that auto-response is what a relay shuttles back and forth while the owner does nothing. It does **not** apply to active button-push (RKE), where the FOB transmits only when the owner physically presses the button: there is no challenge being auto-answered to relay, the FOB is silent until pressed, and a press means the owner is standing at the car -- the button press is itself the proof of presence. (Button-push RKE has its own separate weaknesses, e.g. jam-and-replay / RollJam, but relay is not one of them.) Consequently the mandatory double ping-pong, the timing window, and the clock-drift discriminator below are all **PKES requirements**. For button-push RKE a single authenticated exchange with nonce progression is sufficient -- there is no relay threat to bound.
+
+Two attackers with two linked relay devices:
+
+- **Device A** sits next to the CAR (in the car park).
+- **Device B** sits next to the FOB (outside the owner's house, 50 m away).
+- A and B are joined by the attackers' own fast channel (their own radio link, or the internet).
+
+The exchange:
+
+1. CAR emits **Ping 1** (nonce R1). The real FOB is out of range, so normally nothing happens.
+2. **Device A** hears Ping 1 and forwards it over the attackers' link to **Device B**.
+3. **Device B** re-emits Ping 1 to the real FOB.
+4. The FOB does exactly what it should: reads the token, sets shared nonce to R1 + 1, sends **Pong 1**.
+5. **Device B** captures Pong 1, relays it to **Device A**, which re-emits it to the CAR.
+6. CAR validates shared = private + 1. **Passes.** Round 2 relays identically.
+
+What just happened:
+
+- The FOB **genuinely participated, live**, with the real nonces -- nonce progression is fully satisfied.
+- Nothing was replayed (the nonces are fresh) and nothing was forged (the FOB signed with real keys).
+- The attackers never held SHAREDROM or the ISSUERROMs, never read `privateclaims`, never touched the crypto.
+- They simply **carried the messages between two legitimate endpoints that were too far apart to talk directly.**
+
+The only observable difference between this and the FOB standing at the car is **latency**: the relay adds the propagation time of the attackers' link (car park -> house -> back). If that added delay pushes the response outside the CAR's timing window, the CAR rejects. If the attackers' link is fast enough -- and modern relay hardware adds microseconds -- the exchange completes inside the legitimate window and the CAR cannot distinguish it from the real FOB.
+
+This is exactly why the residual is *physical, not protocol*. The protocol did everything correctly; the messages were real live answers to real live challenges. The attacker only moved them through space faster than the timing check could notice.
+
+**Round-trip timing is the only relay defence available from the messages themselves -- nothing above the ping-pong adds anything at the message layer.** Every message-layer technique that appears to help (more rounds, timing statistics, jitter analysis) is just a way of *measuring the round-trip more sharply*. A relay is caught by the message-layer check if and only if it exceeds the acceptable time window; if it fits inside that window, no number of rounds and no message-timing analysis can detect it, because every signal carried *by the messages* reduces to round-trip time.
+
+There is one way to add a genuinely independent axis, and it does not come from the messages: an endpoint's own internal state that a relay cannot forward. A shared, synced clock with a learned drift model is exactly such a state -- see *Clock Drift as an Independent Relay Discriminator* below.
+
 ### Double Ping-Pong (Relay Prevention)
 
 Round 1 (Authentication):
@@ -260,11 +305,53 @@ Round 2 (Proximity Verification -- MANDATORY):
 - CAR -> FOB: NONCE=4 (ping 2)
 - FOB -> CAR: NONCE=5 (pong 2)
 
-### Why Double Ping-Pong Stops Relay
+### Why Double Ping-Pong Raises the Bar Against Relay
 
 Round 1 authenticates the FOB. The CAR accepts.
 
-Round 2 requires a fast exchange. The relay adds measurable latency. If the second response arrives after the expected time window, the CAR rejects the session.
+Round 2 requires a fast exchange. A relay adds latency; if the second response arrives after the expected window, the CAR rejects the session.
+
+**What this can and cannot do.** Against a message-level relay -- an attacker forwarding the protocol messages between two legitimate endpoints -- the round-trip timing bound is the *maximal* defence available at the protocol layer. Nonce progression already forces the response to be a live answer to this specific challenge (no pre-recorded reply works), so the only remaining signal a relay can be caught by is latency, and round-trip time is the only measurement the endpoints have. A second protocol layer cannot measure closeness any better than the first -- it is the same clock and the same endpoints -- so tightening the ping-pong window is the ceiling of what any token protocol can do. There is no additional protocol step that would prevent a relay 'more'.
+
+The residual risk is therefore purely physical: if relay hardware can forward within the accepted window, no token protocol can tell. Reducing the window to nanosecond scale is a hardware move to a faster physical layer (e.g. UWB ranging), not a better protocol -- a separate subsystem outside ZWT's scope, not a missing step in it. ZWT already performs the complete protocol-layer relay defence.
+
+### Configurable Rounds and Timing Analysis
+
+The round count and the use of inter-round timing are implementation choices, not fixed by the protocol. Note up front: none of these are *additional* protections -- they are all ways of measuring the one and only relay signal, the **timeframe**, more precisely. The timeframe is the sole defence; everything below sharpens that single measurement.
+
+- **More rounds.** Two rounds is the mandatory minimum (Round 1 authenticates, Round 2 forces a second live exchange). Nothing stops an implementation running N rounds. Each additional round is another live nonce exchange the attacker must answer inside the window, and another timing sample.
+- **Sample the times, don't just threshold them.** Rather than a single pass/fail on one round-trip, an implementation can record the timing of every exchange and analyse the series -- mean, variance, jitter, drift between rounds. This is strictly more information than one threshold check.
+- **Why it helps (within the ceiling).** All of these help in exactly one way: they measure the timeframe more sharply. A relay typically adds a roughly constant latency offset and can perturb the jitter profile; across several samples that offset and perturbation are easier to see than in a single round-trip -- a legitimate paired exchange has a tight, stable timing signature, a relayed one sits consistently higher or noisier. A relay fast enough to stay inside the window on every sample still passes -- the ceiling is unchanged -- but a sharper timing measurement shrinks the margin the relay has to fit inside. It never adds a second, non-timing way to catch a relay, because there isn't one.
+- **Tunable trade-off.** Tighter windows and more rounds cut the relay margin but cost latency and can reject legitimate exchanges under adverse RF conditions. The right number of rounds and the window width are per-deployment tuning, not protocol constants.
+
+So the protocol-layer defence is not a single fixed timer: it is as rich a timing model as the implementer wants to build on top of the mandatory two-round minimum. It still cannot beat a relay operating inside the physical window -- that ceiling is physical -- but how close you push to that ceiling is an implementation decision.
+
+### Clock Drift as an Independent Relay Discriminator
+
+A relay forwards *messages*; it cannot forward an endpoint's *internal state*. If the FOB carries its own clock and syncs it with the CAR while in range, that gives the CAR a second observable that is not message round-trip time at all -- and therefore not something a fast relay can defeat by being fast.
+
+**How it works:**
+
+- While the FOB is in range, it periodically syncs its clock with the CAR, so the two agree on time and the CAR records the sync moment.
+- Once the FOB leaves range, its local oscillator drifts from the CAR's at a characteristic rate -- a given FOB's crystal drifts in a particular direction and magnitude, accumulating predictably with elapsed time since last sync.
+- On challenge, the CAR requires the FOB to include its current local clock reading in the response, sealed inside `privateclaims` and bound to the current nonce so a relay cannot lift it from an earlier exchange or rewrite it.
+- The CAR checks whether the FOB's reported clock matches what *this* FOB's clock should read, given its learned drift rate and the time since last sync.
+
+**Why a relay cannot beat it:** the relay does not control the FOB's oscillator and cannot recompute a correctly-drifted timestamp without knowing that specific FOB's drift profile -- which was only ever established through in-range syncs the attacker never observed. A relay that is fast on message latency still cannot make the FOB's clock read the expected value. This is an axis independent of round-trip time.
+
+**Honest caveats:**
+
+- It is a **fingerprint / statistical** discriminator, not an absolute proof of proximity. Oscillator drift shifts with temperature and ageing, and a patient attacker who can observe the FOB over time could model its drift too. It raises the bar substantially but is probabilistic, unlike physical distance-bounding.
+- The clock reading **must be sealed and nonce-bound** (e.g. in `privateclaims`), or a relay could replay or patch it.
+- It requires the FOB to have a clock and an in-range sync opportunity; it does nothing for a FOB that has never synced.
+
+**Operational and physical measures.** No message-layer or clock-layer technique fully removes relay; complete elimination requires operational or physical measures. Examples:
+
+- The ability to **turn a FOB off** (disabling its auto-response so there is nothing for a relay to shuttle).
+- The ability to **shield a FOB** (e.g. a Faraday pouch), which physically prevents the FOB from hearing an interrogation.
+- The ability for a FOB to **alert the user** when it is being interrogated or is auto-responding -- kept separate from its ability to enable or disable the unlock mechanism, so the user is warned even if the unlock path itself is compromised.
+
+So while round-trip timing remains the only relay defence obtainable from the messages, a synced-clock drift model is a genuinely separate axis -- endpoint internal state a relay cannot carry -- and can be layered on top to further mitigate relay attacks.
 
 ### Required Timing Window
 
@@ -279,7 +366,7 @@ Round 2 requires a fast exchange. The relay adds measurable latency. If the seco
 | Attack | Prevention | Mechanism |
 |--------|------------|-----------|
 | **Replay** | Yes | Nonce progression -- each nonce used once |
-| **Relay** | Yes | Double ping-pong + timing/proximity bound |
+| **Relay** | Maximal at protocol layer | Nonce binding + tight round-trip window is the most any token protocol can do; residual is a physical-layer/hardware matter |
 | **MITM** | Yes | ROM binding prevents forgery |
 | **Outsider** | Yes | Cannot forge without SHAREDROM + ISSUERROM |
 | **Compromised RP** | Yes | Can only affect its own door |
@@ -287,11 +374,11 @@ Round 2 requires a fast exchange. The relay adds measurable latency. If the seco
 ### Summary
 
 - Single Ping-Pong -> Prevents REPLAY (nonce used once)
-- Double Ping-Pong -> Prevents RELAY (timing + proximity)
+- Double Ping-Pong -> Maximal protocol-layer RELAY defence (nonce binding + tight timing window); residual relay risk is physical-layer, not a protocol gap
 - ROM Binding -> Prevents FORGERY (needs both ROMs)
 - Paired CAR-FOB -> Prevents SPOOFING (only paired works)
 
-**The double ping-pong is mandatory for relay protection. Single ping-pong is not enough.**
+**Double ping-pong is mandatory and is the complete protocol-layer relay defence -- nonce binding plus a tight round-trip window is the most any token protocol can achieve. Any further relay reduction is a physical-layer/hardware question, not a change to ZWT.**
 
 ---
 
@@ -400,6 +487,7 @@ If one issuer server fails, another can take over. The `privateclaims` remain co
 |-----|------|
 | **Replay to the legitimate relying party** | A stolen ZWT can be replayed to its intended recipient. Bind a server-issued nonce inside the token; avoid clock-based expiry (clocks are attacker-influenceable). |
 | **Revocation** | Stateless local verification can't revoke mid-life. If needed, verify `issuersignature` via issuer introspection instead -- gains revocation, costs a round-trip. |
+| **Relay (proximity attacks)** | ZWT already applies the maximal protocol-layer defence: nonce binding plus a tight round-trip timing window. A relay fast enough to answer inside that window cannot be distinguished by *any* token protocol -- the residual is a physical-layer/hardware matter (e.g. UWB ranging), not a gap ZWT could close with more protocol. |
 
 ---
 
