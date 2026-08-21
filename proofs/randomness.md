@@ -169,22 +169,6 @@ The contrast with a captured-entropy ROM is total: no mandated parameter set to 
 
 A verified aside on scale: Knuth's *The Art of Computer Programming* devotes 193 pages — half of volume two — to random number generation (per Hales), and draws the same line this section draws: generators are either *truly random* (values from a physical process such as a quantum mechanical event) or *pseudo-random* (values from a deterministic algorithm displaying a semblance of randomness). Captured-vs-generated is the older distinction; this document only insists on which one a *key* requires.
 
-### 5a. Applied: RandomROM selection
-
-IMPORTANT NOTE: Below has an error in it which has been identified and will be corrected soon.  The theory is sound but the implementation stated below needs improvement - and yes, we already have an improvement in testing. Watch this space.
-
-The principle above — use captured entropy you already hold, not a generator — has a direct application in ZOSCII's own selection step. Encoding a value means choosing one address among the positions holding that value; that choice needs randomness, and the obvious source is the system RNG. **RandomROM** replaces it with a walk through a *second secret ROM*: each symbol consumes the next RandomROM byte and uses it (XOR'd with the value, modulo the instance count) to pick the address, advancing a pointer whose start is set from a timer.
-
-This is "captured, not generated" made concrete. The selection is driven by a ROM — captured entropy, no compact regenerating seed, no period — instead of a platform generator. Note carefully what it does and does not buy, because it is easy to overstate:
-
-- **It does not add security.** The address never leaked the value regardless of how selection was driven; a secret ROM was already doing that job. The security was complete before.
-- **What it removes is a *system dependency*, not a weakness.** The RNG call was the one place the encoder reached into the platform — a different algorithm on every language and version, and third-party code with its own exposure. RandomROM removes the call: the same arithmetic runs everywhere, so the encoder becomes constant across implementations, and there is no system RNG left to trust or vary.
-- **It is trivial and portable.** Another ROM walk, reusing lookup code — implementable identically in C, C#, ES5, or on 1970s hardware. Plausibly as fast or faster than a system RNG, though that is a bonus, not the point.
-
-RandomROM is the tidy end of this document's argument: not only is the *key* captured rather than generated (the ROM), but the *selection* is too (the RandomROM), so no generator appears anywhere in the pipeline. The timer that sets the walk's start carries no security — freshness only — for the same reason weak seed entropy never mattered: the ROMs carry everything. The mechanism's exact index and seed formulas live in the ZOSCII specification (`randomrom.md`); what belongs here is the principle it instances — the last generator in the system was replaced by a second captured source.
-
-One entropy point belongs here, because it is where this document's "captured entropy" theme meets a size question. The RandomROM may be the value ROM itself (one secret, abundant entropy, nothing extra to hold) or a separate ROM — and if separate, it can be **much smaller** than the value ROM without weakening anything. The reason is the same fairness-vs-secrecy split that runs through this whole document: the value ROM *is* the key, so its entropy is unguessability and wants to be large; the RandomROM's bytes are never stored as a key — each is consumed immediately as a selector reduced modulo the instance count, a few bits at a time. Its entropy requirement is set by the selection task (drive a reduction over hundreds of instances), not the key task (be unguessable at key scale). Hundreds to thousands of values suffices — ideally not so small that the walk develops a short, predictable period, nor larger than the selection needs. Captured entropy is still the right source for it; there is just far less of it required, because it is doing the small job, not the large one.
-
 ---
 
 ## 6. Where the security actually comes from — and where it doesn't

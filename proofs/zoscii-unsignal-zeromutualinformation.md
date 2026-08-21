@@ -247,29 +247,7 @@ The test for any operation wrapped around the loop: does its timing vary with **
 Where selection randomness comes from is a tier-2/3 implementation choice, not a primitive property, but it bears on §6a.2 and §6a.3 so it is stated here. The primitive needs only *blind* selection (§4) — the address must not depend on the value. It does not specify the source. Two options:
 
 - **System RNG.** Call the platform's generator. Works, but it is the one element that sits outside both invariance (§6a.2) and the minimal TCB (§6a.3): a different algorithm on every libc/language/version, and third-party code with its own bugs and exposure.
-- **RandomROM.** Drive selection from a walk through a **second secret ROM** instead of a system RNG. For each message value `v`, take the next byte `ev` from the RandomROM and select within `v`'s instance list `S_v` by an index computed from `v` and `ev` (e.g. `(v XOR ev) mod |S_v|`), then advance the RandomROM pointer. The walk's start is set from a timer (optionally XOR'd with ROM-derived values for a secret, fresh start); the timer is preferred but not mandatory, and additional seed sources give deprecating benefit.
-
-**RandomROM has four consequences, in order of what matters:**
-
-1. **Constant method across platforms.** The selection is `v XOR ev mod |S_v|` — the same arithmetic everywhere — so the encoder produces bit-identical output on every platform, completing §6a.2. A system RNG would diverge across implementations; RandomROM does not.
-2. **Removes the last system dependency.** No platform RNG to trust, backdoor, or vary — completing the minimal-TCB story of §6a.3. The RNG was the last item on the third-party list.
-3. **Trivial to implement.** It is another ROM walk — the same operation ZOSCII already performs — reusing lookup code that already exists. Multiple language variants (C, C#, ES5) and a NuGet package are straightforward.
-4. **As fast or faster.** An indexed read, an XOR, and a mod, with no reseeding or library-call overhead — plausibly faster than a system RNG, though this is implementation-dependent and a bonus, not the reason to adopt it.
-
-**It does not add security.** `I(M;A)=0` held regardless of how selection was driven (§5), and the addresses never leaked the value. The selection happens to become information-theoretically driven (captured ROM entropy, no small algorithm-expanded seed, no period), but that is a *consequence* of using a ROM rather than a benefit sought — the security was already complete. What RandomROM removes is divergence and dependency, not a security gap.
-
-**RandomROM selection is value-seeded, which is unusual.** In ordinary randomness use the generator is independent of what is being selected — `rand()` is produced blind and applied afterward, knowing nothing of the items it will choose among. RandomROM folds the value into the fetch itself: the draw for symbol `v` is `v XOR ev`, seeded by `v`. Every single fetch is specific to the value being selected, not a generic stream applied to it — so two symbols hitting the same walk position (same `ev`) but carrying different values get different selectors before the mod, the value diversifying the choice from identical RandomROM state. This remains blind selection (§4): the value steers only *which of its own hidden instances* is chosen, and the output is a member of `S_v`, invisible without the ROM. It is value-*seeded* without being value-*leaking*. (Whether `v XOR ev` induces any cross-stream structure a pure `ev`-driven walk would not is a formula-level question deferred to `randomrom.md`; the per-value `mod |S_v|` remaps within each value's own instance list, so the expectation is none, but it is to be verified when the formula freezes.)
-
-Both ROMs are secret; **same or different is a trust-model choice**, not a security difference. The spectrum, all secure:
-
-- **RandomROM = the value ROM.** One secret does both jobs — value lookup *and* selection entropy — read in two independent roles (the lookup uses the value to find `S_v`; the walk uses a separately-advancing pointer to grab selector bytes; no circularity, like using one dictionary both to look up a word and to pick a page number). Costs **no additional secret to hold**: the system RNG is removed and nothing new is added in its place.
-- **A separate RandomROM.** Mechanically detaches the roles — share the value ROM but withhold the RandomROM, or rotate them independently. A trust-model lever.
-
-**Sizing (separate case).** Entropy still matters in a RandomROM — it drives selection — but the requirement is *smaller* than the value ROM's, because the two ROMs do different jobs. The value ROM **is** the key: its entropy is unguessability, wanted at ~million-bit scale (§6-adjacent; `randomness.md`). The RandomROM's output is never stored as a key — each byte is consumed as a **label-blind `mod |S_v|`** onto the instance list, a few bits per selection. So its size floor is set by the *selection* task, not the *key* task: hundreds to thousands of values is ample. Ideally not too small (or the walk gets short-period, predictable structure) and not too big (no benefit — only selector bytes are drawn). A smaller detached RandomROM is safe *precisely because* its output ends in a label-blind reduction over the instances (§4) — it needs only enough spread to drive that mod, not key-scale unguessability.
-
-**Decode is unchanged** — `value = main_ROM[address]`, a pure lookup; the decoder never touches the RandomROM. The exact index computation, seed derivation, and pointer discipline are specified separately in `randomrom.md` (tier 2), since they are still being fixed and none of the four consequences above depends on the final formula.
-
-The timer, when used, carries **no security** and must not be relied on for unpredictability — that would be the CSPRNG mistake in miniature (`randomness.md`). Its only job is per-session freshness; the ROMs carry all security-relevant entropy.
+- **RandomROM.** Drive selection from a walk through a **second secret ROM** instead of a system RNG. See randomrom.md for implementation details.
 
 ---
 
