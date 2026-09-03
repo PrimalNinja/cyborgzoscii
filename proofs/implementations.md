@@ -935,15 +935,15 @@ ZOSCII 64KB TRI-SWORD PERFORMANCE AUDIT
 Batch      | Encode (ms)  | Decode (ms)  | Encode MB/s  | Decode MB/s  | JS Encode x  | Correct
 --------------------------------------------------------------------------------------------------------------
 ZOSCII Tri-Sword initialized with 5,000 batch capacity
-5000       |       0.75 |       0.31 |     3419.4 |     8169.1 |      16140x | [OK]
+5000       |       0.75 |       0.31 |     3419.4 |     8169.1 |      31x | [OK]
 ZOSCII Tri-Sword initialized with 50,000 batch capacity
-50000      |       6.13 |       2.01 |     4175.9 |    12765.1 |      19710x | [OK]
+50000      |       6.13 |       2.01 |     4175.9 |    12765.1 |      38x | [OK]
 ZOSCII Tri-Sword initialized with 500,000 batch capacity
-500000     |      58.16 |      17.79 |     4401.7 |    14392.6 |      20776x | [OK]
+500000     |      58.16 |      17.79 |     4401.7 |    14392.6 |      40x | [OK]
 ZOSCII Tri-Sword initialized with 2,000,000 batch capacity
-2000000    |     128.13 |      41.91 |     7992.1 |    24434.3 |      37723x | [OK]
+2000000    |     128.13 |      41.91 |     7992.1 |    24434.3 |      73x | [OK]
 ZOSCII Tri-Sword initialized with 3,500,000 batch capacity
-3500000    |     335.29 |      71.47 |     5344.6 |    25072.1 |      25227x | [OK]
+3500000    |     335.29 |      71.47 |     5344.6 |    25072.1 |      49x | [OK]
 
 Randomness Verification:
 ZOSCII Tri-Sword initialized with 1,000 batch capacity
