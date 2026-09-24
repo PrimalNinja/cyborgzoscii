@@ -8,6 +8,11 @@
 // Deletes messages based on the RRRR (Retention Days) value in the name.
 // 
 // Execution: php index.php
+//
+// Bugs:
+// - publish finished in the same second but after fetch took place but with a guid lower than that fetch
+//   cause: handlePublish collision check includes the GUID, so CCCC never increments past 0000
+//   fix: check glob(time . CCCC . '-*.bin') instead of the full name, inside a flock with the rename
 
 define('ALLOW_FETCH', 'TRUE');
 define('ALLOW_GET', 'FALSE');
