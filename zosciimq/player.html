@@ -30,9 +30,14 @@
 			</div>
 			
 			<div class="mb-3">
-				<label class="form-label">Channel Names:</label>
-				<select class="geQueueNames form-select" multiple size="6">
+				<label class="form-label">Sources:</label>
+				<select class="geSources form-select" multiple size="6">
 				</select>
+			</div>
+			
+			<div class="mb-3">
+				<label class="form-label">Or custom ICY stream URL:</label>
+				<input class="geCustomStream form-control" type="text" placeholder="http://host:port/ or http://host:port/12">
 			</div>
 			
 			<div class="mb-3 gsHidden">
@@ -79,7 +84,7 @@
 			<!-- Audio Player -->
 			<div class="gsPlaybackSection gsHidden">
 				<div class="gsSectionTitle">Audio Player</div>
-				<audio class="gePlayer gsPlayer" xcontrols></audio>
+				<audio class="gePlayer gsPlayer" xcontrols crossorigin="anonymous"></audio>
 			</div>
 
 			<!-- Media Display Section -->
@@ -122,18 +127,54 @@ $(document).ready(function()
 	{
 		m_strComponentID = 'geZOSCIIMQPlayer';
 		
-		var arrQueueNames = ['Cyborg Unicorn', 'ZOSCII'];
+		// Source descriptors.
+		//   type: 'mq'  = fetch a ZOSCII message from the MQ and decode in the browser
+		//         'icy' = connect directly to an ICY stream (e.g. zwrserve)
+		//   For 'mq':  url = the MQ endpoint (index.php), queue = channel name
+		//   For 'icy': url = the stream base URL, session = 0 for a new session,
+		//              or N to resume session N (appended as /N)
+		var arrSources = [
+			{
+				name: 'Cyborg Unicorn',
+				type: 'mq',
+				url: 'indexmq.php',
+				queue: 'Cyborg Unicorn'
+			},
+			{
+				name: 'ZOSCII',
+				type: 'mq',
+				url: 'indexmq.php',
+				queue: 'ZOSCII'
+			},
+			{
+				name: 'Radio One (stream)',
+				type: 'icy',
+				url: 'http://localhost:8000/',
+				session: 0
+			},
+			{
+				name: 'Radio Two (shared)',
+				type: 'icy',
+				url: 'http://localhost:8001/',
+				session: 0
+			}
+		];
 		
 		function element(strScope_a, strClass_a)
 		{
 			return $('.' + strClass_a, '#' + strScope_a);
 		}
 		
-		// Populate queue listbox
-		var objQueueSelect = element(m_strComponentID, 'geQueueNames');
-		for (var intI = 0; intI < arrQueueNames.length; intI++)
+		// Populate source listbox - value is the index into arrSources
+		var objSources = element(m_strComponentID, 'geSources');
+		for (var intI = 0; intI < arrSources.length; intI++)
 		{
-			objQueueSelect.append('<option selected="selected" value="' + arrQueueNames[intI] + '">' + arrQueueNames[intI] + '</option>');
+			var objSrc = arrSources[intI];
+			objSources.append(
+				'<option selected="selected" value="' + intI + '">' +
+				objSrc.name + ' [' + objSrc.type + ']' +
+				'</option>'
+			);
 		}
 	
 		// default logo to be ROM
@@ -145,27 +186,17 @@ $(document).ready(function()
 		$.ajax({
 			url: strLogoSrc,
 			type: 'GET',
-			// Use the xhr option to manually set the responseType to 'blob'.
-			// This is necessary for downloading binary data (like an image) in a cross-browser,
-			// ES5-compatible way with jQuery.
 			xhr: function() 
 			{
 				var objXHR = $.ajaxSettings.xhr();
 				objXHR.responseType = 'blob'; 
 				return objXHR;
 			},
-			
-			// Callback function for a successful request
 			success: function(objBlob_a) 
 			{
-				// objBlob_a is the binary data (Blob object) from the image.
-				
-				// Programmatically create a File object from the Blob.
 				var objFile = new File([objBlob_a], 'logo.png', { type: 'image/png' });
 				var objDataTransfer = new DataTransfer();
 				objDataTransfer.items.add(objFile);
-				
-				// Assign the new FileList to the input element.
 				objROMFile.files = objDataTransfer.files;
 			}
 		});
@@ -206,6 +237,9 @@ $(document).ready(function()
 
 		function onStart()
 		{
+console.log('geSources:', $('.geSources').length);
+console.log('geQueueNames:', $('.geQueueNames').length);
+console.log('rom files:', $('.geROMFile')[0].files.length);
 			element(m_strComponentID, 'geConfigSection').hide();
 			element(m_strComponentID, 'geStartButton').hide();
 			element(m_strComponentID, 'geStopButton').show();
@@ -213,16 +247,34 @@ $(document).ready(function()
 			element(m_strComponentID, 'gePreviousButton').show();
 			element(m_strComponentID, 'geNextButton').show();
 			
-			//element(m_strComponentID, 'geProgressBar').show();
-			element(m_strComponentID, 'geProgressBar').css('display', 'flex'); // show
-			element(m_strComponentID, 'geOscilloscope').css('display', 'flex'); // show
+			element(m_strComponentID, 'geProgressBar').css('display', 'flex');
+			element(m_strComponentID, 'geOscilloscope').css('display', 'flex');
 			
 			element(m_strComponentID, 'gePlayerSection').show();
 			
-			// return selected queues
-			var arrQueues = element(m_strComponentID, 'geQueueNames').val() || [];
-			console.log(arrQueues);
-			return arrQueues;
+			// Resolve selected indices into source objects
+			var arrIdx = element(m_strComponentID, 'geSources').val() || [];
+			var arrPicked = [];
+
+			for (var intI = 0; intI < arrIdx.length; intI++)
+			{
+				arrPicked.push(arrSources[parseInt(arrIdx[intI], 10)]);
+			}
+
+			// Custom ICY URL becomes a one-off source appended to the picked list
+			var strCustom = element(m_strComponentID, 'geCustomStream').val();
+			if (strCustom && strCustom.trim().length > 0)
+			{
+				arrPicked.push({
+					name: 'Custom',
+					type: 'icy',
+					url: strCustom.trim(),
+					session: 0
+				});
+			}
+
+			console.log(arrPicked);
+			return arrPicked;
 		}
 		
 		function onStop()
@@ -234,9 +286,8 @@ $(document).ready(function()
 			element(m_strComponentID, 'gePreviousButton').hide();
 			element(m_strComponentID, 'geNextButton').hide();
 
-			//element(m_strComponentID, 'geProgressBar').hide();
-			element(m_strComponentID, 'geProgressBar').css('display', 'none'); // hide
-			element(m_strComponentID, 'geOscilloscope').css('display', 'none'); // hide
+			element(m_strComponentID, 'geProgressBar').css('display', 'none');
+			element(m_strComponentID, 'geOscilloscope').css('display', 'none');
 			
 			element(m_strComponentID, 'geStartButton').show();
 			element(m_strComponentID, 'gePlayerSection').hide();

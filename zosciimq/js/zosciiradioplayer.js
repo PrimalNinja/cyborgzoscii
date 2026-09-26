@@ -7,6 +7,11 @@
 //			clearTextAfterSong
 //		imageDelay:	seconds between image changes if a song isn't playing
 //		maxTextLength: maximum number of text characters to display
+//
+// Source objects (returned by onStart):
+//		{ name, type, url, queue?, session? }
+//		type 'mq'  = fetch a ZOSCII message from the MQ and decode in the browser
+//		type 'icy' = connect directly to an ICY stream (e.g. zwrserve)
 function ZOSCIIRadioPlayer(strComponentID_a, objOptions_a) 
 {
 	var m_objThis = this;
@@ -23,7 +28,7 @@ function ZOSCIIRadioPlayer(strComponentID_a, objOptions_a)
 	var m_objSourceNode = null;
 	var m_strPreviousType = '';
     var m_arrHistoryStack = [];
-    var m_arrQueues = [];
+    var m_arrQueues = [];                // now an array of source objects
     var m_arrROM = null;
     var m_blnFetchNextRunning = false;
     var m_blnFirstTrack = true;
@@ -38,6 +43,7 @@ function ZOSCIIRadioPlayer(strComponentID_a, objOptions_a)
     var m_strBehavior = 'wait';
     var m_strCurrentPointer = '';
     var m_strQueueURL = '';
+    var m_blnStreamMode = false;         // true when current source is an ICY stream
 	
 	// defaults
 	m_objOptions.clearImageAfterSong = m_objOptions.clearImageAfterSong || false;
@@ -255,6 +261,22 @@ function ZOSCIIRadioPlayer(strComponentID_a, objOptions_a)
         element(m_strComponentID, 'geStatus').html(strMessage_a);
     }
 
+	function updateModeUI()
+	{
+		if (m_blnStreamMode)
+		{
+			element(m_strComponentID, 'gePreviousButton').hide();
+			element(m_strComponentID, 'geNextButton').hide();
+			element(m_strComponentID, 'gsMediaSection').hide();
+		}
+		else
+		{
+			element(m_strComponentID, 'gePreviousButton').show();
+			element(m_strComponentID, 'geNextButton').show();
+			element(m_strComponentID, 'gsMediaSection').show();
+		}
+	}
+
 	function zosciiDecode(arrROM_a, arrZOSBinary_a) 
 	{
 		var intDecodedLength = arrZOSBinary_a.length / 2;
@@ -267,6 +289,36 @@ function ZOSCIIRadioPlayer(strComponentID_a, objOptions_a)
 		}
 
 		return arrResult;
+	}
+
+	// Returns the currently selected source object.
+	function currentSource()
+	{
+		var objResult = null;
+
+		if (m_arrQueues[m_intCurrentQueueIndex])
+		{
+			objResult = m_arrQueues[m_intCurrentQueueIndex];
+		}
+
+		return objResult;
+	}
+
+	// Builds the ICY URL for a stream source, appending /<session> when session > 0.
+	function buildStreamUrl(objSrc_a)
+	{
+		var strUrl = objSrc_a.url;
+
+		if (objSrc_a.session && objSrc_a.session > 0)
+		{
+			if (strUrl.charAt(strUrl.length - 1) !== '/')
+			{
+				strUrl += '/';
+			}
+			strUrl += objSrc_a.session;
+		}
+
+		return strUrl;
 	}
 
 	// initialisation
@@ -326,14 +378,14 @@ function ZOSCIIRadioPlayer(strComponentID_a, objOptions_a)
 	{
         if (m_blnFirstTrack) 
 		{
-            m_arrHistoryStack.push({ queue: m_arrQueues[m_intCurrentQueueIndex], type: '', pointer: '' });
+            m_arrHistoryStack.push({ queue: m_intCurrentQueueIndex, type: '', pointer: '' });
             m_blnFirstTrack = false;
         }
 
 		if (arrDecodedData_a.length > m_MINTRACKSIZE)
 		{
 			m_arrHistoryStack.push({
-				queue: m_arrQueues[m_intCurrentQueueIndex],
+				queue: m_intCurrentQueueIndex,
 				type: strType_a, 
 				pointer: m_strCurrentPointer
 			});
@@ -538,13 +590,25 @@ function ZOSCIIRadioPlayer(strComponentID_a, objOptions_a)
 	{
         if (m_blnPlaying)
 		{
-			var strCurrentFilename = m_objPlayer.src.split('/').pop();
-			updateStatus('Playback error (wrong ROM or corrupted file) - skipping to next...');
-			if (strCurrentFilename) 
+			if (m_blnStreamMode)
 			{
-				addToPlayLog(strCurrentFilename + ' (SKIPPED - playback error)', false);
+				// ICY stream dropped - retry the same source
+				updateStatus('Stream error - retrying in 5s...');
+				m_objFetchNextTimer = setTimeout(function()
+				{
+					if (m_blnPlaying) startStream(currentSource());
+				}, 5000);
 			}
-			scheduleNext();
+			else
+			{
+				var strCurrentFilename = m_objPlayer.src.split('/').pop();
+				updateStatus('Playback error (wrong ROM or corrupted file) - skipping to next...');
+				if (strCurrentFilename) 
+				{
+					addToPlayLog(strCurrentFilename + ' (SKIPPED - playback error)', false);
+				}
+				scheduleNext();
+			}
 		}
     }
 
@@ -598,8 +662,12 @@ function ZOSCIIRadioPlayer(strComponentID_a, objOptions_a)
 
 		m_objPlayer.ontimeupdate = function() 
 		{
-			var intPercent = (m_objPlayer.currentTime / m_objPlayer.duration) * 100;
-			updateProgress(intPercent);
+			// Live streams report Infinity duration - skip the progress bar in that case
+			if (m_objPlayer.duration && isFinite(m_objPlayer.duration))
+			{
+				var intPercent = (m_objPlayer.currentTime / m_objPlayer.duration) * 100;
+				updateProgress(intPercent);
+			}
 		};
 	}
 
@@ -634,7 +702,7 @@ function ZOSCIIRadioPlayer(strComponentID_a, objOptions_a)
 	{
         m_intCurrentQueueIndex = intNextIndex_a % m_arrQueues.length;
         m_strCurrentPointer = '';
-        updateStatus('Switched to channel: ' + m_arrQueues[m_intCurrentQueueIndex]);
+        updateStatus('Switched to channel: ' + (currentSource() ? currentSource().name : '?'));
     }
 
 	// button events
@@ -684,10 +752,11 @@ function ZOSCIIRadioPlayer(strComponentID_a, objOptions_a)
 				m_arrHistoryStack.push(objLast);
 				console.log(m_arrHistoryStack);
 
-				m_intCurrentQueueIndex = m_arrQueues.indexOf(objLast.queue);
+				// History stores the queue index (not the queue name)
+				m_intCurrentQueueIndex = objLast.queue;
 				m_strCurrentPointer = objLast.pointer;
 
-				updateStatus('Playing previous track from channel: ' + objLast.queue);
+				updateStatus('Playing previous track from channel: ' + (currentSource() ? currentSource().name : '?'));
 			}
 			
 			fetchNext();
@@ -703,7 +772,8 @@ function ZOSCIIRadioPlayer(strComponentID_a, objOptions_a)
 		var intSquareIndex = parseInt($(this).attr('data-counter'), 10);
 		var fltPercent = intSquareIndex / m_intProgressSquares;
 
-		if (m_objPlayer && m_objPlayer.duration) 
+		// Only meaningful for finite (MQ) tracks
+		if (m_objPlayer && m_objPlayer.duration && isFinite(m_objPlayer.duration)) 
 		{
 			m_objPlayer.currentTime = fltPercent * m_objPlayer.duration;
 			updateProgress(fltPercent * 100);
@@ -722,23 +792,8 @@ function ZOSCIIRadioPlayer(strComponentID_a, objOptions_a)
 		element(m_strComponentID, 'geText').html('');
 		element(m_strComponentID, 'geText').hide();
 		
-		// Validation
-		if (!m_strQueueURL || m_strQueueURL.trim() === '') 
-		{
-			updateStatus('Error: Please enter a Web Ratio Station URL');
-			blnValid = false;
-		}
-		
-		// Check ROM file
-		var objRomFileInput = element(m_strComponentID, 'geROMFile')[0];
-		if (blnValid && !objRomFileInput.files[0])
-		{
-			updateStatus('Error: Please select a ROM file');
-			blnValid = false;
-		}
-		
-		// Call onStart to get queues and change UI
-		if (blnValid && isFunction(m_objOptions.onStart))
+		// Call onStart to get sources and change UI
+		if (isFunction(m_objOptions.onStart))
 		{
 			m_arrQueues = m_objOptions.onStart();
 			
@@ -754,6 +809,32 @@ function ZOSCIIRadioPlayer(strComponentID_a, objOptions_a)
 			}
 		}
 		
+		// Need a ROM if any selected source is an MQ source
+		var blnNeedROM = false;
+		var objRomFileInput = element(m_strComponentID, 'geROMFile')[0];
+
+		if (blnValid)
+		{
+			for (var intI = 0; intI < m_arrQueues.length; intI++)
+			{
+				if (m_arrQueues[intI].type === 'mq')
+				{
+					blnNeedROM = true;
+					break;
+				}
+			}
+		}
+
+		if (blnValid && blnNeedROM && !objRomFileInput.files[0])
+		{
+			updateStatus('Error: Please select a ROM file (required for MQ sources)');
+			if (isFunction(m_objOptions.onStop))
+			{
+				m_objOptions.onStop();
+			}
+			blnValid = false;
+		}
+		
 		if (blnValid)
 		{
 			m_blnPaused = false;
@@ -765,16 +846,26 @@ function ZOSCIIRadioPlayer(strComponentID_a, objOptions_a)
 			m_blnFetchNextRunning = false;
 			m_blnPlaying = true;
 			
-			updateStatus('Loading ROM...');
-			var objReader = new FileReader();
-			objReader.onload = function(objEvent) 
+			if (blnNeedROM)
 			{
-				m_arrROM = new Uint8Array(objEvent.target.result);
-				updateStatus('ROM loaded (' + m_arrROM.length + ' bytes)');
+				updateStatus('Loading ROM...');
+				var objReader = new FileReader();
+				objReader.onload = function(objEvent) 
+				{
+					m_arrROM = new Uint8Array(objEvent.target.result);
+					updateStatus('ROM loaded (' + m_arrROM.length + ' bytes)');
+					startProgressBar();
+					fetchNext();
+				};
+				objReader.readAsArrayBuffer(objRomFileInput.files[0]);
+			}
+			else
+			{
+				// ICY-only selection - no ROM needed
+				updateStatus('Connecting...');
 				startProgressBar();
 				fetchNext();
-			};
-			objReader.readAsArrayBuffer(objRomFileInput.files[0]);
+			}
 		}
 	}
 
@@ -850,6 +941,9 @@ function ZOSCIIRadioPlayer(strComponentID_a, objOptions_a)
     function StopPlayer_onClick() 
 	{
         m_blnPlaying = false;
+        m_blnStreamMode = false;
+		updateModeUI();
+
         m_objPlayer.pause();
         m_objPlayer.src = '';
         updateStatus('Stopped');
@@ -894,71 +988,120 @@ function ZOSCIIRadioPlayer(strComponentID_a, objOptions_a)
 		}
 	}
 
+	// startStream(): connect the audio element to an ICY stream URL.
+	// The browser handles the ICY protocol natively.
+	function startStream(objSrc_a)
+	{
+		if (objSrc_a)
+		{
+			var strUrl = buildStreamUrl(objSrc_a);
+
+			updateStatus('Connecting to ICY stream: ' + strUrl);
+			element(m_strComponentID, 'geNowPlaying').html('Stream: ' + htmlEncode(objSrc_a.name));
+
+			m_objPlayer.src = strUrl;
+
+			var objPlayPromise = m_objPlayer.play();
+			if (objPlayPromise !== undefined)
+			{
+				objPlayPromise.catch(function()
+				{
+					updateStatus('Stream play failed - retrying in 5s...');
+					m_objFetchNextTimer = setTimeout(function()
+					{
+						if (m_blnPlaying) startStream(objSrc_a);
+					}, 5000);
+				});
+			}
+		}
+	}
+
 	// network functions
 	function fetchNext() 
 	{
 		if (m_blnPlaying && !m_blnFetchNextRunning)
 		{
-			m_blnFetchNextRunning = true;
+			var objSrc = currentSource();
 
-			var strCurrentQueue = m_arrQueues[m_intCurrentQueueIndex];
-			var objXHR = new XMLHttpRequest();
-			objXHR.open('POST', m_strQueueURL, true);
-			objXHR.responseType = 'blob';
-			objXHR.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-
-			var strPostBody = 'action=fetch&q=' + encodeURIComponent(strCurrentQueue) +
-							  '&after=' + encodeURIComponent(m_strCurrentPointer);
-			console.log(strPostBody);
-
-			objXHR.onload = function() 
+			if (!objSrc)
 			{
-				m_blnFetchNextRunning = false;
-				if (!m_blnPlaying) return;
+				updateStatus('No source selected.');
+			}
+			else if (objSrc.type === 'icy')
+			{
+				// ICY stream source: just point the audio element at it, no MQ fetch
+				m_blnStreamMode = true;
+				updateModeUI();
+				startStream(objSrc);
+			}
+			else
+			{
+				// MQ source: original behavior
+				m_blnStreamMode = false;
+				updateModeUI();
+				m_blnFetchNextRunning = true;
 
-				if (objXHR.status === 200 && objXHR.response && objXHR.response.size > 0)
+				var strCurrentQueue = objSrc.queue;
+				var strUrl = objSrc.url || m_strQueueURL;
+
+				var objXHR = new XMLHttpRequest();
+				objXHR.open('POST', strUrl, true);
+				objXHR.responseType = 'blob';
+				objXHR.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+
+				var strPostBody = 'action=fetch&q=' + encodeURIComponent(strCurrentQueue) +
+								  '&after=' + encodeURIComponent(m_strCurrentPointer);
+				console.log(strPostBody);
+
+				objXHR.onload = function() 
 				{
-					var strContentDisp = objXHR.getResponseHeader('Content-Disposition') || '';
-					var arrMatches = strContentDisp.match(/filename="(.+)"/);
-					var strFilename = arrMatches ? arrMatches[1].trim() : null;
+					m_blnFetchNextRunning = false;
+					if (!m_blnPlaying) return;
 
-					if (strFilename && strFilename !== m_strCurrentPointer)
+					if (objXHR.status === 200 && objXHR.response && objXHR.response.size > 0)
 					{
-						m_strCurrentPointer = strFilename;
+						var strContentDisp = objXHR.getResponseHeader('Content-Disposition') || '';
+						var arrMatches = strContentDisp.match(/filename="(.+)"/);
+						var strFilename = arrMatches ? arrMatches[1].trim() : null;
 
-						var objReader = new FileReader();
-						objReader.onload = function(objEvent) 
+						if (strFilename && strFilename !== m_strCurrentPointer)
 						{
-							fetchedNext(strFilename, new Uint8Array(objEvent.target.result));
-						};
-						objReader.readAsArrayBuffer(objXHR.response);
+							m_strCurrentPointer = strFilename;
+
+							var objReader = new FileReader();
+							objReader.onload = function(objEvent) 
+							{
+								fetchedNext(strFilename, new Uint8Array(objEvent.target.result));
+							};
+							objReader.readAsArrayBuffer(objXHR.response);
+						}
+						else
+						{
+							handleEndOfQueue();
+						}
+					}
+					else if (objXHR.status !== 200)
+					{
+						updateStatus('HTTP ' + objXHR.status + ' - retrying in 30s...');
+						m_objFetchNextTimer = setTimeout(fetchNext, 30000);
 					}
 					else
 					{
 						handleEndOfQueue();
 					}
-				}
-				else if (objXHR.status !== 200)
-				{
-					updateStatus('HTTP ' + objXHR.status + ' - retrying in 30s...');
-					m_objFetchNextTimer = setTimeout(fetchNext, 30000);
-				}
-				else
-				{
-					handleEndOfQueue();
-				}
-			};
+				};
 
-			objXHR.onerror = function() 
-			{
-				m_blnFetchNextRunning = false;
-				if (m_blnPlaying) 
+				objXHR.onerror = function() 
 				{
-					m_objFetchNextTimer = setTimeout(fetchNext, 30000);
-				}
-			};
+					m_blnFetchNextRunning = false;
+					if (m_blnPlaying) 
+					{
+						m_objFetchNextTimer = setTimeout(fetchNext, 30000);
+					}
+				};
 
-			objXHR.send(strPostBody);
+				objXHR.send(strPostBody);
+			}
 		}
 	}
 

@@ -10,10 +10,11 @@
 <h1>ZOSCII Radio Player</h1>
 
 <div id="geZOSCIIMQPlayer" class="gsPlayer">
-    <label>Queue URL: <input class="geQueueUrl" type="text" value="index.php" size="50"></label><br>
-    <label>Queue Names (one per line):<br>
-    <textarea class="geQueueNames" rows="5" cols="50">test_radio
-test_radio2</textarea></label><br>
+    <label>Queue URL: <input class="geQueueUrl" type="text" value="indexmq.php" size="50"></label><br>
+    <label>Sources:<br>
+    <select class="geSources" multiple size="6">
+    </select></label><br>
+    <label>Or custom ICY stream URL: <input class="geCustomStream" type="text" value="" size="50" placeholder="http://host:port/ or http://host:port/12"></label><br>
     <label>Behavior: 
     <select class="geBehavior">
       <option value="repeatQueue">Repeat Queue</option>
@@ -36,7 +37,7 @@ test_radio2</textarea></label><br>
     <div class="geNowPlaying"></div>
 
 	<hr>
-    <audio class="gePlayer" controls></audio>
+    <audio class="gePlayer" controls crossorigin="anonymous"></audio>
 
 	<hr>
     <div class="geImage"></div>
@@ -51,7 +52,82 @@ test_radio2</textarea></label><br>
 <script>
 $(document).ready(function() 
 {
-    var objRadioPlayer = new ZOSCIIRadioPlayer('geZOSCIIMQPlayer', { imageDelay: 10 });
+	var arrSources = [
+		{
+			name: 'Cyborg Unicorn',
+			type: 'mq',
+			url: 'indexmq.php',
+			queue: 'Cyborg Unicorn'
+		},
+		{
+			name: 'ZOSCII',
+			type: 'mq',
+			url: 'indexmq.php',
+			queue: 'ZOSCII'
+		},
+		{
+			name: 'Radio One (stream)',
+			type: 'icy',
+			url: 'http://localhost:8000/',
+			session: 0
+		},
+		{
+			name: 'Radio Two (shared)',
+			type: 'icy',
+			url: 'http://localhost:8001/',
+			session: 0
+		}
+	];
+
+	function element(strScope_a, strClass_a)
+	{
+		return $('.' + strClass_a, '#' + strScope_a);
+	}
+
+	// Populate source listbox - value is the index into arrSources
+	var objSources = element('geZOSCIIMQPlayer', 'geSources');
+	for (var intI = 0; intI < arrSources.length; intI++)
+	{
+		var objSrc = arrSources[intI];
+		objSources.append(
+			'<option selected="selected" value="' + intI + '">' +
+			objSrc.name + ' [' + objSrc.type + ']' +
+			'</option>'
+		);
+	}
+
+	// Auto-load the logo as the ROM, same trick as the full player
+	var objLogo = element('geZOSCIIMQPlayer', 'geLogo');
+	var objROMFile = element('geZOSCIIMQPlayer', 'geROMFile')[0];
+
+	var objRadioPlayer = new ZOSCIIRadioPlayer('geZOSCIIMQPlayer', { 
+		imageDelay: 10,
+		onStart: function()
+		{
+			// Resolve selected indices into source objects
+			var arrIdx = element('geZOSCIIMQPlayer', 'geSources').val() || [];
+			var arrPicked = [];
+
+			for (var intI = 0; intI < arrIdx.length; intI++)
+			{
+				arrPicked.push(arrSources[parseInt(arrIdx[intI], 10)]);
+			}
+
+			// Custom ICY URL becomes a one-off source appended to the picked list
+			var strCustom = element('geZOSCIIMQPlayer', 'geCustomStream').val();
+			if (strCustom && strCustom.trim().length > 0)
+			{
+				arrPicked.push({
+					name: 'Custom',
+					type: 'icy',
+					url: strCustom.trim(),
+					session: 0
+				});
+			}
+
+			return arrPicked;
+		}
+	});
 });
 </script>
 
