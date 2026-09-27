@@ -83,10 +83,12 @@ function ZOSCIIRadioPlayer(strComponentID_a, objOptions_a)
 	{
 		var strResult = '';
 		var intI = 0;
+		var intByte, intByte1, intByte2, intByte3, intCodePoint;
 		
 		while (intI < arrBytes.length) 
 		{
-			var intByte = arrBytes[intI++];
+			intByte = arrBytes[intI];
+			intI = intI + 1;
 			
 			if (intByte < 0x80) 
 			{
@@ -96,17 +98,29 @@ function ZOSCIIRadioPlayer(strComponentID_a, objOptions_a)
 			else if (intByte < 0xE0) 
 			{
 				// Two-byte character
-				strResult += String.fromCharCode(((intByte & 0x1F) << 6) | (arrBytes[intI++] & 0x3F));
+				intByte1 = arrBytes[intI];
+				intI = intI + 1;
+				strResult += String.fromCharCode(((intByte & 0x1F) << 6) | (intByte1 & 0x3F));
 			} 
 			else if (intByte < 0xF0) 
 			{
 				// Three-byte character
-				strResult += String.fromCharCode(((intByte & 0x0F) << 12) | ((arrBytes[intI++] & 0x3F) << 6) | (arrBytes[intI++] & 0x3F));
+				intByte1 = arrBytes[intI];
+				intI = intI + 1;
+				intByte2 = arrBytes[intI];
+				intI = intI + 1;
+				strResult += String.fromCharCode(((intByte & 0x0F) << 12) | ((intByte1 & 0x3F) << 6) | (intByte2 & 0x3F));
 			} 
 			else 
 			{
 				// Four-byte character (needs surrogate pairs)
-				var intCodePoint = ((intByte & 0x07) << 18) | ((arrBytes[intI++] & 0x3F) << 12) | ((arrBytes[intI++] & 0x3F) << 6) | (arrBytes[intI++] & 0x3F);
+				intByte1 = arrBytes[intI];
+				intI = intI + 1;
+				intByte2 = arrBytes[intI];
+				intI = intI + 1;
+				intByte3 = arrBytes[intI];
+				intI = intI + 1;
+				intCodePoint = ((intByte & 0x07) << 18) | ((intByte1 & 0x3F) << 12) | ((intByte2 & 0x3F) << 6) | (intByte3 & 0x3F);
 				intCodePoint -= 0x10000;
 				strResult += String.fromCharCode(0xD800 + (intCodePoint >> 10), 0xDC00 + (intCodePoint & 0x3FF));
 			}
@@ -140,7 +154,7 @@ function ZOSCIIRadioPlayer(strComponentID_a, objOptions_a)
 				// use latin1 decoding instead of naive fromCharCode
 				function latin1(arr_a) 
 				{ 
-					return String.fromCharCode.apply(null, arr_a).replace(/\0/g,'').trim(); 
+					return String.fromCharCode.apply(null, arr_a).replace(/\u0000/g,'').trim(); 
 				}
 
 				objInfo.title   = latin1(arrID3.slice(3, 33));
@@ -153,6 +167,388 @@ function ZOSCIIRadioPlayer(strComponentID_a, objOptions_a)
 		}
 
 		return objInfo;
+	}
+
+	// Read ID3 tags from decoded MP3 bytes.
+	// Tries ID3v2 (v2.2/2.3/2.4) at the start first, falls back to ID3v1 at the end.
+	// Handles text encodings 0x00 (ISO-8859-1), 0x01 (UTF-16 w/ BOM), 0x02 (UTF-16BE), 0x03 (UTF-8).
+	function getID3Info(binData_a)
+	{
+		var objInfo = {
+			title: 'Unknown',
+			artist: 'Unknown',
+			album: 'Unknown',
+			year: 'Unknown',
+			comment: 'Unknown',
+			genre: 'Unknown'
+		};
+
+		if (!binData_a || binData_a.length < 10)
+		{
+			return objInfo;
+		}
+
+		// ---- ID3v2 first ----
+		if (binData_a[0] === 0x49 && binData_a[1] === 0x44 && binData_a[2] === 0x33)
+		{
+			try
+			{
+				var objV2 = readID3v2(binData_a);
+				if (objV2.title)  { objInfo.title  = objV2.title; }
+				if (objV2.artist) { objInfo.artist = objV2.artist; }
+				if (objV2.album)  { objInfo.album  = objV2.album; }
+				if (objV2.year)   { objInfo.year   = objV2.year; }
+				if (objV2.comment){ objInfo.comment= objV2.comment; }
+
+				// If we got at least a title, trust v2 and don't also read v1.
+				if (objV2.title || objV2.artist || objV2.album)
+				{
+					return objInfo;
+				}
+			}
+			catch (objErr)
+			{
+				// fall through to v1
+			}
+		}
+
+		// ---- ID3v1 fallback ----
+		if (binData_a.length >= 128)
+		{
+			var arrID3 = binData_a.slice(binData_a.length - 128);
+			var strHeader = String.fromCharCode(arrID3[0], arrID3[1], arrID3[2]);
+			if (strHeader === 'TAG')
+			{
+				objInfo.title   = latin1(arrID3.slice(3, 33));
+				objInfo.artist  = latin1(arrID3.slice(33, 63));
+				objInfo.album   = latin1(arrID3.slice(63, 93));
+				objInfo.year    = latin1(arrID3.slice(93, 97));
+				objInfo.comment = latin1(arrID3.slice(97, 127));
+				objInfo.genre   = arrID3[127];
+			}
+		}
+
+		return objInfo;
+	}
+
+	// ---- ID3v2 internals ----
+
+	function readID3v2(arrBytes)
+	{
+		var objResult = { title: null, artist: null, album: null, year: null, comment: null };
+
+		var intVersion = arrBytes[3];
+		var intFlags   = arrBytes[5];
+
+		// Synchsafe size (7 bits per byte)
+		var intTagSize = ((arrBytes[6] & 0x7F) << 21) |
+						 ((arrBytes[7] & 0x7F) << 14) |
+						 ((arrBytes[8] & 0x7F) << 7)  |
+						  (arrBytes[9] & 0x7F);
+
+		var intBodyStart = 10;
+		var intBodyEnd   = Math.min(intBodyStart + intTagSize, arrBytes.length);
+
+		// Skip extended header if present
+		if (intFlags & 0x40)
+		{
+			if (intBodyStart + 4 <= intBodyEnd)
+			{
+				var intExtSize = (intVersion >= 4) ?
+					synchsafe4(arrBytes, intBodyStart) :
+					bigEndian4(arrBytes, intBodyStart);
+				intBodyStart += 4 + intExtSize;
+			}
+		}
+
+		if (intVersion === 2)
+		{
+			scanV2Frames(arrBytes, intBodyStart, intBodyEnd, objResult);
+		}
+		else if (intVersion === 3 || intVersion === 4)
+		{
+			scanV34Frames(arrBytes, intBodyStart, intBodyEnd, objResult, intVersion >= 4);
+		}
+
+		return objResult;
+	}
+
+	function scanV2Frames(arrBytes, intStart, intEnd, objResult)
+	{
+		var intPos = intStart;
+
+		while (intPos + 6 <= intEnd)
+		{
+			if (arrBytes[intPos] === 0x00)
+			{
+				break;
+			}
+
+			var strId = String.fromCharCode(arrBytes[intPos], arrBytes[intPos + 1], arrBytes[intPos + 2]);
+			var intSize = bigEndian3(arrBytes, intPos + 3);
+
+			if (intSize <= 0 || intPos + 6 + intSize > intEnd)
+			{
+				break;
+			}
+
+			decodeV2Frame(strId, arrBytes, intPos + 6, intSize, objResult);
+
+			intPos += 6 + intSize;
+		}
+	}
+
+	function scanV34Frames(arrBytes, intStart, intEnd, objResult, blnSynchsafe)
+	{
+		var intPos = intStart;
+
+		while (intPos + 10 <= intEnd)
+		{
+			if (arrBytes[intPos] === 0x00)
+			{
+				break;
+			}
+
+			var strId = String.fromCharCode(arrBytes[intPos], arrBytes[intPos + 1],
+											arrBytes[intPos + 2], arrBytes[intPos + 3]);
+			var intSize = blnSynchsafe ?
+				synchsafe4(arrBytes, intPos + 4) :
+				bigEndian4(arrBytes, intPos + 4);
+
+			if (intSize <= 0 || intPos + 10 + intSize > intEnd)
+			{
+				break;
+			}
+
+			decodeV34Frame(strId, arrBytes, intPos + 10, intSize, objResult);
+
+			intPos += 10 + intSize;
+		}
+	}
+
+	function decodeV2Frame(strId, arrBytes, intOffset, intSize, objResult)
+	{
+		// v2.2 frame IDs: TT2=title, TP1=artist, TAL=album, TYE=year, COM=comment
+		var strText = null;
+
+		switch (strId)
+		{
+			case 'TT2': strText = decodeTextFrame(arrBytes, intOffset, intSize); if (strText) objResult.title = strText; break;
+			case 'TP1': strText = decodeTextFrame(arrBytes, intOffset, intSize); if (strText) objResult.artist = strText; break;
+			case 'TAL': strText = decodeTextFrame(arrBytes, intOffset, intSize); if (strText) objResult.album = strText; break;
+			case 'TYE': strText = decodeTextFrame(arrBytes, intOffset, intSize); if (strText) objResult.year = strText; break;
+			case 'COM': strText = decodeCommentFrame(arrBytes, intOffset, intSize); if (strText) objResult.comment = strText; break;
+			default: break;
+		}
+	}
+
+	function decodeV34Frame(strId, arrBytes, intOffset, intSize, objResult)
+	{
+		switch (strId)
+		{
+			case 'TIT2': { var t = decodeTextFrame(arrBytes, intOffset, intSize); if (t) objResult.title = t; break; }
+			case 'TPE1': { var a = decodeTextFrame(arrBytes, intOffset, intSize); if (a) objResult.artist = a; break; }
+			case 'TALB': { var l = decodeTextFrame(arrBytes, intOffset, intSize); if (l) objResult.album = l; break; }
+			case 'TYER': { var y = decodeTextFrame(arrBytes, intOffset, intSize); if (y) objResult.year = y; break; }
+			case 'TDRC': { var y2 = decodeTextFrame(arrBytes, intOffset, intSize); if (y2) objResult.year = y2.substring(0, 4); break; }
+			case 'COMM': { var c = decodeCommentFrame(arrBytes, intOffset, intSize); if (c) objResult.comment = c; break; }
+			default: break;
+		}
+	}
+
+	function decodeTextFrame(arrBytes, intOffset, intSize)
+	{
+		if (intSize < 1)
+		{
+			return null;
+		}
+
+		var intEncoding = arrBytes[intOffset];
+		var intTextOffset = intOffset + 1;
+		var intTextLength = intSize - 1;
+
+		return decodeEncodedText(arrBytes, intTextOffset, intTextLength, intEncoding);
+	}
+
+	function decodeCommentFrame(arrBytes, intOffset, intSize)
+	{
+		// encoding(1) + language(3) + short description (null-terminated) + comment text
+		if (intSize < 5)
+		{
+			return null;
+		}
+
+		var intEncoding = arrBytes[intOffset];
+		var intPos = intOffset + 4; // skip encoding + 3-byte language
+
+		// skip short description (null-terminated, variable width depending on encoding)
+		if (intEncoding === 0x01 || intEncoding === 0x02)
+		{
+			while (intPos + 1 < intOffset + intSize)
+			{
+				if (arrBytes[intPos] === 0x00 && arrBytes[intPos + 1] === 0x00)
+				{
+					intPos += 2;
+					break;
+				}
+				intPos += 2;
+			}
+		}
+		else
+		{
+			while (intPos < intOffset + intSize && arrBytes[intPos] !== 0x00)
+			{
+				intPos++;
+			}
+			intPos++; // skip terminator
+		}
+
+		if (intPos >= intOffset + intSize)
+		{
+			return null;
+		}
+
+		return decodeEncodedText(arrBytes, intPos, (intOffset + intSize) - intPos, intEncoding);
+	}
+
+	function decodeEncodedText(arrBytes, intOffset, intLength, intEncoding)
+	{
+		if (intLength <= 0)
+		{
+			return null;
+		}
+
+		var strText = '';
+
+		try
+		{
+			if (intEncoding === 0x00)
+			{
+				// ISO-8859-1
+				for (var intI = 0; intI < intLength; intI++)
+				{
+					strText += String.fromCharCode(arrBytes[intOffset + intI]);
+				}
+			}
+			else if (intEncoding === 0x01)
+			{
+				// UTF-16 with BOM
+				var blnBE = false;
+				var intStart = intOffset;
+				var intLen = intLength;
+
+				if (intLength >= 2)
+				{
+					if (arrBytes[intOffset] === 0xFF && arrBytes[intOffset + 1] === 0xFE)
+					{
+						intStart = intOffset + 2;
+						intLen   = intLength - 2;
+						blnBE    = false;
+					}
+					else if (arrBytes[intOffset] === 0xFE && arrBytes[intOffset + 1] === 0xFF)
+					{
+						intStart = intOffset + 2;
+						intLen   = intLength - 2;
+						blnBE    = true;
+					}
+				}
+
+				strText = decodeUtf16(arrBytes, intStart, intLen, blnBE);
+			}
+			else if (intEncoding === 0x02)
+			{
+				// UTF-16BE, no BOM
+				strText = decodeUtf16(arrBytes, intOffset, intLength, true);
+			}
+			else if (intEncoding === 0x03)
+			{
+				// UTF-8
+				var arrSlice = arrBytes.slice(intOffset, intOffset + intLength);
+				strText = decodeUTF8(arrSlice);
+			}
+		}
+		catch (objErr)
+		{
+			return null;
+		}
+
+		strText = strText.replace(/\u0000+$/, '').replace(/^\u0000+/, '').trim();
+
+		return strText.length > 0 ? strText : null;
+	}
+
+	function decodeUtf16(arrBytes, intOffset, intLength, blnBigEndian)
+	{
+		var strResult = '';
+		var intEnd = intOffset + intLength - (intLength % 2);
+
+		for (var intI = intOffset; intI < intEnd; intI += 2)
+		{
+			var intCode;
+			if (blnBigEndian)
+			{
+				intCode = (arrBytes[intI] << 8) | arrBytes[intI + 1];
+			}
+			else
+			{
+				intCode = arrBytes[intI] | (arrBytes[intI + 1] << 8);
+			}
+
+			// Handle surrogate pairs
+			if (intCode >= 0xD800 && intCode <= 0xDBFF && intI + 3 < intEnd)
+			{
+				var intLow;
+				if (blnBigEndian)
+				{
+					intLow = (arrBytes[intI + 2] << 8) | arrBytes[intI + 3];
+				}
+				else
+				{
+					intLow = arrBytes[intI + 2] | (arrBytes[intI + 3] << 8);
+				}
+
+				if (intLow >= 0xDC00 && intLow <= 0xDFFF)
+				{
+					intCode = 0x10000 + ((intCode - 0xD800) << 10) + (intLow - 0xDC00);
+					intI += 2;
+				}
+			}
+
+			if (intCode < 0x10000)
+			{
+				strResult += String.fromCharCode(intCode);
+			}
+			else
+			{
+				intCode -= 0x10000;
+				strResult += String.fromCharCode(0xD800 + (intCode >> 10), 0xDC00 + (intCode & 0x3FF));
+			}
+		}
+
+		return strResult;
+	}
+
+	function synchsafe4(arrBytes, intOffset)
+	{
+		return ((arrBytes[intOffset]     & 0x7F) << 21) |
+			   ((arrBytes[intOffset + 1] & 0x7F) << 14) |
+			   ((arrBytes[intOffset + 2] & 0x7F) << 7)  |
+				(arrBytes[intOffset + 3] & 0x7F);
+	}
+
+	function bigEndian4(arrBytes, intOffset)
+	{
+		return ((arrBytes[intOffset]     & 0xFF) << 24) |
+			   ((arrBytes[intOffset + 1] & 0xFF) << 16) |
+			   ((arrBytes[intOffset + 2] & 0xFF) << 8)  |
+				(arrBytes[intOffset + 3] & 0xFF);
+	}
+
+	function bigEndian3(arrBytes, intOffset)
+	{
+		return ((arrBytes[intOffset]     & 0xFF) << 16) |
+			   ((arrBytes[intOffset + 1] & 0xFF) << 8)  |
+				(arrBytes[intOffset + 2] & 0xFF);
 	}
 
 	function initialiseOscilloscope() 
@@ -192,16 +588,16 @@ function ZOSCIIRadioPlayer(strComponentID_a, objOptions_a)
 
 	function htmlEncode(str_a) 
 	{
-		return String(str_a || '').replace(/&/g, '&amp;')
-								.replace(/</g, '&lt;')
-								.replace(/>/g, '&gt;')
-								.replace(/"/g, '&quot;')
-								.replace(/'/g, '&#39;');
+		return String(str_a || '').replace(/&/g, '&amp;').
+								replace(/</g, '&lt;').
+								replace(/>/g, '&gt;').
+								replace(/"/g, '&quot;').
+								replace(/'/g, '&#39;');
 	}
 
 	function latin1(arr_a) 
 	{
-		return String.fromCharCode.apply(null, arr_a).replace(/\0/g, '').trim();
+		return String.fromCharCode.apply(null, arr_a).replace(/\u0000/g, '').trim();
 	}
 
 	function setupAudioContext()
@@ -218,9 +614,10 @@ function ZOSCIIRadioPlayer(strComponentID_a, objOptions_a)
 		}
 	}
 
-	function updateNowPlaying(arrDecodedData_a) 
+	function OLD_updateNowPlaying(arrDecodedData_a) 
 	{
-		var objID3Info = getID3v1Info(arrDecodedData_a);
+		//var objID3Info = getID3v1Info(arrDecodedData_a);
+		var objID3Info = getID3Info(arrDecodedData_a);
 		var strTrackInfo = 'Playing ' + htmlEncode(objID3Info.title);
 		if (objID3Info.artist) 
 		{
@@ -237,6 +634,42 @@ function ZOSCIIRadioPlayer(strComponentID_a, objOptions_a)
 			strTrackInfo += htmlEncode(objID3Info.year) + ']';
 		}
 		
+		element(m_strComponentID, 'geNowPlaying').html(strTrackInfo);
+	}
+
+	function updateNowPlaying(arrDecodedData_a) 
+	{
+		var objID3Info = getID3Info(arrDecodedData_a);
+
+		function isKnown(strValue_a)
+		{
+			return strValue_a && strValue_a !== 'Unknown';
+		}
+
+		var strTrackInfo = 'Playing ' + htmlEncode(objID3Info.title);
+
+		if (isKnown(objID3Info.artist))
+		{
+			strTrackInfo += ' - ' + htmlEncode(objID3Info.artist);
+		}
+
+		var arrBits = [];
+
+		if (isKnown(objID3Info.album))
+		{
+			arrBits.push(htmlEncode(objID3Info.album));
+		}
+
+		if (isKnown(objID3Info.year))
+		{
+			arrBits.push(htmlEncode(objID3Info.year));
+		}
+
+		if (arrBits.length > 0)
+		{
+			strTrackInfo += ' [' + arrBits.join(' | ') + ']';
+		}
+
 		element(m_strComponentID, 'geNowPlaying').html(strTrackInfo);
 	}
 
@@ -273,7 +706,7 @@ function ZOSCIIRadioPlayer(strComponentID_a, objOptions_a)
 		{
 			element(m_strComponentID, 'gePreviousButton').show();
 			element(m_strComponentID, 'geNextButton').show();
-			element(m_strComponentID, 'gsMediaSection').show();
+			//element(m_strComponentID, 'gsMediaSection').show();
 		}
 	}
 
@@ -361,6 +794,7 @@ function ZOSCIIRadioPlayer(strComponentID_a, objOptions_a)
 		if (arrDecodedData_a[0] === 0xFF && arrDecodedData_a[1] === 0xD8 && arrDecodedData_a[2] === 0xFF)
 		{
 			strType = 'jpg';
+			element(m_strComponentID, 'gsMediaSection').show();
 		}
 		
 		// MP3: FF FB or FF F3 (MPEG sync) or ID3 tag (49 44 33)

@@ -88,7 +88,7 @@
 			</div>
 
 			<!-- Media Display Section -->
-			<div class="gsMediaSection">
+			<div class="gsMediaSection gsHidden">
 				<div class="geImage gsImage"></div>
 				<div class="geText gsText"></div>
 			</div>
@@ -135,31 +135,32 @@ $(document).ready(function()
 		//              or N to resume session N (appended as /N)
 		var arrSources = [
 			{
-				name: 'Cyborg Unicorn',
+				name: 'Cyborg Unicorn English',
 				type: 'mq',
 				url: 'indexmq.php',
-				queue: 'Cyborg Unicorn'
+				queue: 'Cyborg Unicorn English'
 			},
 			{
-				name: 'ZOSCII',
+				name: 'Cyborg Unicorn World',
 				type: 'mq',
 				url: 'indexmq.php',
-				queue: 'ZOSCII'
-			},
-			{
-				name: 'Radio One (stream)',
-				type: 'icy',
-				url: 'http://localhost:8000/',
-				session: 0
-			},
-			{
-				name: 'Radio Two (shared)',
-				type: 'icy',
-				url: 'http://localhost:8001/',
-				session: 0
+				queue: 'Cyborg Unicorn World'
 			}
 		];
-		
+//,
+//			{
+//				name: 'Cyborg Unicorn English',
+//				type: 'icy',
+//				url: 'http://localhost:8000/',
+//				session: 0
+//			},
+//			{
+//				name: 'Cyborg Unicorn World',
+//				type: 'icy',
+//				url: 'http://localhost:8001/',
+//				session: 0
+//			}
+			
 		function element(strScope_a, strClass_a)
 		{
 			return $('.' + strClass_a, '#' + strScope_a);
