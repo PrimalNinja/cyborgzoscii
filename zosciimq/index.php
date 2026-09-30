@@ -9,10 +9,9 @@
 // 
 // Execution: php index.php
 //
-// Bugs:
+// NOT Bugs:
 // - publish finished in the same second but after fetch took place but with a guid lower than that fetch
-//   cause: handlePublish collision check includes the GUID, so CCCC never increments past 0000
-//   fix: check glob(time . CCCC . '-*.bin') instead of the full name, inside a flock with the rename
+//   note: guids are guids, they are not upper or lower, they are uniqueness
 
 define('ALLOW_FETCH', 'TRUE');
 define('ALLOW_GET', 'FALSE');
