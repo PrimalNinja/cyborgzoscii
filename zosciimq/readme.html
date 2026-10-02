@@ -36,7 +36,9 @@
 			<li><a href="#integrator-usage-d">&nbsp;&nbsp;D. Storing Messages (Writing to a Data Store)</a></li>
 			<li><a href="#integrator-usage-e">&nbsp;&nbsp;E. Retrieving Messages (Reading from a Data Store)</a></li>
 			<li><a href="#integrator-usage-f">&nbsp;&nbsp;F. Scanning Messages (Scan the Data Store for unidentified messages)</a></li>
-			<li><a href="#integrator-usage-f">&nbsp;&nbsp;G. Identify Messages</a></li>
+			<li><a href="#integrator-usage-g">&nbsp;&nbsp;G. Identify Messages</a></li>
+			<li><a href="#integrator-usage-h">&nbsp;&nbsp;H. Transactions (Upload, Commit, Abort)</a></li>
+			<li><a href="#integrator-usage-i">&nbsp;&nbsp;I. Adapter Processing (Octopus)</a></li>
 
 			<li><a href="#server-setup-and-maintenance">3. Server Setup and Maintenance (For Administrators)</a></li>
 			<li><a href="#deployment-strategies">4. Deployment Strategies</a></li>
@@ -205,8 +207,13 @@
     <p><b>Filename Format:</b></p>
     <p>The message is saved as a file in the <code>queues/QUEUE_NAME/</code> directory with the format: <code>YYYYMMDDHHNNSSCCCC-RRRR-GUID.bin</code></p>
 
+    <p><b>Ordering:</b></p>
+    <p>Publishing takes a short lock (<code>locks/publish.lock</code>) while it picks the name and renames the message into the queue, so <code>CCCC</code> counts up in the order publishes finished within a second. A message published after another therefore always sorts after it, and a consumer using <code>after</code> can never step past a message it has not read. The payload is written before the lock is taken, so a large message does not hold up other publishers.</p>
+
     <h3 id="integrator-usage-b">B. Fetching Messages (Reading from a Queue - API Pull)</h3>
     <p>Messages are fetched sequentially using the unique filename as a <strong>pointer</strong>. The consumer must track this pointer (the <code>after</code> parameter) to ensure guaranteed, chronological delivery.</p>
+
+    <p>Fetching runs forward by default: the pointer is the last message you processed and you get the next one. Add <code>r</code> to the request (any value, even empty) and it runs backwards instead: you get the message before the pointer, which lets a consumer walk back through a queue (newest first) without reading it from the start. An empty pointer means the first message going forward, and the newest message going backwards.</p>
 
     <p><b>Endpoint:</b></p>
     <pre><code>/index.php?action=fetch</code></pre>
@@ -236,8 +243,14 @@
             <tr>
                 <td><code>after</code></td>
                 <td>Optional</td>
-                <td><strong>The Pointer.</strong> The filename of the LAST successfully processed message. Leave blank or omit for the very first message.</td>
+                <td><strong>The Pointer.</strong> The filename of the LAST successfully processed message. Leave blank or omit for the very first message (or, with <code>r</code> present, the newest message).</td>
                 <td><code>202510300900000001-0000-ed207f80-9fee-428d-8fad-0133255e1790.bin</code></td>
+            </tr>
+            <tr>
+                <td><code>r</code></td>
+                <td>Optional</td>
+                <td><strong>Reverse.</strong> Present, with any value, returns the message BEFORE the pointer instead of after it. Omit it to fetch forward as usual. (On <code>publish</code> and <code>store</code>, <code>r</code> is the retention days.)</td>
+                <td><code>1</code></td>
             </tr>
         </tbody>
     </table>
@@ -247,7 +260,12 @@
         <li>The consumer must store the returned filename (<code>Content-Disposition</code> header) as its <strong>pointer</strong>.</li>
         <li>The consumer must only advance the pointer <strong>after</strong> successfully processing and acting on the message content.</li>
         <li><strong>The system performs no message acknowledgment (ACK).</strong> Delivery guarantee relies entirely on the consumer's proper use of the pointer (<code>after</code> parameter).</li>
+        <li>A reverse walk is for reading history, not for guaranteed delivery: keep the forward pointer for that, and use a separate pointer for the backwards walk.</li>
     </ul>
+
+    <p><b>Example (reverse):</b></p>
+    <pre><code>POST /index.php
+action=fetch&amp;q=customer_b&amp;after=202510300900000001-0000-ed207f80-9fee-428d-8fad-0133255e1790.bin&amp;r=</code></pre>
 
 <h3 id="integrator-usage-c">C. B2B Replication (Puller)</h3>
 <p>For external partners (e.g. ABC Ltd) to pull data from your (e.g. XYZ Ltd) queue, they should run a dedicated cron job on their server (e.g. ABC_LOCAL_SERVER).</p>
@@ -356,6 +374,7 @@
     <p><b>Filename Format:</b></p>
     <p>The message is saved as a file in the <code>store/x/y/z/</code> directory with the format: <code>YYYYMMDDHHNNSSCCCC-RRRR-GUID.bin</code>.  The file will be returned if the storing of the message is successful. You will need to note this filename for later fast retrieval.</p>
 	<p>For later retrieval of the message, you must note the <code>response.result</code>.</p>
+	<p>The message is first written to <code>queues/temp/</code>, checked, and only then moved to its name in the store, so a stored file never exists half written. A write that fails leaves nothing behind in the store.</p>
 
 
     <h3 id="integrator-usage-e">E. Retrieving Messages (Reading from a Data Store)</h3>
@@ -481,24 +500,183 @@
     </ul>
 
 
-    <h2 id="server-setup-and-maintenance">3. Server Setup and Maintenance (For Administrators)</h2>
+    <h3 id="integrator-usage-h">H. Transactions (Upload, Commit, Abort)</h3>
+    <p>A transaction stages any number of messages without touching the live queues or the data store, then moves them all into place with one commit. A whole catalogue can be uploaded over hours or days, and listeners see nothing of it until the commit, when all of it appears at once and in upload order.</p>
+    <p>A transaction is just a GUID the client makes up and sends as <code>t</code>. There is no step to open one: the first upload with a new GUID creates it. Where the messages go - one queue, or the data store - is decided at the commit, not at upload.</p>
+    <p>Without <code>t</code>, <code>publish</code> and <code>store</code> work exactly as before, one message per request. <code>upload</code>, <code>commit</code> and <code>abort</code> all require <code>t</code>.</p>
+
+    <p><b>Endpoints:</b></p>
+    <pre><code>/index.php?action=upload
+/index.php?action=commit
+/index.php?action=abort</code></pre>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Action</th>
+                <th>Parameters</th>
+                <th>Effect</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>upload</code></td>
+                <td><code>t</code> (required), <code>msg</code> (required), <code>n</code> (optional nonce)</td>
+                <td>Stages the message in the transaction as the next one in upload order. Nothing is visible anywhere yet. <code>result</code> is its position (1, 2, 3, ...).</td>
+            </tr>
+            <tr>
+                <td><code>commit</code></td>
+                <td><code>t</code> (required), <code>q</code>, <code>r</code>, <code>u</code></td>
+                <td>With <code>q</code>: every staged message is published to that queue, in upload order. Without <code>q</code>: every staged message goes into the data store (<code>u=1</code> marks them unidentified). <code>r</code> is the retention for all of them. <code>result</code> is the list of final names, in upload order.</td>
+            </tr>
+            <tr>
+                <td><code>abort</code></td>
+                <td><code>t</code> (required)</td>
+                <td>Deletes the transaction and everything staged in it.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p><b>Example (POST):</b></p>
+    <pre><code>action=upload&amp;t=5b0c1f3e-8a7d-4c2e-9f61-0d4a2b7c9e15&amp;n=a1b2c3d4-e5f6-4000-8000-0123456789ab&amp;msg=...
+action=upload&amp;t=5b0c1f3e-8a7d-4c2e-9f61-0d4a2b7c9e15&amp;n=b2c3d4e5-f6a7-4000-8000-0123456789ab&amp;msg=...
+action=commit&amp;t=5b0c1f3e-8a7d-4c2e-9f61-0d4a2b7c9e15&amp;q=customer_b&amp;r=30</code></pre>
+
+	<p><b>Commit Response:</b></p>
+	<pre><code>{
+	"system":"ZOSCII MQ",
+	"version":"1.0",
+	"error":"",
+	"message":"Transaction committed.",
+	"result":[
+		"202610021400390000-0030-5d226a8f-11f7-4a97-b103-d8407e9849a3.bin",
+		"202610021400390001-0030-6bb43cf4-b933-4a5a-912d-4b6a1d3159b7.bin"
+	]
+}</code></pre>
+
+    <p><b>How it behaves:</b></p>
+    <ul>
+        <li><b>Queue order:</b> a queue commit takes the same publish lock as <code>publish</code>, reads the time once and numbers the messages in upload order: CCCC counts 0000, 0001, 0002 ... within that second, carrying into the next second past 9999. While it runs, fetches on that queue wait, then see the whole commit at once.</li>
+        <li><b>Safe to send again:</b> a commit that stops part way (timeout, error) carries on where it stopped when it is sent again, keeping its first destination. A commit sent after it finished answers <code>"Transaction already committed."</code> with the same names, so a client whose reply was lost still gets them.</li>
+        <li><b>Retries:</b> each upload can carry its own nonce <code>n</code>, so a retried upload is answered <code>"Nonce already used."</code> and is not staged twice.</li>
+        <li><b>Expiry:</b> a transaction with no upload, commit or abort for <code>TRANSACTION_EXPIRY</code> seconds (default one day) is deleted with everything staged in it. A committed transaction keeps only its list of names until then.</li>
+        <li><b>Locked once committing:</b> uploads and aborts are refused once a commit has started.</li>
+        <li><b>Permissions:</b> <code>ALLOW_TRANSACTIONS</code> enables the three actions. A queue commit also needs <code>ALLOW_PUBLISH</code> (and the queue must not be in the publish block list); a store commit needs <code>ALLOW_STORE</code>.</li>
+        <li><b>Zero knowledge:</b> staged files are kept only with their upload position - the server stores nothing about where they will go until the commit, and nothing about the transaction once it expires.</li>
+    </ul>
+
+
+
+
+    <h3 id="integrator-usage-i">I. Adapter Processing (Octopus)</h3>
+    <p><code>octopus.php</code> is a cron-job entrypoint that fetches messages from a source queue, passes each one through a pluggable adapter script, and publishes the result to a target queue or data store. It is the same pull loop as <code>replikate.php</code> with a processing step in the middle.</p>
+
+    <p><b>Script:</b></p>
+    <pre><code>octopus.php</code></pre>
+
+    <p><b>Setup:</b></p>
+    <ul>
+        <li>Place adapter files in <code>./adapters/</code>. Each adapter must define <code>function octopusProcess($strName_a, $binContent_a, $arrParams_a)</code>.</li>
+        <li>Schedule a cron job per source/adapter/target combination.</li>
+        <li>State files are written to <code>./states/octopus_state_SOURCE_TARGET_ADAPTER.txt</code> automatically, one per unique combination, so multiple adapters can run against the same source queue independently.</li>
+    </ul>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Parameter</th>
+                <th>Required</th>
+                <th>Description</th>
+                <th>Example Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>url</code></td>
+                <td>Yes</td>
+                <td>URL of the source server&apos;s <code>index.php</code></td>
+                <td><code>https://SOURCE_SERVER/index.php</code></td>
+            </tr>
+            <tr>
+                <td><code>sq</code></td>
+                <td>Yes</td>
+                <td>Source queue name to read from</td>
+                <td><code>raw_orders</code></td>
+            </tr>
+            <tr>
+                <td><code>tq</code></td>
+                <td>Optional</td>
+                <td>Target queue name on the local server. Omit to save processed messages to the data store instead.</td>
+                <td><code>processed_orders</code></td>
+            </tr>
+            <tr>
+                <td><code>adapter</code></td>
+                <td>Yes</td>
+                <td>Adapter filename (without <code>.php</code>) from the <code>adapters/</code> folder. Only <code>[a-zA-Z0-9_-]</code> allowed.</td>
+                <td><code>example</code></td>
+            </tr>
+            <tr>
+                <td><em>extra params</em></td>
+                <td>Optional</td>
+                <td>Any additional key=value pairs are passed to the adapter as <code>$arrParams_a</code>.</td>
+                <td><code>--mode=strict</code> (CLI) or <code>&amp;mode=strict</code> (HTTP)</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p><b>Example Commands:</b></p>
+    <pre><code># CLI — queue to queue
+php octopus.php --url=https://SOURCE/index.php --sq=raw_orders --tq=processed_orders --adapter=example
+
+# CLI — queue to store
+php octopus.php --url=https://SOURCE/index.php --sq=raw_orders --adapter=example
+
+# HTTP
+GET /octopus.php?url=https://SOURCE/index.php&amp;sq=raw_orders&amp;tq=processed_orders&amp;adapter=example</code></pre>
+
+    <p><b>Adapter Interface:</b></p>
+    <pre><code>&lt;?php
+// adapters/myadapter.php
+
+function octopusProcess($strName_a, $binContent_a, $arrParams_a)
+{
+    // $strName_a    — original filename (YYYYMMDDHHNNSSCCCC-RRRR-GUID.bin)
+    // $binContent_a — raw message bytes
+    // $arrParams_a  — extra parameters passed to octopus
+
+    // Return processed bytes to publish/store, or null/false to skip the message.
+    return $binContent_a;
+}
+</code></pre>
+
+    <p><b>Skip semantics:</b> returning <code>null</code> or <code>false</code> skips the message — the pointer advances and the message is not published. Use this to filter, route conditionally, or drop messages the adapter cannot handle.</p>
+
+    <p><b>Retention:</b> the processed message inherits the <code>RRRR</code> retention value from the source filename.</p>
+
+        <h2 id="server-setup-and-maintenance">3. Server Setup and Maintenance (For Administrators)</h2>
 
     <h3>A. Core Directory Structure</h3>
     <p>The system is file-based and requires a dedicated root directory:</p>
     <pre><code>./
 |-- index.php             (HTTP API: Publish/Fetch)
 |-- replikate.php         (Cron: External Puller)
+|-- octopus.php           (Cron: Adapter Processing Framework)
 |-- claireup.php          (Cron: Retention Cleanup)
 |-- nonce/                (Optional nonce files go here)
 |-- queues/
 |   |-- customer_a/       (Queue 1)
-|   |-- customer_a/locks/ (Queue 1 lock files)
-|   |   |-- *.bin
+|   |   |-- *.bin         (Queue 1 messages)
+|   |   |-- locks/        (Queue 1 lock files)
 |   |-- customer_b/       (Queue 2)
-|   |-- customer_b/locks/ (Queue 2 lock files)
-|   |   |-- *.bin
+|   |   |-- *.bin         (Queue 2 messages)
+|   |   |-- locks/        (Queue 2 lock files)
+|   |-- temp/             (Uploads in progress, moved into place once complete)
+|   |   |-- &lt;guid&gt;/      (One folder per open transaction)
 |-- states/               (State Files are here for Replicators)
 |   |   |-- replikate_state_*.txt
+|   |   |-- octopus_state_*.txt
+|-- adapters/             (Octopus adapter files)
+|   |-- example.php       (Example/template adapter)
 |-- store/                (Data Store Files are here)
 |-- statissa.php          (Statistics, it's better to place statissa elsewhere)
 </code></pre>
@@ -1250,7 +1428,6 @@ volumes:
         <li>Operating within single organization</li>
         <li>Have dedicated DevOps team</li>
         <li>Need built-in partitioning/sharding</li>
-        <li>Require transaction support</li>
     </ul>
 </div>
 
