@@ -3,6 +3,8 @@
    This software is released under MIT License. */
 
 /* Small-C for CP/M - ZOSCII ROM Encoder - Input Streaming Version */
+/* NOTE: THIS VERSION DOES NOT USE A TIMER SO IT IS NOT RANDOM BEYOND THE ROM AND THE INPUT */
+
 #include "stdio.h"
 
 /* Lookup table structure - 1536 bytes total */

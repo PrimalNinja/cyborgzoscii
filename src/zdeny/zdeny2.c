@@ -162,6 +162,9 @@ static bool createDeniabilityROMs(const char* strTemplate1_a, const char* strTem
                                   const char* strOutputROM1_a, const char* strOutputROM2_a)
 {
     uint8_t* arrAssigned = NULL;
+    uint8_t* arrSkip = NULL;
+    size_t szSkipped = 0;
+    bool blnBest = false;
     uint32_t* arrCount = NULL;
     uint8_t* arrS = NULL;
     uint8_t* arrUsed = NULL;
@@ -179,6 +182,7 @@ static bool createDeniabilityROMs(const char* strTemplate1_a, const char* strTem
     size_t szI = 0;
     size_t szMsg = 0;
     size_t szN = 0;
+    size_t szPadded = 0;
     size_t szW2 = 0;
     uint8_t* ptrEnc = NULL;
     uint8_t* ptrMsg = NULL;
@@ -218,8 +222,19 @@ static bool createDeniabilityROMs(const char* strTemplate1_a, const char* strTem
     }
     else if (szMsg < szN)
     {
-        printf("Warning: Message is %zu bytes but the encoded file holds %zu.\n", szMsg, szN);
-        printf("         Positions %zu onward will decode to unconstrained ROM bytes.\n", szMsg);
+        // Pad with spaces so every position decodes to something clean (no junk tail)
+        uint8_t* ptrPadded = (uint8_t*)realloc(ptrMsg, szN);
+        if (!ptrPadded)
+        {
+            fprintf(stderr, "Error: Failed to allocate memory\n");
+            goto done;
+        }
+        ptrMsg = ptrPadded;
+        szPadded = szN - szMsg;
+        memset(ptrMsg + szMsg, ' ', szPadded);
+        printf("Message is %zu bytes but the encoded file holds %zu.\n", szMsg, szN);
+        printf("         Padding positions %zu onward with spaces.\n", szMsg);
+        szMsg = szN;
     }
 
     arrW = (uint16_t*)malloc(szW2 * sizeof(uint16_t));
@@ -229,9 +244,10 @@ static bool createDeniabilityROMs(const char* strTemplate1_a, const char* strTem
     arrAssigned = (uint8_t*)malloc(ZOSCII_ROM_SIZE);
     arrUsed = (uint8_t*)malloc(ZOSCII_ROM_SIZE);
     arrV1 = (uint8_t*)malloc(ZOSCII_ROM_SIZE);
+    arrSkip = (uint8_t*)calloc(szMsg, 1);
     ptrROM1 = (uint8_t*)malloc(ZOSCII_ROM_SIZE);
     ptrROM2 = (uint8_t*)malloc(ZOSCII_ROM_SIZE);
-    if (!arrW || !arrS || !arrCount || !arrVal || !arrAssigned || !arrUsed || !arrV1 || !ptrROM1 || !ptrROM2)
+    if (!arrW || !arrS || !arrCount || !arrVal || !arrAssigned || !arrUsed || !arrV1 || !arrSkip || !ptrROM1 || !ptrROM2)
     {
         fprintf(stderr, "Error: Failed to allocate memory\n");
         goto done;
@@ -256,8 +272,12 @@ static bool createDeniabilityROMs(const char* strTemplate1_a, const char* strTem
     seedFromROM(ptrROM2, ZOSCII_ROM_SIZE);
 
     // Choose S: equal layer-2 addresses force equal S bytes; every other S byte is free
-    for (intAttempt = 0; intAttempt < MAX_ATTEMPTS && !blnOk; )
+    // Passes 1..MAX_ATTEMPTS must satisfy every position. If none does, one final
+    // best-effort pass skips the positions it cannot satisfy (they decode as garbage,
+    // like zdeny) instead of failing.
+    for (intAttempt = 0; intAttempt <= MAX_ATTEMPTS && !blnOk; )
     {
+        blnBest = (intAttempt == MAX_ATTEMPTS);
         intAttempt++;
         memset(arrAssigned, 0, ZOSCII_ROM_SIZE);
         memset(arrUsed, 0, ZOSCII_ROM_SIZE);
@@ -273,11 +293,14 @@ static bool createDeniabilityROMs(const char* strTemplate1_a, const char* strTem
         }
 
         blnOk = true;
+        szSkipped = 0;
+        memset(arrSkip, 0, szMsg);
         for (szI = 0; szI < szMsg && blnOk; szI++)
         {
             // an S word may repeat, but only for the same message byte
             uint16_t intS = makeWord(arrS[2 * szI], arrS[2 * szI + 1]);
             int intTries = 0;
+            bool blnSkip = false;
             while (arrUsed[intS] && arrV1[intS] != ptrMsg[szI])
             {
                 intRerolls++;
@@ -291,17 +314,22 @@ static bool createDeniabilityROMs(const char* strTemplate1_a, const char* strTem
                 }
                 else
                 {
-                    blnOk = false;   // both bytes tied to repeats: rebuild everything
+                    if (blnBest) { blnSkip = true; } else { blnOk = false; }   // both bytes tied to repeats
                     break;
                 }
                 intS = makeWord(arrS[2 * szI], arrS[2 * szI + 1]);
                 if (++intTries > 100000)
                 {
-                    blnOk = false;
+                    if (blnBest) { blnSkip = true; } else { blnOk = false; }
                     break;
                 }
             }
-            if (blnOk)
+            if (blnSkip)
+            {
+                arrSkip[szI] = 1;
+                szSkipped++;
+            }
+            else if (blnOk)
             {
                 arrUsed[intS] = 1;
                 arrV1[intS] = ptrMsg[szI];
@@ -320,7 +348,10 @@ static bool createDeniabilityROMs(const char* strTemplate1_a, const char* strTem
     // Overwrite ROM cells
     for (szI = 0; szI < szMsg; szI++)
     {
-        ptrROM1[makeWord(arrS[2 * szI], arrS[2 * szI + 1])] = ptrMsg[szI];
+        if (!arrSkip[szI])
+        {
+            ptrROM1[makeWord(arrS[2 * szI], arrS[2 * szI + 1])] = ptrMsg[szI];
+        }
     }
     for (szI = 0; szI < szW2; szI++)
     {
@@ -335,6 +366,10 @@ static bool createDeniabilityROMs(const char* strTemplate1_a, const char* strTem
     // Decode in memory with the finished ROMs before writing anything
     for (szI = 0; szI < szMsg; szI++)
     {
+        if (arrSkip[szI])
+        {
+            continue;
+        }
         uint16_t intS = makeWord(ptrROM2[arrW[2 * szI]], ptrROM2[arrW[2 * szI + 1]]);
         if (ptrROM1[intS] != ptrMsg[szI])
         {
@@ -358,14 +393,24 @@ static bool createDeniabilityROMs(const char* strTemplate1_a, const char* strTem
     printf("Template ROM 1:    %s\n", strTemplate1_a);
     printf("Template ROM 2:    %s\n", strTemplate2_a);
     printf("Encoded file:      %s\n", strEncodedFile_a);
-    printf("Message file:      %s (%zu bytes)\n", strMessageFile_a, szMsg);
+    printf("Message file:      %s (%zu bytes", strMessageFile_a, szMsg - szPadded);
+    if (szPadded)
+    {
+        printf(" + %zu spaces of padding", szPadded);
+    }
+    printf(")\n");
     printf("Output ROM 1:      %s (inner)\n", strOutputROM1_a);
     printf("Output ROM 2:      %s (outer)\n", strOutputROM2_a);
     printf("ROM size:          %d bytes (64KB) each\n", ZOSCII_ROM_SIZE);
     printf("ROM 1 cells set:   %d\n", intMapped1);
     printf("ROM 2 cells set:   %d\n", intMapped2);
     printf("Conflicts re-rolled: %d (over %d build attempt(s))\n", intRerolls, intAttempt);
-    printf("Self-check:        decoded %zu bytes match the message\n", szMsg);
+    if (szSkipped)
+    {
+        printf("Unsatisfied:       %zu of %zu positions (%.1f%%) could not be mapped and decode as garbage\n",
+               szSkipped, szMsg, 100.0 * (double)szSkipped / (double)szMsg);
+    }
+    printf("Self-check:        the other %zu positions decode to the message\n", szMsg - szSkipped);
     printf("\n");
     printf("Verification:\n");
     printf("  zdecode \"%s\" \"%s\" \"%s\" decoded.txt\n", strOutputROM1_a, strOutputROM2_a, strEncodedFile_a);
@@ -382,6 +427,7 @@ done:
     free(arrS);
     free(arrUsed);
     free(arrV1);
+    free(arrSkip);
     free(arrVal);
     free(arrW);
     free(ptrEnc);

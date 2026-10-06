@@ -500,47 +500,42 @@ action=fetch&amp;q=customer_b&amp;after=202510300900000001-0000-ed207f80-9fee-42
     </ul>
 
 
-    <h3 id="integrator-usage-h">H. Transactions (Upload, Commit, Abort)</h3>
+<h3 id="integrator-usage-h">H. Transactions (publish / store with t and commit)</h3>
     <p>A transaction stages any number of messages without touching the live queues or the data store, then moves them all into place with one commit. A whole catalogue can be uploaded over hours or days, and listeners see nothing of it until the commit, when all of it appears at once and in upload order.</p>
-    <p>A transaction is just a GUID the client makes up and sends as <code>t</code>. There is no step to open one: the first upload with a new GUID creates it. Where the messages go - one queue, or the data store - is decided at the commit, not at upload.</p>
-    <p>Without <code>t</code>, <code>publish</code> and <code>store</code> work exactly as before, one message per request. <code>upload</code>, <code>commit</code> and <code>abort</code> all require <code>t</code>.</p>
-
-    <p><b>Endpoints:</b></p>
-    <pre><code>/index.php?action=upload
-/index.php?action=commit
-/index.php?action=abort</code></pre>
+    <p>A transaction is just a GUID the client makes up and sends as <code>t</code>. There is no step to open one: the first message sent with a new GUID creates it. Transactions use the normal verbs - <code>publish</code> and <code>store</code> - and the verb on the commit decides where everything goes.</p>
+    <p>Without <code>t</code>, <code>publish</code> and <code>store</code> work exactly as before, one message per request.</p>
 
     <table>
         <thead>
             <tr>
-                <th>Action</th>
-                <th>Parameters</th>
+                <th>Request</th>
                 <th>Effect</th>
             </tr>
         </thead>
         <tbody>
             <tr>
-                <td><code>upload</code></td>
-                <td><code>t</code> (required), <code>msg</code> (required), <code>n</code> (optional nonce)</td>
-                <td>Stages the message in the transaction as the next one in upload order. Nothing is visible anywhere yet. <code>result</code> is its position (1, 2, 3, ...).</td>
+                <td><code>action=publish&amp;t=&lt;guid&gt;&amp;msg=...</code><br><code>action=store&amp;t=&lt;guid&gt;&amp;msg=...</code></td>
+                <td>Stages the message in the transaction as the next one in upload order. Nothing is visible anywhere yet. <code>n</code> (nonce) is optional, as usual. <code>result</code> is its position (1, 2, 3, ...).</td>
             </tr>
             <tr>
-                <td><code>commit</code></td>
-                <td><code>t</code> (required), <code>q</code>, <code>r</code>, <code>u</code></td>
-                <td>With <code>q</code>: every staged message is published to that queue, in upload order. Without <code>q</code>: every staged message goes into the data store (<code>u=1</code> marks them unidentified). <code>r</code> is the retention for all of them. <code>result</code> is the list of final names, in upload order.</td>
+                <td><code>action=publish&amp;t=&lt;guid&gt;&amp;q=...&amp;r=...&amp;commit=true</code></td>
+                <td>Publishes everything staged to queue <code>q</code>, in upload order. <code>result</code> is the list of queue names, in upload order.</td>
             </tr>
             <tr>
-                <td><code>abort</code></td>
-                <td><code>t</code> (required)</td>
-                <td>Deletes the transaction and everything staged in it.</td>
+                <td><code>action=store&amp;t=&lt;guid&gt;&amp;r=...&amp;commit=true</code></td>
+                <td>Stores everything staged (<code>u=1</code> marks them unidentified). <code>result</code> is the list of store names, in upload order.</td>
+            </tr>
+            <tr>
+                <td><code>action=publish&amp;t=&lt;guid&gt;&amp;commit=false</code><br><code>action=store&amp;t=&lt;guid&gt;&amp;commit=false</code></td>
+                <td>Rolls back: deletes the transaction and everything staged in it.</td>
             </tr>
         </tbody>
     </table>
 
     <p><b>Example (POST):</b></p>
-    <pre><code>action=upload&amp;t=5b0c1f3e-8a7d-4c2e-9f61-0d4a2b7c9e15&amp;n=a1b2c3d4-e5f6-4000-8000-0123456789ab&amp;msg=...
-action=upload&amp;t=5b0c1f3e-8a7d-4c2e-9f61-0d4a2b7c9e15&amp;n=b2c3d4e5-f6a7-4000-8000-0123456789ab&amp;msg=...
-action=commit&amp;t=5b0c1f3e-8a7d-4c2e-9f61-0d4a2b7c9e15&amp;q=customer_b&amp;r=30</code></pre>
+    <pre><code>action=store&amp;t=5b0c1f3e-8a7d-4c2e-9f61-0d4a2b7c9e15&amp;n=a1b2c3d4-e5f6-4000-8000-0123456789ab&amp;msg=...
+action=store&amp;t=5b0c1f3e-8a7d-4c2e-9f61-0d4a2b7c9e15&amp;n=b2c3d4e5-f6a7-4000-8000-0123456789ab&amp;msg=...
+action=store&amp;t=5b0c1f3e-8a7d-4c2e-9f61-0d4a2b7c9e15&amp;r=3650&amp;commit=true</code></pre>
 
 	<p><b>Commit Response:</b></p>
 	<pre><code>{
@@ -549,22 +544,22 @@ action=commit&amp;t=5b0c1f3e-8a7d-4c2e-9f61-0d4a2b7c9e15&amp;q=customer_b&amp;r=
 	"error":"",
 	"message":"Transaction committed.",
 	"result":[
-		"202610021400390000-0030-5d226a8f-11f7-4a97-b103-d8407e9849a3.bin",
-		"202610021400390001-0030-6bb43cf4-b933-4a5a-912d-4b6a1d3159b7.bin"
+		"202610030120150000-3650-5d226a8f-11f7-4a97-b103-d8407e9849a3.bin",
+		"202610030120150000-3650-6bb43cf4-b933-4a5a-912d-4b6a1d3159b7.bin"
 	]
 }</code></pre>
 
     <p><b>How it behaves:</b></p>
     <ul>
-        <li><b>Queue order:</b> a queue commit takes the same publish lock as <code>publish</code>, reads the time once and numbers the messages in upload order: CCCC counts 0000, 0001, 0002 ... within that second, carrying into the next second past 9999. While it runs, fetches on that queue wait, then see the whole commit at once.</li>
-        <li><b>Safe to send again:</b> a commit that stops part way (timeout, error) carries on where it stopped when it is sent again, keeping its first destination. A commit sent after it finished answers <code>"Transaction already committed."</code> with the same names, so a client whose reply was lost still gets them.</li>
-        <li><b>Retries:</b> each upload can carry its own nonce <code>n</code>, so a retried upload is answered <code>"Nonce already used."</code> and is not staged twice.</li>
-        <li><b>Expiry:</b> a transaction with no upload, commit or abort for <code>TRANSACTION_EXPIRY</code> seconds (default one day) is deleted with everything staged in it. A committed transaction keeps only its list of names until then.</li>
-        <li><b>Locked once committing:</b> uploads and aborts are refused once a commit has started.</li>
-        <li><b>Permissions:</b> <code>ALLOW_TRANSACTIONS</code> enables the three actions. A queue commit also needs <code>ALLOW_PUBLISH</code> (and the queue must not be in the publish block list); a store commit needs <code>ALLOW_STORE</code>.</li>
-        <li><b>Zero knowledge:</b> staged files are kept only with their upload position - the server stores nothing about where they will go until the commit, and nothing about the transaction once it expires.</li>
+        <li><b>The commit's verb decides:</b> staged messages carry no destination. Whatever verb they were sent with, <code>publish ... commit=true</code> sends them all to <code>q</code> and <code>store ... commit=true</code> sends them all to the store. A publish commit without <code>q</code> is refused.</li>
+        <li><b>A commit carries no message:</b> a request with <code>commit=true</code> and a <code>msg</code> is refused, so a stray upload can't be taken as a commit. <code>commit</code> must be <code>true</code> or <code>false</code>.</li>
+        <li><b>Queue order:</b> a publish commit takes the same publish lock as a single publish, reads the time once and numbers the messages in upload order: CCCC counts 0000, 0001, 0002 ... within that second, carrying into the next second past 9999. While it runs, fetches on that queue wait, then see the whole commit at once.</li>
+        <li><b>Safe to send again:</b> a commit that stops part way (timeout, error) carries on where it stopped when it is sent again. Sent again with the other verb, it is refused until it is finished with the first one. A commit sent after it finished answers <code>"Transaction already committed."</code> with the same names, so a client whose reply was lost still gets them.</li>
+        <li><b>Locked once committing:</b> new messages and roll backs are refused once a commit has started.</li>
+        <li><b>Expiry:</b> a transaction with no activity for <code>TRANSACTION_EXPIRY</code> seconds (default one day) is deleted with everything staged in it. A committed transaction keeps only its list of names until then.</li>
+        <li><b>Permissions:</b> <code>ALLOW_PUBLISH</code> and <code>ALLOW_STORE</code> apply to transactions exactly as to single messages.</li>
+        <li><b>Zero knowledge:</b> staged messages are kept only with their upload position - the server stores nothing about where they will go until the commit, and nothing about the transaction once it expires.</li>
     </ul>
-
 
 
 

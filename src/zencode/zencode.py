@@ -7,6 +7,7 @@ import sys
 import random
 import struct
 import os
+import time
 
 class ByteAddresses:
     def __init__(self):

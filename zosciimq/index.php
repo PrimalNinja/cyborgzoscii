@@ -16,10 +16,12 @@ define('ALLOW_PUBLISH', 'TRUE');
 define('ALLOW_RETRIEVE', 'FALSE');
 define('ALLOW_SCAN', 'FALSE');
 define('ALLOW_STORE', 'FALSE');
-define('ALLOW_TRANSACTIONS', 'TRUE');	// upload / commit / abort (a commit also needs ALLOW_PUBLISH or ALLOW_STORE)
 
-// A transaction with no upload, commit or abort for this long is deleted, along with
-// anything staged in it. Also the age at which a leftover single-upload temp file is removed.
+// Transactions: publish or store with t=<guid> stages the message; the same verb with
+// commit=true moves everything staged to the queue q (publish) or into the store (store);
+// commit=false rolls the transaction back. ALLOW_PUBLISH / ALLOW_STORE apply as usual.
+// A transaction with no activity for this long is deleted, along with anything staged in
+// it. Also the age at which a leftover single-message temp file is removed.
 define('TRANSACTION_EXPIRY', 86400);	// in seconds
 
 // Allowed file extensions for fetch operations
@@ -188,12 +190,17 @@ function findUnidentifiedFilesRecursive($strPath_a)
 // Single publish / store: the payload is written to QUEUE_ROOT/temp/<guid>.bin,
 // checked, then renamed to its final name, so it never appears half written.
 //
-// Transaction: QUEUE_ROOT/temp/<txguid>/ holds the uploads until a commit moves
-// them all to one queue (in upload order) or into the store.
-//   NNNNNNNN-<guid>.bin   staged upload, NNNNNNNN = upload order
+// Transaction: QUEUE_ROOT/temp/<txguid>/ holds the staged messages until a commit
+// moves them all to one queue (in upload order) or into the store.
+//   action=publish|store & t=<guid> & msg=...        stage a message
+//   action=publish & t=<guid> & q=... & commit=true  publish everything staged to q
+//   action=store & t=<guid> & commit=true            store everything staged
+//   action=publish|store & t=<guid> & commit=false   roll back
+//
+//   NNNNNNNN-<guid>.bin   staged message, NNNNNNNN = upload order
 //   tx.lock               mutex for this transaction
 //   next.seq              next upload order number
-//   commit.json           destination, written when a commit starts
+//   commit.json           verb and destination, written when a commit starts
 //   commit.log            "staged|final" per file, written before each move
 //   committed.json        final names in upload order, once the commit is done
 // -----------------------------------------------------------------------------
@@ -378,16 +385,42 @@ function handleUpload($strTx_a, $strNonce_a, $binMessage_a)
 			}
 		}
 
-		sendJSONResponse("", "", "Message uploaded.", $intSeq + 1);
+		sendJSONResponse("", "", "Message staged.", $intSeq + 1);
 	}
 }
 
-// Moves every staged upload to the queue 'q' (in upload order, through the publish
-// lock, exactly as if published one after another) or, with no 'q', into the store.
-// Retention 'r' and unidentified 'u' apply to every file. A commit that stops part way
-// (timeout, error) carries on where it stopped when it is sent again; a commit sent
-// after it finished returns the same names again.
-function handleCommit($strTx_a, $strQueueName_a, $intRetentionDays_a, $blnUnidentified_a)
+// publish / store with t=<guid>: stage, commit or roll back, by the commit parameter.
+function handleTransaction($strVerb_a, $strTx_a, $strCommit_a, $strQueueName_a, $intRetentionDays_a, $blnUnidentified_a, $strNonce_a, $binMessage_a)
+{
+	if ($strCommit_a === 'true')
+	{
+		if (!empty($binMessage_a))
+		{
+			sendJSONResponse("", "A commit carries no message - send the message without commit first.", "", []);
+		}
+
+		handleCommit($strTx_a, $strVerb_a, $strQueueName_a, $intRetentionDays_a, $blnUnidentified_a);
+	}
+	else if ($strCommit_a === 'false')
+	{
+		handleAbort($strTx_a);
+	}
+	else if (strlen($strCommit_a) === 0)
+	{
+		handleUpload($strTx_a, $strNonce_a, $binMessage_a);
+	}
+	else
+	{
+		sendJSONResponse("", "Invalid 'commit' - use true or false.", "", []);
+	}
+}
+
+// Moves every staged message to the queue 'q' (verb publish: in upload order, through
+// the publish lock, exactly as if published one after another) or into the store (verb
+// store). Retention 'r' and unidentified 'u' apply to every message. A commit that stops
+// part way (timeout, error) carries on where it stopped when it is sent again; a commit
+// sent after it finished returns the same names again.
+function handleCommit($strTx_a, $strVerb_a, $strQueueName_a, $intRetentionDays_a, $blnUnidentified_a)
 {
 	global $arrPublishBlocks;
 
@@ -415,36 +448,35 @@ function handleCommit($strTx_a, $strQueueName_a, $intRetentionDays_a, $blnUniden
 		sendJSONResponse("", "", "Transaction already committed.", is_array($arrNames) ? $arrNames : []);
 	}
 
-	// The destination is fixed by the first commit; a repeat carries on with it.
+	// The verb and destination are fixed by the first commit; a repeat carries on with them.
 	$arrPlan = json_decode((string)@file_get_contents($strTxPath . 'commit.json'), true);
 
 	if (!is_array($arrPlan))
 	{
-		$arrPlan = ['q' => $strQueueName_a, 'r' => $intRetentionDays_a, 'u' => $blnUnidentified_a];
+		if ($strVerb_a === 'publish' && strlen($strQueueName_a) === 0)
+		{
+			unlockMutex($strMutexFile);
+			sendJSONResponse("", "Missing 'q' (queue name) for publish commit.", "", []);
+		}
+
+		if ($strVerb_a === 'publish' && in_array($strQueueName_a, $arrPublishBlocks))
+		{
+			unlockMutex($strMutexFile);
+			sendJSONResponse("", "Invalid action 'publish' for provided queue.", "", []);
+		}
+
+		$arrPlan = ['verb' => $strVerb_a, 'q' => ($strVerb_a === 'publish') ? $strQueueName_a : '', 'r' => $intRetentionDays_a, 'u' => $blnUnidentified_a];
+	}
+	else if ($arrPlan['verb'] !== $strVerb_a)
+	{
+		unlockMutex($strMutexFile);
+		sendJSONResponse("", "Transaction is being committed with action '" . $arrPlan['verb'] . "' - send that commit again to finish it.", "", []);
 	}
 
 	$strQueueName = (string)$arrPlan['q'];
 	$strRetentionDays = sprintf('%04d', (int)$arrPlan['r']);
 	$blnUnidentified = (bool)$arrPlan['u'];
-	$blnToQueue = (strlen($strQueueName) > 0);
-
-	if ($blnToQueue && ALLOW_PUBLISH !== 'TRUE')
-	{
-		unlockMutex($strMutexFile);
-		sendJSONResponse("", "Publishing is not allowed.", "", []);
-	}
-
-	if ($blnToQueue && in_array($strQueueName, $arrPublishBlocks))
-	{
-		unlockMutex($strMutexFile);
-		sendJSONResponse("", "Invalid action 'commit' for provided queue.", "", []);
-	}
-
-	if (!$blnToQueue && ALLOW_STORE !== 'TRUE')
-	{
-		unlockMutex($strMutexFile);
-		sendJSONResponse("", "Storing is not allowed.", "", []);
-	}
+	$blnToQueue = ($arrPlan['verb'] === 'publish');
 
 	$arrStaged = glob($strTxPath . '*.bin');
 	if (!is_array($arrStaged))
@@ -658,7 +690,7 @@ function handleAbort($strTx_a)
 	unlockMutex($strMutexFile);
 	deleteFolder($strTxPath);
 
-	sendJSONResponse("", "", "Transaction aborted.", []);
+	sendJSONResponse("", "", "Transaction rolled back.", []);
 }
 
 function handleFetch($strQueueName_a, $strAfterName_a, $intOffset_a, $intLength_a, $blnReverse_a)
@@ -1133,6 +1165,7 @@ initFolders();
 $binMessage = '';
 $strAction = '';
 $strAfterName = '';
+$strCommit = '';
 $strLength = '';
 $strName = '';
 $strNames = '';
@@ -1147,6 +1180,7 @@ if (ALLOW_GET === 'TRUE')
 {
 	if (isset($_GET['action'])) 	{ $strAction = $_GET['action']; }
 	if (isset($_GET['after'])) 		{ $strAfterName = $_GET['after']; }
+	if (isset($_GET['commit'])) 	{ $strCommit = $_GET['commit']; }
 	if (isset($_GET['length'])) 	{ $strLength = $_GET['length']; };
 	if (isset($_GET['name'])) 		{ $strName = $_GET['name']; }
 	if (isset($_GET['names']))		{ $strNames = $_GET['names']; }
@@ -1174,6 +1208,7 @@ if (empty($strAction))
 
 if (empty($binMessage))				{ if (isset($_POST['msg'])) 	{ $binMessage = $_POST['msg']; } }
 if (strlen($strAfterName) === 0)	{ if (isset($_POST['after'])) 	{ $strAfterName = $_POST['after']; } }
+if (strlen($strCommit) === 0)		{ if (isset($_POST['commit'])) 	{ $strCommit = $_POST['commit']; } }
 if (strlen($strLength) === 0)		{ if (isset($_POST['length']))  { $strLength = $_POST['length']; } }
 if (strlen($strName) === 0)			{ if (isset($_POST['name'])) 	{ $strName = $_POST['name']; } }
 if (strlen($strNames) === 0)		{ if (isset($_POST['names'])) 	{ $strNames = $_POST['names']; } }
@@ -1204,6 +1239,7 @@ $strNonce = preg_replace('/[^a-zA-Z0-9_-]/', '', $strNonce);
 $strQueueName = preg_replace('/[^a-zA-Z0-9_-]/', '', $strQueueName);
 $strQueueName = strtolower($strQueueName);
 $strTransaction = strtolower(trim($strTransaction));
+$strCommit = strtolower(trim($strCommit));
 $intRetentionDays = (int)$strRetentionDays;
 $intOffset = (int)$strOffset;
 $intLength = (int)$strLength;
@@ -1234,7 +1270,11 @@ switch ($strAction)
 	case 'publish':
 		if (ALLOW_PUBLISH === 'TRUE')
 		{
-			if (in_array($strQueueName, $arrPublishBlocks))
+			if (strlen($strTransaction) > 0)
+			{
+				handleTransaction('publish', $strTransaction, $strCommit, $strQueueName, $intRetentionDays, false, $strNonce, $binMessage);
+			}
+			else if (in_array($strQueueName, $arrPublishBlocks))
 			{
 				sendJSONResponse("", "Invalid action '" . $strAction . "' for provided queue.", "", []);
 			}
@@ -1263,28 +1303,15 @@ switch ($strAction)
 		if (ALLOW_STORE === 'TRUE')
 		{
 			$blnUnidentified = ($strUnidentified === '1');
-		handleStore($strNonce, $intRetentionDays, $binMessage, $blnUnidentified);
-		}
-		break;
 
-	case 'upload':
-		if (ALLOW_TRANSACTIONS === 'TRUE')
-		{
-			handleUpload($strTransaction, $strNonce, $binMessage);
-		}
-		break;
-
-	case 'commit':
-		if (ALLOW_TRANSACTIONS === 'TRUE')
-		{
-			handleCommit($strTransaction, $strQueueName, $intRetentionDays, ($strUnidentified === '1'));
-		}
-		break;
-
-	case 'abort':
-		if (ALLOW_TRANSACTIONS === 'TRUE')
-		{
-			handleAbort($strTransaction);
+			if (strlen($strTransaction) > 0)
+			{
+				handleTransaction('store', $strTransaction, $strCommit, '', $intRetentionDays, $blnUnidentified, $strNonce, $binMessage);
+			}
+			else
+			{
+				handleStore($strNonce, $intRetentionDays, $binMessage, $blnUnidentified);
+			}
 		}
 		break;
 
